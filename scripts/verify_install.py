@@ -66,8 +66,13 @@ def main():
     ok("plugin source is repo root", entry.get("source") == "./",
        "source=" + str(entry.get("source")))
 
-    # 2 - declared paths exist
-    for key in ("skills", "commands", "agents"):
+    # 2 - declared paths exist, and nothing is declared that must not be.
+    # `agents` must NOT appear in plugin.json: the harness auto-discovers agents/*.md,
+    # and declaring the directory fails manifest validation with
+    # "agents.0: Invalid input", which aborts the whole install.
+    ok("plugin.json does not declare `agents`", "agents" not in plugin,
+       "remove it - agents/ is auto-discovered; declaring it breaks `plugin install`")
+    for key in ("skills", "commands"):
         for rel in plugin.get(key, []):
             p = os.path.join(ROOT, rel.lstrip("./"))
             ok("declared " + key + " path exists: " + rel, os.path.isdir(p))
