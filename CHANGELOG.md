@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.3.0
+
+### Added - run conformance, after the first real end-to-end run exposed that nothing was enforced
+
+onestop was dogfooded against a live project (a FastAPI wrapper over a legacy portal).
+The result: **5 of 15 phases ran, 0 of 23 subagents were spawned, the change touched 3
+security-trigger surfaces, and security review never happened.** No run ledger was ever
+written. Every phase was followed in narration while the machinery sat unused - and
+nothing detected it, because every phase, gate and "MANDATORY" in this plugin was prose
+in a file that nothing read back.
+
+Adding more prose to a 17KB skill that already was not followed would change nothing.
+These changes are mechanical instead:
+
+- **`hooks/security-watch.sh`** (PostToolUse) - scans each written source file against
+  the nine security-trigger surfaces in `registry/intents.json` and records which ones
+  it touched. Source files only; docs mentioning "password" are not a security surface.
+  Replayed against the real `client.py` from the dogfood run, it correctly identifies
+  four surfaces - one more than a careful manual audit found.
+- **`hooks/run-conformance.sh`** (Stop) - reports unreviewed security surfaces and
+  unstamped phases at every turn boundary, and says plainly when no run ledger exists
+  at all, which is the signal that the orchestrate flow never actually executed. It
+  never blocks: an advisory check that can fail a turn is worse than the problem. It
+  only makes skipping visible instead of invisible.
+- **Ledger-first mandate** at the very top of the orchestrate skill. The first action
+  of any run is now writing `.onestop/run.json` with every phase stamped, and marking
+  each one done/skipped/inline with a reason as the run proceeds. A run with no ledger
+  is a run that did not happen.
+- **Delegation stated as the default, not an optimisation** - doing a phase inline is
+  always easier and looks identical in the transcript, which is exactly why it needs to
+  be a rule with an explicit `inline: <reason>` stamp rather than a preference.
+- `scripts/validate.py` now verifies all four hooks stay registered; install checks
+  went from 20 to 22.
+
 ## 1.2.1
 
 ### Fixed

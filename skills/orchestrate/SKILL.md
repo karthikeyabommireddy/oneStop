@@ -21,6 +21,39 @@ situations, defined in **The Asking Contract** below, and in no others.
 
 ---
 
+## Step 0.0 - Write the ledger FIRST (before anything else)
+
+**Your very first action in any run is to create `.onestop/run.json`.** Not after
+classification, not after discovery - first, with the phases you are about to run
+stamped `pending`. Then stamp each one `done` or `skipped: <reason>` as you go.
+
+This is not bookkeeping. It is the only thing that makes this pipeline real.
+
+> In onestop's first end-to-end run on a live project, 5 of 15 phases ran, 0 of 23
+> subagents were spawned, the change touched 3 security-trigger surfaces, security
+> review never happened, and no ledger was written. Every phase below was followed in
+> *narration* while the actual machinery sat unused - and nothing detected it, because
+> nothing was tracking. A run with no ledger is a run that did not happen.
+
+```json
+{ "run_id": "<date>-<slug>", "status": "active", "intent": "...", "tier": "...",
+  "phases": { "context": "pending", "discovery": "pending", "plan": "pending" },
+  "gates": { "gate_1": "pending", "gate_2": "pending" } }
+```
+
+A `Stop` hook reads this file and reports unstamped phases and unreviewed security
+surfaces at every turn boundary. It cannot block you. It can only make skipping
+visible - so if you skip a phase, skip it **explicitly**, with a stated reason, rather
+than by forgetting it exists.
+
+**Delegation is the default, not an optimisation.** When a phase says "delegate to
+`<agent>`", spawn it. Doing the work inline is always easier and always looks
+identical in the transcript - which is exactly why it has to be a rule rather than a
+preference. If you deliberately run a phase inline (tier `trivial`/`small`, or a
+one-file change), stamp it `inline: <reason>` in the ledger.
+
+---
+
 ## The Asking Contract
 
 This is the governing rule of the entire plugin. Read it before anything else.

@@ -1,5 +1,5 @@
 {
-  "description": "onestop lifecycle hooks. Their only job is to keep the knowledge graph accurate so phases can query it instead of re-reading the codebase. Every hook exits 0 on failure - a stale graph degrades onestop to reading files, which is slower but never wrong.",
+  "description": "onestop lifecycle hooks. They keep the knowledge graph accurate so phases can query it instead of re-reading the codebase, and they make a skipped phase or an unreviewed security surface visible at the turn boundary. Every hook exits 0 on failure - advisory checks must never block a turn, and a stale graph degrades onestop to reading files, which is slower but never wrong.",
   "hooks": {
     "PostToolUse": [
       {
@@ -8,6 +8,11 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/kg-mark-dirty.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/security-watch.sh\"",
             "timeout": 5
           }
         ]
@@ -20,6 +25,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/kg-refresh.sh\"",
             "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run-conformance.sh\"",
+            "timeout": 15
           }
         ]
       }

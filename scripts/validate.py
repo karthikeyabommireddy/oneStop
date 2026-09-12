@@ -189,6 +189,18 @@ def main():
                 "this fails on any repo with a doc/markdown file unless an LLM key is set")
         print("  kg.sh no-LLM build   " + ("ok" if kg_llm_safe else "FAIL"))
 
+    # 10 - the conformance hooks must stay registered. They are the only mechanical
+    # check that a run actually executed its declared phases and reviewed its security
+    # surfaces; without them every gate in this plugin is prose nothing enforces.
+    hj = os.path.join(ROOT, "hooks", "hooks.json")
+    if os.path.isfile(hj):
+        hooks_src = open(hj, encoding="utf-8").read()
+        need = ["kg-mark-dirty.sh", "kg-refresh.sh", "security-watch.sh", "run-conformance.sh"]
+        missing_hooks = [h for h in need if h not in hooks_src]
+        for h in missing_hooks:
+            err("hooks.json no longer registers " + h)
+        print("  conformance hooks    " + ("ok" if not missing_hooks else "FAIL"))
+
     return report()
 
 
