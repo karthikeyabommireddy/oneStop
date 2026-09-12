@@ -1,6 +1,6 @@
 {
   "name": "onestop",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "One-stop SDLC orchestration. Describe what you want in plain language - onestop classifies the intent, searches the codebase, binds the right specialists automatically, and drives plan, design, code, test, web and app automation, review and ship. You never pick an agent or a skill; it asks only when information is genuinely missing or discovery surfaced several real options.",
   "author": {
     "name": "karthikeya"
@@ -22,8 +22,8 @@
     "gate_mode": {
       "type": "string",
       "title": "Gate mode",
-      "description": "standard keeps both gates (plan approval, ship approval). strict adds a gate before the automation phase. autonomous keeps only the ship gate. Invalid values fall back to standard.",
-      "default": "standard"
+      "description": "every-phase (default) stops at every phase boundary - you see what ran, what is next and which agents will do it, and can approve, skip, adjust or stop. milestone gates only at plan, design, implement and ship. autonomous gates only before ship. No mode disables the narration between phases, and the ship gate is never skippable in any mode.",
+      "default": "every-phase"
     },
     "coverage_threshold": {
       "type": "number",

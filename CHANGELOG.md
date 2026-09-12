@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.4.0
+
+### Changed - a gate at every phase boundary, not two at the ends
+
+Two gates at the far ends of a fifteen-phase pipeline meant everything between them was
+invisible - which is how a run once finished with ten phases silently skipped. Every
+phase boundary is now a gate.
+
+- **`registry/gates.json`** - the gate protocol: shape, option vocabulary, skip policy,
+  narration rules, and the three gate modes.
+- **`skills/phase-gate/SKILL.md`** - the shared protocol every boundary runs. A gate
+  presents DONE (what the phase produced), NEXT (the next phase and which agents it
+  spawns), RECOMMEND (what onestop advises, and why), and OPTIONS (continue / skip /
+  adjust / stop, recommendation first).
+- **A gate is an `AskUserQuestion` call, not prose asking for confirmation.** Written
+  requests to confirm get skipped under context pressure and leave no trace; a tool call
+  is a real stop with a real answer, and the ledger stamp is the record.
+- **Narration between gates** - every agent spawned by name, every wave dispatched with
+  its lane count, every file written by path, every decision resolved without asking and
+  the rule that settled it. The bar: the user could say what onestop is doing right now
+  without having to ask.
+- **Adjust-and-re-present** - when the user redirects, the plan and ledger update and
+  the gate is presented again, so they approve the amended direction rather than the
+  original.
+- **Skips are always honoured.** Two cases get one specific warning first - skipping
+  review when a security trigger was touched, and skipping test on a behavior change -
+  then the user's answer stands either way and the override is recorded with their name
+  on it.
+- **`gate_mode` default is now `every-phase`** (was `standard`); `milestone` and
+  `autonomous` loosen which boundaries stop. No mode disables narration, and the ship
+  gate is never skippable in any mode.
+- **`run-conformance.sh` now reports phases that ran with no gate decision**, so a
+  skipped gate is visible at the turn boundary rather than discovered later.
+
+### Reconciled
+
+The Asking Contract previously read "Phase boundaries are not questions." That governed
+*decisions inside a phase* - do not ask what you could discover yourself - but it read
+as a ban on telling the user anything. Both rules now stand explicitly side by side:
+do not ask what you can find out, and always show what you are doing. They are not the
+same instruction.
+
 ## 1.3.0
 
 ### Added - run conformance, after the first real end-to-end run exposed that nothing was enforced

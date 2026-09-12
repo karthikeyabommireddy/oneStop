@@ -1,0 +1,124 @@
+{
+  "version": "1.0.0",
+  "description": "Per-phase gate protocol. Every phase boundary stops, reports what happened, states what comes next, and asks the user to approve, skip, adjust or stop. The user is never surprised by what onestop did, and can redirect at any boundary.",
+
+  "why": "onestop's first real end-to-end run completed with 10 of 15 phases silently skipped and the user never told. Two gates at the far ends of a long pipeline meant everything between them was invisible. A gate at every boundary makes the run legible as it happens rather than auditable afterwards.",
+
+  "mechanism": {
+    "tool": "AskUserQuestion",
+    "instruction": "A gate is a real AskUserQuestion call, not a sentence in prose asking the user to confirm. Prose requests for confirmation get skipped under context pressure - that is exactly how the invisible run happened. The tool call is the mechanism; the ledger stamp is the record; the Stop hook is the check.",
+    "record": "Every gate decision is written to .onestop/run.json as the phase's gate field before the next phase starts. A phase that ran with no recorded gate decision is a conformance failure and the Stop hook reports it."
+  },
+
+  "gate_modes": {
+    "every-phase": {
+      "default": true,
+      "description": "Gate at every phase boundary. Maximum visibility and control - the user sees each step and approves the direction.",
+      "gates": "all"
+    },
+    "milestone": {
+      "description": "Gate only at the decision-heavy boundaries: after plan, after design, after implement, before ship. Phases in between report but do not stop.",
+      "gates": ["plan", "design", "implement", "ship"]
+    },
+    "autonomous": {
+      "description": "Gate only before ship. Everything else flows. Use when the task is well understood and the user wants the result, not the journey.",
+      "gates": ["ship"]
+    }
+  },
+
+  "gate_shape": {
+    "instruction": "Every gate presents the same four things, in this order. Keep each one short - a gate the user must read for a minute is a gate they will start rubber-stamping, which defeats the purpose.",
+    "sections": [
+      {
+        "name": "DONE",
+        "content": "What the phase just produced, in two or three concrete lines. Files written, decisions taken, findings. Never a restatement of what the phase is for.",
+        "rule": "Concrete artifacts and outcomes only. 'Discovery complete' is not a report; 'found 3 existing auth implementations, one dominant' is."
+      },
+      {
+        "name": "NEXT",
+        "content": "The next phase, what it will actually do, and which agents it will spawn.",
+        "rule": "Name the agents. The user should know who is about to work and on what."
+      },
+      {
+        "name": "RECOMMENDATION",
+        "content": "What onestop advises, and the one-line reason.",
+        "rule": "Always recommend something. A gate that presents options without a recommendation pushes the decision back onto the user without helping them make it - that is the failure this is meant to avoid, not create."
+      },
+      {
+        "name": "OPTIONS",
+        "content": "The concrete choices, recommendation first.",
+        "rule": "Four at most, since that is what the question tool takes. Free-text redirect is always implicitly available and never needs to be listed."
+      }
+    ]
+  },
+
+  "standard_options": {
+    "instruction": "The default option set at a phase boundary. Adapt the labels to the actual phase - 'Continue to review' beats 'Continue'.",
+    "options": [
+      {
+        "id": "continue",
+        "label": "Continue to <next phase>",
+        "meaning": "Proceed as recommended.",
+        "usually_recommended": true
+      },
+      {
+        "id": "skip",
+        "label": "Skip <next phase>",
+        "meaning": "Move past it to the phase after.",
+        "must_state": "What is lost by skipping. A skip whose cost is unstated is a decision made blind - say plainly what will not be checked, written or verified."
+      },
+      {
+        "id": "adjust",
+        "label": "Adjust first",
+        "meaning": "The user changes scope, approach or plan before this phase runs. Take their input, update the plan and the ledger, then re-present the gate.",
+        "must_state": "Re-present the gate after adjusting so the user confirms the amended direction rather than the original."
+      },
+      {
+        "id": "stop",
+        "label": "Stop here",
+        "meaning": "End the run. Write the ledger as stopped, and report exactly what exists and what does not."
+      }
+    ]
+  },
+
+  "narration": {
+    "instruction": "Between gates, the user still sees what is happening. Announce each significant action as it starts - not a running commentary, but never silent work either.",
+    "announce": [
+      "Every agent spawned, by name, and what it is working on.",
+      "Every parallel wave dispatched, with its lane count.",
+      "Every file written or modified - path only, never the contents.",
+      "Every decision resolved without asking, with the rule that settled it.",
+      "Every command run whose result changes the plan."
+    ],
+    "do_not_announce": [
+      "Individual file reads during discovery - report the conclusion instead.",
+      "Internal reasoning steps that produce no artifact.",
+      "Anything that would repeat what the last gate already said."
+    ]
+  },
+
+  "skip_policy": {
+    "instruction": "The user may skip any phase. Two exceptions are never silently honoured, because skipping them has consequences the user may not have in mind at that moment.",
+    "confirm_twice": [
+      {
+        "phase": "review",
+        "when": "the change surface touched a security trigger",
+        "say": "State which security surfaces were touched and that review is marked mandatory for them in registry/intents.json, then ask again. If the user still says skip, honour it and record the override in the ledger with their decision - it is their call, not onestop's."
+      },
+      {
+        "phase": "test",
+        "when": "the change added or altered behavior",
+        "say": "State that the change will ship with no test proving it works, then ask again. Honour the answer either way and record it."
+      }
+    ],
+    "rule": "Never refuse a skip. Warn once, with specifics, then do what the user decides and write down that they decided it."
+  },
+
+  "tier_scaling": {
+    "instruction": "Gate content scales with tier; the gate itself does not disappear. A trivial change still shows the user what it is about to do - it just does it in two lines instead of ten.",
+    "trivial": "One-line DONE and NEXT. Options reduce to continue/stop.",
+    "small": "Short DONE and NEXT, full option set.",
+    "standard": "Full gate shape.",
+    "large": "Full gate shape, plus the open decisions the phase surfaced."
+  }
+}

@@ -77,10 +77,17 @@ This is the governing rule of the entire plugin. Read it before anything else.
 - The answer is a convention the repo already demonstrates. Follow the repo.
 - It is a preference with an obvious professional default. Choose the default, state
   it, and continue. The user can override.
-- You want reassurance, confirmation, or permission to continue between phases.
-  Phase boundaries are not questions. Only the two hard gates stop the pipeline.
+- You want reassurance about a judgement you are qualified to make. Decide it,
+  state it, move on. (This is about decisions *inside* a phase. Flow control *between*
+  phases is a gate, which is a different thing - see below.)
 - The question is open-ended ("how would you like me to handle X?"). If you must ask,
   present concrete discovered options, never a blank prompt.
+
+**Two different things, both true at once.** The contract above governs *decisions
+within a phase*: do not ask what you could find out yourself. Gates govern *flow
+control between phases*: always show what you did and confirm the direction. "Do not
+ask me things you could discover" and "do not tell me what you are doing" are not the
+same instruction - onestop follows the first and rejects the second.
 
 **How to ask, when you have earned the right:**
 
@@ -286,8 +293,15 @@ Each phase is a separate skill under `skills/phase-*`. Load exactly one at a tim
 | compliance | `phase-compliance` | domain control findings |
 | ship | `phase-ship` | commits, PR, docs |
 
-Between phases: announce the phase in one line, run it, summarise its output in a few
-lines. **Do not ask permission to continue.** Flow through to the next phase.
+Between phases: **run the gate.** Announce the phase, run it, narrate the work as it
+happens (agents spawned, waves dispatched, files written), then present the gate -
+DONE, NEXT, RECOMMEND, OPTIONS - as an `AskUserQuestion` call, and stamp the decision
+in the ledger before the next phase starts. See
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-gate/SKILL.md`.
+
+Under `gate_mode: milestone` or `autonomous`, boundaries that are not gated still get
+the announce-and-summarise treatment - the user always sees what ran, even where they
+are not asked to approve it.
 
 ## Parallel Execution
 
@@ -322,23 +336,43 @@ built at the same time instead of one waiting for the other.
 When the partition finds no parallelism - a dependency chain, or everything colliding on
 one file - say so plainly and run serially. Manufactured concurrency is worse than none.
 
-## The Two Gates
+## Gates - every phase boundary
 
-The pipeline is gated, not autonomous. Exactly two stops, and they are not questions
-about preference - they are approvals of concrete artifacts.
+**Every phase boundary is a gate.** The run stops, reports what the phase produced,
+states what comes next and which agents will do it, recommends a direction, and lets
+the user approve, skip, adjust or stop.
 
-- **GATE 1 - after `plan`.** Present the task list, the bound specialists, and every
-  resolved and unresolved choice. No implementation code is written until the user
-  approves. This is where the user corrects course cheaply.
-- **GATE 2 - before `ship`.** Present the diff summary, test and coverage results,
-  review findings, and the proposed commit messages. Nothing is committed, pushed, or
-  published until the user approves.
+Full protocol: `${CLAUDE_PLUGIN_ROOT}/skills/phase-gate/SKILL.md`. Rules:
+`${CLAUDE_PLUGIN_ROOT}/registry/gates.json`.
 
-CRITICAL and HIGH review findings must be resolved before Gate 2 - they are not
-negotiable and are never deferred past the gate without the user saying so explicitly.
+```
+DONE      <what this phase produced - files, findings, decisions>
+NEXT      <next phase, what it does, which agents it spawns>
+RECOMMEND <what onestop advises, and why>
+OPTIONS   Continue to <phase>  |  Skip <phase>  |  Adjust first  |  Stop here
+```
 
-Tier `trivial` and `small` collapse Gate 1 into a single stated line rather than a
-stop, because there is nothing meaningful to approve. Gate 2 always stops.
+**A gate is an `AskUserQuestion` call, not a sentence asking permission.** Prose
+confirmations get skipped under context pressure and leave no trace - that is precisely
+how a run once completed with ten of fifteen phases silently skipped. The tool call is
+the stop; the ledger stamp is the record; the Stop hook is the check.
+
+**Between gates, narrate.** Every agent spawned by name, every wave dispatched with its
+lane count, every file written by path, every decision resolved without asking and the
+rule that settled it. Not a running commentary - but never silent work either. The bar:
+the user could say what onestop is doing right now without having to ask.
+
+**Skips are always honoured.** Two cases get one warning with specifics first - skipping
+`review` when a security trigger was touched, and skipping `test` on a behavior change.
+Warn once, then do what the user decides and record that they decided it.
+
+**Modes.** `gate_mode` selects which boundaries stop: `every-phase` (default),
+`milestone` (plan, design, implement, ship), `autonomous` (ship only). It never changes
+what a gate looks like when it runs, and never disables narration.
+
+**Ship is absolute.** Nothing is committed, pushed or published without an explicit
+approval at the ship gate, in every mode, at every tier. CRITICAL and HIGH review
+findings block it unless the user explicitly accepts them on the record.
 
 ## Run Ledger
 

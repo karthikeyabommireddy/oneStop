@@ -36,7 +36,28 @@ if [ -s "$FLAGS" ]; then
   fi
 fi
 
-# 2. Run ledger present but phases unstamped.
+# 2. Phases that ran with no recorded gate decision. Every phase boundary is a gate
+#    (registry/gates.json); a phase marked done with no gate stamp means the user was
+#    never shown what ran or asked where to go next. The ledger writes one phase per
+#    line, so a per-line scan is enough and avoids fragile multiline matching.
+if [ -f "$LEDGER" ]; then
+  ungated=$(awk '
+    /"status"[[:space:]]*:[[:space:]]*"done"/ && !/"gate"/ {
+      if (match($0, /"[a-z][a-z-]*"[[:space:]]*:[[:space:]]*\{/)) {
+        name = substr($0, RSTART + 1)
+        sub(/".*/, "", name)
+        out = (out == "" ? name : out ", " name)
+      }
+    }
+    END { print out }
+  ' "$LEDGER" 2>/dev/null)
+  if [ -n "$ungated" ]; then
+    lines+=("PHASES RAN WITHOUT A GATE - $ungated")
+    lines+=("  Every phase boundary should stop and ask (registry/gates.json). These did not.")
+  fi
+fi
+
+# 3. Run ledger present but phases unstamped.
 if [ -f "$LEDGER" ]; then
   if grep -q '"status"[[:space:]]*:[[:space:]]*"active"' "$LEDGER" 2>/dev/null; then
     pending=$(grep -oE '"[a-z-]+"[[:space:]]*:[[:space:]]*"(pending|active)"' "$LEDGER" 2>/dev/null \

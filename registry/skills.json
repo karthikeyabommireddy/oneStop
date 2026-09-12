@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "generated_by": "scripts/build_registry.py",
   "description": "Derived skill catalogue - the orchestrator engine and its phase skills.",
-  "count": 20,
+  "count": 21,
   "skills": [
     {
       "name": "orchestrate",
@@ -44,6 +44,12 @@
       "name": "phase-discovery",
       "path": "skills/phase-discovery/SKILL.md",
       "description": "Search the repository to establish what already exists before any planning or questioning happens. Runs one scout pass per unit of work, aggregates the findings, and hands the orchestrator a resolved decision set plus the short list of choices that genuinely need the user. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-gate",
+      "path": "skills/phase-gate/SKILL.md",
+      "description": "The per-phase gate protocol. Run at every phase boundary - report what the phase produced, state what comes next and who will do it, recommend a direction, and let the user approve, skip, adjust or stop. Shared by every phase. Loaded by the orchestrate skill; not usually invoked directly.",
       "phase": ""
     },
     {
