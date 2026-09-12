@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "generated_by": "scripts/build_registry.py",
+  "description": "Derived skill catalogue - the orchestrator engine and its phase skills.",
+  "count": 20,
+  "skills": [
+    {
+      "name": "orchestrate",
+      "path": "skills/orchestrate/SKILL.md",
+      "description": "The single entry point for all development work. Accepts any request - a feature, a narrated user flow, a bug, a ticket ID, a PR, a spec document, or a plain question - then classifies it, binds the right specialists automatically, and drives plan, design, code, test, automation, review and ship to completion. Use whenever the user asks for development work without naming a specific tool. Invoked as /onestop.",
+      "phase": ""
+    },
+    {
+      "name": "parallel-execution",
+      "path": "skills/parallel-execution/SKILL.md",
+      "description": "The wave scheduler. Turns a task DAG into waves of independent agents that run at the same time, joins each wave, and continues around failures. Shared engine used by the discovery, implement, test, automation and review phases. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-automation",
+      "path": "skills/phase-automation/SKILL.md",
+      "description": "Build end-to-end automation for the described journey across web and native app targets. Binds the existing or default framework per target, delegates to the web and app automation agents, and wires artifacts and CI. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-compliance",
+      "path": "skills/phase-compliance/SKILL.md",
+      "description": "Check a change against the regulatory regime its data and domain actually place it under - HIPAA, GDPR, PCI-DSS, SOC 2 - and report control findings with severity. Loaded by the orchestrate skill when a regulated data path is detected.",
+      "phase": ""
+    },
+    {
+      "name": "phase-context",
+      "path": "skills/phase-context/SKILL.md",
+      "description": "Build, refresh and query the repository knowledge graph so later phases get targeted context instead of re-reading the codebase. Runs inside orchestrate Step 0 and is queried by discovery. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-design",
+      "path": "skills/phase-design/SKILL.md",
+      "description": "Produce the design artifacts a change needs and no more - interface contract, low-level design, and an ADR for decisions that are expensive to reverse. Scales from a single contract file to a full HLD. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-discovery",
+      "path": "skills/phase-discovery/SKILL.md",
+      "description": "Search the repository to establish what already exists before any planning or questioning happens. Runs one scout pass per unit of work, aggregates the findings, and hands the orchestrator a resolved decision set plus the short list of choices that genuinely need the user. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-implement",
+      "path": "skills/phase-implement/SKILL.md",
+      "description": "Execute the approved task list test-first, one vertical slice at a time, following the conventions discovery recorded. Drives the red-green-refactor loop, repairs build breaks in place, and keeps the suite green between slices. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-measure",
+      "path": "skills/phase-measure/SKILL.md",
+      "description": "Produce a reproducible performance baseline before any optimization, so improvement can be proven rather than assumed. Loaded by the orchestrate skill for perf intent.",
+      "phase": ""
+    },
+    {
+      "name": "phase-plan",
+      "path": "skills/phase-plan/SKILL.md",
+      "description": "Turn the discovery picture into an ordered task list of thin vertical slices, each with its own acceptance criteria and test strategy. Produces the artifact presented at Gate 1. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-qa-plan",
+      "path": "skills/phase-qa-plan/SKILL.md",
+      "description": "Draft the manual testing plan for the change as a document plus an importable CSV, covering what a human tester does on top of the automated suites. Runs after automation, before review. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-reproduce",
+      "path": "skills/phase-reproduce/SKILL.md",
+      "description": "Turn a reported defect into a failing regression test that fails for the right reason, before any fix is attempted. Loaded by the orchestrate skill for defect intent; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-requirements",
+      "path": "skills/phase-requirements/SKILL.md",
+      "description": "Turn a thin request, ticket, or spec document into testable acceptance criteria before planning begins. Runs only when the input lacks criteria a plan can be built on. Loaded by the orchestrate skill.",
+      "phase": ""
+    },
+    {
+      "name": "phase-research",
+      "path": "skills/phase-research/SKILL.md",
+      "description": "Find proven prior art before writing net-new code - vendor documentation, package registries, and reference implementations - and report what should be adopted rather than built. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-review",
+      "path": "skills/phase-review/SKILL.md",
+      "description": "Review the change with every reviewer the diff surface warrants, running them in parallel, and resolve blocking findings before ship. Binds language, security, database, accessibility and domain reviewers automatically from the diff. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-scaffold",
+      "path": "skills/phase-scaffold/SKILL.md",
+      "description": "Stand up the first end-to-end vertical slice of a new project so every later slice has a working skeleton to extend. Loaded by the orchestrate skill for mvp intent.",
+      "phase": ""
+    },
+    {
+      "name": "phase-ship",
+      "path": "skills/phase-ship/SKILL.md",
+      "description": "Close the loop after review - conventional commits scoped to logical changes, a pull request with the repo template, and documentation sync. Owns Gate 2, the last stop before anything leaves the machine. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-test",
+      "path": "skills/phase-test/SKILL.md",
+      "description": "Complete unit and integration coverage for the change, verify the coverage threshold, and prove the tests are correct rather than merely present. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-ui-design",
+      "path": "skills/phase-ui-design/SKILL.md",
+      "description": "Establish or extend the visual design system before UI implementation - domain-matched palette with verified contrast, type scale, spacing, elevation and motion, emitted as tokens. Runs automatically when the change touches user interface. Loaded by the orchestrate skill; not usually invoked directly.",
+      "phase": ""
+    },
+    {
+      "name": "phase-verify-green",
+      "path": "skills/phase-verify-green/SKILL.md",
+      "description": "Prove the existing suite is green and actually covers the code about to be restructured, before a refactor begins. Adds characterization tests where coverage is missing. Loaded by the orchestrate skill for refactor intent.",
+      "phase": ""
+    }
+  ]
+}

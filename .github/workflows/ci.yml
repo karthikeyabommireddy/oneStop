@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Packaging - marketplace add and plugin install will work
+        run: python scripts/verify_install.py
+
+      - name: Consistency - phases, agents, packs and registries agree
+        run: python scripts/validate.py
+
+      - name: Spec - intent classifier and stack binding
+        run: python scripts/test_routing.py
+
+      - name: Spec - parallel wave scheduler
+        run: python scripts/test_parallel.py
+
+      - name: Shell syntax
+        run: |
+          for f in scripts/*.sh hooks/*.sh; do
+            bash -n "$f" || exit 1
+          done
+          echo "all shell scripts parse"

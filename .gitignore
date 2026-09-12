@@ -1,0 +1,8 @@
+.onestop/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+
+# knowledge graph output (built per-repo, never committed)
+graphify-out/

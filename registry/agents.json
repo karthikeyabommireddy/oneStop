@@ -1,0 +1,443 @@
+{
+  "version": "1.0.0",
+  "generated_by": "scripts/build_registry.py",
+  "description": "Derived agent catalogue. Do not hand-edit. onestop uses role agents that specialise by loading language and concern packs, rather than one agent per language.",
+  "count": 23,
+  "by_phase": {
+    "automation": [
+      "app-automation-agent",
+      "web-automation-agent"
+    ],
+    "compliance": [
+      "security-reviewer"
+    ],
+    "design": [
+      "a11y-agent",
+      "architect",
+      "contract-agent",
+      "option-broker",
+      "ui-designer"
+    ],
+    "discovery": [
+      "code-explorer",
+      "discovery-scout",
+      "option-broker"
+    ],
+    "implement": [
+      "build-resolver",
+      "docs-agent",
+      "merge-coordinator",
+      "performance-agent",
+      "refactor-agent",
+      "test-author",
+      "ui-designer",
+      "work-partitioner"
+    ],
+    "plan": [
+      "architect",
+      "option-broker",
+      "planner",
+      "work-partitioner"
+    ],
+    "requirements": [
+      "ba-analyst"
+    ],
+    "review": [
+      "a11y-agent",
+      "code-reviewer",
+      "data-reviewer",
+      "performance-agent",
+      "security-reviewer",
+      "validator"
+    ],
+    "ship": [
+      "docs-agent"
+    ],
+    "test": [
+      "app-automation-agent",
+      "qa-planner",
+      "test-author",
+      "web-automation-agent"
+    ]
+  },
+  "agents": [
+    {
+      "name": "a11y-agent",
+      "path": "agents/a11y-agent.md",
+      "description": "Designs and reviews user interfaces against WCAG 2.2 AA for web and the platform accessibility APIs for native apps. Bound automatically when a stack declares the accessibility concern and the change touches UI. Use in the design and review phases.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "design",
+        "review"
+      ]
+    },
+    {
+      "name": "app-automation-agent",
+      "path": "agents/app-automation-agent.md",
+      "description": "Builds and maintains native and cross-platform app end-to-end automation - iOS, Android, Flutter, React Native and Windows desktop. Detects the existing framework or binds the stack default, writes device-resilient flows from acceptance criteria, and wires simulator and device-farm execution. Use whenever an app user journey needs end-to-end coverage.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "automation",
+        "test"
+      ]
+    },
+    {
+      "name": "architect",
+      "path": "agents/architect.md",
+      "description": "Designs the structure of a change - module boundaries, data model, interface contracts, and the decisions worth recording as ADRs - scaled to blast radius rather than to ceremony. Use in the design phase.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob"
+      ],
+      "model": "opus",
+      "phases": [
+        "design",
+        "plan"
+      ]
+    },
+    {
+      "name": "ba-analyst",
+      "path": "agents/ba-analyst.md",
+      "description": "Turns a business objective into development-ready requirements - stakeholders, scope, domain model, process flows, functional and non-functional requirements, user stories with testable acceptance criteria, and a bidirectional traceability matrix. Derives from the codebase and the domain before asking anything. Use in the requirements phase.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "opus",
+      "phases": [
+        "requirements"
+      ]
+    },
+    {
+      "name": "build-resolver",
+      "path": "agents/build-resolver.md",
+      "description": "Gets a failing build, compile or type-check green again with the smallest correct change, specialising to the toolchain by loading its language pack. Fixes build breakage only - never refactors, never redesigns. Use whenever a build or type check fails.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "implement"
+      ]
+    },
+    {
+      "name": "code-explorer",
+      "path": "agents/code-explorer.md",
+      "description": "Traces how something actually works by following real execution paths through the code, and reports the mechanism with file-level evidence. Read-only. Use in the discovery phase and for investigate intent.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "code-reviewer",
+      "path": "agents/code-reviewer.md",
+      "description": "Reviews a change for correctness, clarity and maintainability, specialising to the languages in the diff by loading the language packs it is given. One reviewer that knows many languages rather than one agent per language - a diff spanning two languages loads both packs into a single review. Use in the review phase for every change.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "review"
+      ]
+    },
+    {
+      "name": "contract-agent",
+      "path": "agents/contract-agent.md",
+      "description": "Writes the interface contract two or more components must agree on - OpenAPI, GraphQL SDL, protobuf, AsyncAPI, or a typed interface file - before either side is implemented. Use in the design phase whenever a component boundary exists.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "design"
+      ]
+    },
+    {
+      "name": "data-reviewer",
+      "path": "agents/data-reviewer.md",
+      "description": "Reviews schema changes, migrations and queries for correctness, safety under deployment, and performance at real data volume. Bound automatically whenever the change surface touches migrations, schema or query files. Use in the review phase.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "review"
+      ]
+    },
+    {
+      "name": "discovery-scout",
+      "path": "agents/discovery-scout.md",
+      "description": "Searches a repository to answer a specific question about what already exists, so the orchestrator never asks the user something the code can answer. Returns found, gaps and options with file-level evidence. Use for every flow step and every non-trivial unit of work before planning.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "docs-agent",
+      "path": "agents/docs-agent.md",
+      "description": "Writes and updates documentation from the source of truth - routes, schemas, exports, scripts and config - never from memory. Updates only what the change actually invalidated. Use in the ship phase and for docs intent.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "ship",
+        "implement"
+      ]
+    },
+    {
+      "name": "merge-coordinator",
+      "path": "agents/merge-coordinator.md",
+      "description": "Joins the results of a parallel wave - verifies the combined state, detects semantic conflicts the write-surface partition could not prevent, merges worktree lanes one at a time, and decides what the next wave may schedule. Use at every wave boundary.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "implement"
+      ]
+    },
+    {
+      "name": "option-broker",
+      "path": "agents/option-broker.md",
+      "description": "Decides whether an open choice must go to the user or can be resolved silently, and formats the ones that must be asked. Enforces the Asking Contract - search first, resolve what is resolvable, batch what remains, always recommend. Use after discovery, before planning, whenever a unit of work has more than one candidate approach.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "discovery",
+        "design",
+        "plan"
+      ]
+    },
+    {
+      "name": "performance-agent",
+      "path": "agents/performance-agent.md",
+      "description": "Finds and fixes real performance problems by measuring first, profiling to locate the actual bottleneck, and proving the improvement against the baseline. Use in the measure and implement phases for perf intent.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "implement",
+        "review"
+      ]
+    },
+    {
+      "name": "planner",
+      "path": "agents/planner.md",
+      "description": "Turns a discovery picture into an ordered task list of thin vertical slices, each with observable acceptance criteria, the files it touches, and the test level that proves it. Produces the artifact approved at Gate 1. Use in the plan phase.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob"
+      ],
+      "model": "opus",
+      "phases": [
+        "plan"
+      ]
+    },
+    {
+      "name": "qa-planner",
+      "path": "agents/qa-planner.md",
+      "description": "Drafts the manual testing plan for a change - environment setup, concrete test data creation steps, step-by-step cases with observable expected results, regression checklist and sign-off - as a document plus an importable CSV. Documentation only; it writes no test code. Use in the qa-plan phase.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "test"
+      ]
+    },
+    {
+      "name": "refactor-agent",
+      "path": "agents/refactor-agent.md",
+      "description": "Restructures code without changing behavior, and removes code that is genuinely dead, verifying the suite stays green at every step. Use in the implement phase for refactor intent.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "implement"
+      ]
+    },
+    {
+      "name": "security-reviewer",
+      "path": "agents/security-reviewer.md",
+      "description": "Reviews a change for exploitable weaknesses - injection, authentication and authorization flaws, secret exposure, unsafe deserialization, SSRF, and insecure defaults. Mandatory whenever the change surface touches a security trigger, at every size tier. Use in the review phase.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "review",
+        "compliance"
+      ]
+    },
+    {
+      "name": "test-author",
+      "path": "agents/test-author.md",
+      "description": "Writes tests first and drives the red-green-refactor loop, specialising to the stack by loading its language pack for idiom, runner and assertion style. Writes complete runnable test bodies, never stubs. Use in the implement and test phases.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "implement",
+        "test"
+      ]
+    },
+    {
+      "name": "ui-designer",
+      "path": "agents/ui-designer.md",
+      "description": "Establishes the visual design direction for a product - a domain-matched colour palette in OKLCH with verified contrast, a fluid type scale, spacing, elevation and motion budgets - emitted as design tokens. Extends an existing design system when one is present rather than replacing it. Use in the design phase whenever the change touches UI.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "opus",
+      "phases": [
+        "design",
+        "implement"
+      ]
+    },
+    {
+      "name": "validator",
+      "path": "agents/validator.md",
+      "description": "Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before Gate 2. Use at the end of the review phase.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "review"
+      ]
+    },
+    {
+      "name": "web-automation-agent",
+      "path": "agents/web-automation-agent.md",
+      "description": "Builds and maintains browser end-to-end automation for a described user flow. Detects the existing framework or binds the stack default, writes resilient specs from flow acceptance criteria, wires artifacts and CI, and quarantines flaky specs. Use whenever a web user journey needs end-to-end coverage.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "sonnet",
+      "phases": [
+        "automation",
+        "test"
+      ]
+    },
+    {
+      "name": "work-partitioner",
+      "path": "agents/work-partitioner.md",
+      "description": "Converts an approved task list into an executable DAG with declared write surfaces, then groups the tasks into waves that can safely run in parallel. The single safety check that makes concurrent agents possible without corrupting files. Use after the plan phase, before implementation.",
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "opus",
+      "phases": [
+        "plan",
+        "implement"
+      ]
+    }
+  ]
+}

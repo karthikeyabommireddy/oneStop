@@ -1,0 +1,101 @@
+{
+  "version": "1.0.0",
+  "description": "Parallel execution rules. onestop decomposes work into a task DAG, groups tasks into waves that can safely run at the same time, and fans them out to independent agents. The binding constraint is never the dependency graph - it is the WRITE SURFACE. Two agents editing the same file concurrently corrupt it, and no amount of speed is worth that.",
+
+  "scheduling": {
+    "model": "wave",
+    "algorithm": [
+      "1. READY = every task whose dependencies are all complete.",
+      "2. Order READY by longest remaining path through the DAG - the critical path goes first, because the wave is only as fast as its slowest lane.",
+      "3. Walk the ordered list and add a task to the wave only if its write surface is DISJOINT from every task already in the wave.",
+      "4. Cap the wave at max_width. A task that collides, or overflows the cap, waits for the next wave.",
+      "5. Dispatch the whole wave in ONE message - several Agent calls in a single assistant turn is what makes them concurrent. Dispatching them in separate turns is sequential execution wearing a costume.",
+      "6. Join: collect every result before scheduling the next wave.",
+      "7. Verify at the join, not inside the lanes - run the suite once for the wave.",
+      "8. Repeat until the DAG is drained."
+    ],
+    "max_width": 5,
+    "max_width_note": "Five concurrent lanes is the practical ceiling. Beyond that the join summary stops being readable, token cost rises faster than wall-clock falls, and a failure in one lane becomes hard to attribute.",
+    "min_width_to_bother": 2,
+    "critical_path_first": true
+  },
+
+  "write_surface": {
+    "rule": "Every task declares the files and directories it will WRITE, before the wave is formed. Two tasks may share a read surface freely; they may never share a write surface inside one wave.",
+    "declaration": "Paths come from the plan `touches` field, which discovery populated. A task that cannot declare its write surface is not ready to be parallelised - run it alone.",
+    "collision_examples": [
+      "Two tasks both editing src/routes/index.ts - collide, even if they add different routes.",
+      "Two tasks both adding a migration - collide; migration ordering is global state.",
+      "Two tasks both editing the same test file - collide.",
+      "One task writing src/api/orders.ts and another writing src/ui/OrderList.tsx - disjoint, safe.",
+      "A task writing a shared barrel/index/registration file that several features must touch - this is the most common hidden collision. Detect it and serialise those tasks, or have ONE task own the barrel and the others declare no write to it."
+    ],
+    "shared_file_strategy": "When several tasks must all register into one file (a route table, a DI container, an export barrel, a translations file), do not parallelise around it. Either give one task ownership of that file for the whole wave, or add a final serial task that performs every registration at once."
+  },
+
+  "isolation": {
+    "in_process": {
+      "when": "Write surfaces are disjoint - the normal case.",
+      "how": "Plain parallel Agent calls in one message. No isolation needed; the partition already guarantees safety."
+    },
+    "worktree": {
+      "when": "Two large lanes genuinely need the same files, or a lane is experimental and may be discarded.",
+      "how": "Pass isolation: worktree on the Agent call. Each agent gets its own git worktree, so even overlapping writes cannot collide.",
+      "cost": "A checkout per lane, and a real merge afterwards. Worth it for substantial independent lanes; overkill for a two-file change.",
+      "merge": "Merge worktrees one at a time, running the suite after each. Never merge them all and then test - you lose the ability to attribute a failure."
+    }
+  },
+
+  "always_parallel": {
+    "note": "These are read-only or write-disjoint by construction. Running them sequentially is the largest avoidable waste in the pipeline, and there is never a reason to.",
+    "cases": [
+      "Discovery scouts - one per flow step, always independent.",
+      "Reviewers - code, security, data, accessibility all read the same diff and write nothing.",
+      "Research lookups - independent questions.",
+      "Per-component test runs where the components are independent.",
+      "Web and app automation - different targets, different files.",
+      "Independent build or lint lanes."
+    ]
+  },
+
+  "never_parallel": {
+    "note": "Speed is never worth these. Each is serialised regardless of what the DAG says.",
+    "cases": [
+      "Database migrations - ordering is global and a concurrent apply corrupts state.",
+      "Any two tasks writing the same file, for any reason.",
+      "Dependency manifest edits - two agents writing package.json or the lockfile will clobber each other.",
+      "Git operations - commit, rebase, branch, push. One writer only.",
+      "The final registration/barrel task, if one exists.",
+      "Anything destructive or externally visible - a deploy, a data backfill, an outbound send.",
+      "Tasks whose acceptance criterion depends on another task in the same wave having finished."
+    ]
+  },
+
+  "failure_policy": {
+    "rule": "A failed lane never silently poisons the wave. Lanes are independent by construction, so the others are allowed to finish - stopping them wastes work already paid for.",
+    "steps": [
+      "Let every other lane in the wave run to completion.",
+      "At the join, report exactly which lane failed and why, with its output.",
+      "Do NOT schedule any task that depends on the failed one.",
+      "Schedule the next wave from the tasks that are still unblocked - progress continues around the failure.",
+      "Retry a lane at most once, and only for a transient cause (a flaky network, a lock). Never retry a logic failure; fix it.",
+      "If the failure invalidates the plan, stop scheduling and return to the user with what completed and what is now uncertain."
+    ],
+    "never": "Never report a wave as successful when a lane failed. Never merge a worktree whose lane failed."
+  },
+
+  "speculative": {
+    "note": "Work that can start before it is strictly unblocked, because it only needs a completed subset.",
+    "cases": [
+      "Review a finished slice while later slices are still being implemented. Findings arrive earlier and the review phase shrinks to whatever remains.",
+      "Generate automation for flow steps already implemented while the rest are in progress.",
+      "Write documentation for a stabilised contract while implementation continues against it."
+    ],
+    "guard": "Speculative results must be re-validated at the real join. A review of code that later changed is stale - re-review only the delta, not the whole file."
+  },
+
+  "reporting": {
+    "requirement": "Every wave reports a lane table. A bare speed claim is not a report, and an unexplained wave is impossible to debug.",
+    "shape": "WAVE <n>  (<k> lanes)\n  lane | task | agent | write surface | result | duration\n  join: <suite result>  |  next wave unblocked: <task ids>  |  blocked: <task ids and why>"
+  }
+}

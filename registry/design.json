@@ -1,0 +1,384 @@
+{
+  "version": "1.0.0",
+  "description": "Design direction registry. The ui-designer agent detects the product domain from the request and the repository, then binds a palette strategy, type scale, density and motion budget WITHOUT asking. Colour is derived from the domain because a palette that fights its domain reads as untrustworthy long before anyone can say why - a clinical product in neon gradients feels unsafe, a developer tool in pastel feels like a toy.",
+  "method": {
+    "order": [
+      "1. Read an existing design system first. Tailwind config, CSS custom properties, a tokens file, a Figma export, or a component library already in the manifest. If one exists it is AUTHORITATIVE - extend it, never replace it.",
+      "2. Read the brand if one is present - logo colours, marketing site, README banner, existing favicon.",
+      "3. Detect the domain from the request language, dependencies, model and route names.",
+      "4. Bind the domain profile below as the starting point.",
+      "5. Generate the full token set from the seed, then VERIFY contrast programmatically before using any pair."
+    ],
+    "never": [
+      "Never replace an existing design system because a different one would be nicer.",
+      "Never introduce a second UI library beside one already installed.",
+      "Never hardcode a colour in a component - every colour is a token.",
+      "Never ship a palette without running the contrast check."
+    ],
+    "ask_only_when": "Two domain profiles fit equally and they imply materially different palettes - a wellness app that is also a medical device, say. Then present exactly those two with a one-line consequence each."
+  },
+  "color_system": {
+    "space": "OKLCH",
+    "why": "OKLCH is perceptually uniform, so a ramp built by holding chroma and stepping lightness produces steps that look evenly spaced - which HSL does not. It also makes a hue rotation keep its apparent brightness, so a palette stays balanced across hues. Emit OKLCH with a hex fallback for older targets.",
+    "ramp": {
+      "steps": [
+        50,
+        100,
+        200,
+        300,
+        400,
+        500,
+        600,
+        700,
+        800,
+        900,
+        950
+      ],
+      "rule": "Hold hue, vary lightness on a curve, and taper chroma at both ends - full chroma at the extremes produces muddy near-blacks and washed near-whites. 500 is the seed. 600 and 700 carry interactive states. 50 through 200 are surfaces. 800 through 950 are text and dark-mode surfaces.",
+      "contrast_anchors": "Step 600 on step 50 must clear 4.5:1. Step 700 on white must clear 4.5:1. Step 200 on step 900 must clear 4.5:1. If an anchor fails, adjust lightness - never ship the ramp unverified."
+    },
+    "roles": {
+      "note": "Name tokens by ROLE, never by literal colour. `--color-danger` survives a rebrand; `--color-red-500` does not, and a product where danger is orange makes the literal name a lie.",
+      "surface": "page background, raised card, sunken well, overlay scrim",
+      "content": "primary text, secondary text, muted text, inverse text",
+      "border": "subtle divider, default border, strong border, focus ring",
+      "action": "primary, secondary, ghost, destructive - each with rest, hover, active, disabled",
+      "semantic": "success, warning, danger, info - each with a surface, a border and a content variant so a status can be rendered as a badge, a banner or text"
+    },
+    "dark_mode": {
+      "rule": "First-class, never an inverted afterthought. Dark mode is not light mode with swapped lightness - saturated colours vibrate on dark surfaces and must be desaturated, and pure black causes halation around light text.",
+      "surfaces": "Base near oklch(0.18 0.01 <hue>) rather than pure black. Elevation is conveyed by getting LIGHTER, not by shadow - shadows barely read on dark.",
+      "accents": "Reduce chroma roughly 15 to 25 percent from the light-mode value and raise lightness so the accent stays legible without glowing.",
+      "implementation": "Define the light palette on :root, redefine only the tokens under a dark selector, and set color-scheme so native controls and scrollbars follow."
+    },
+    "contrast_gate": {
+      "requirement": "WCAG 2.2 AA - 4.5:1 body text, 3:1 large text and UI component boundaries, 3:1 focus indicators.",
+      "enforcement": "Compute the ratio for every token pair the UI actually uses, before writing components. A palette that looks good and fails contrast is not a palette - it is a redesign scheduled for later.",
+      "never": "Never lower the standard to keep a colour. Adjust the colour."
+    }
+  },
+  "domains": [
+    {
+      "id": "fintech",
+      "signals": [
+        "payment",
+        "banking",
+        "invoice",
+        "ledger",
+        "transaction",
+        "wallet",
+        "trading",
+        "portfolio",
+        "stripe",
+        "plaid",
+        "accounting"
+      ],
+      "feeling": "Trustworthy, precise, calm under pressure. Users are moving money and are alert to anything that feels careless.",
+      "seed_hue": "deep blue 240-260, or forest green 150-165 for wealth and growth products",
+      "neutrals": "Cool grey with a faint blue cast - warm greys read casual here.",
+      "accent": "One accent only, used for the primary action and nothing else. Restraint reads as competence.",
+      "semantic": "Green for gains and success, red for loss and danger - but never rely on hue alone, since a large share of users cannot separate them. Pair with sign, arrow, or label.",
+      "density": "compact - these are data products; tables and figures dominate",
+      "type": "A tabular-figure font for all numerals so columns align. Never a display face for data.",
+      "motion": "minimal - 120-180ms, ease-out. Playful motion undermines trust when money is on screen.",
+      "avoid": "Gradients on primary surfaces, neon, playful illustration, rounded-everything. Anything that reads as a consumer toy."
+    },
+    {
+      "id": "healthcare",
+      "signals": [
+        "patient",
+        "clinical",
+        "diagnosis",
+        "medical",
+        "ehr",
+        "emr",
+        "fhir",
+        "hl7",
+        "prescription",
+        "provider",
+        "telehealth"
+      ],
+      "feeling": "Calm, clear, unhurried. Often read by a tired clinician at speed, or an anxious patient. Clarity beats personality every time.",
+      "seed_hue": "teal 190-205 or a soft blue 210-225 - both read clinical without reading cold",
+      "neutrals": "Near-neutral grey, generous light surfaces. Whitespace is the main tool.",
+      "accent": "Low chroma. A saturated interface competes with clinical imagery and with genuine alerts.",
+      "semantic": "Reserve red ENTIRELY for clinical alerts and critical values. If red is decoration anywhere, it is invisible where it matters. Amber for caution, blue for information.",
+      "density": "comfortable - error costs are high, so give controls room",
+      "type": "High x-height, unambiguous 1/l/I and 0/O. Minimum 16px body. Legibility is a safety property here.",
+      "motion": "minimal - 150ms. Nothing that delays reading a value.",
+      "avoid": "Red as a brand colour, dense dashboards without hierarchy, low-contrast greys, anything that hides a critical value behind a hover."
+    },
+    {
+      "id": "devtools",
+      "signals": [
+        "cli",
+        "sdk",
+        "api",
+        "developer",
+        "deploy",
+        "pipeline",
+        "terminal",
+        "repository",
+        "compiler",
+        "observability",
+        "logs"
+      ],
+      "feeling": "Dense, fast, keyboard-first. The user is technical, is here often, and wants information over ornament.",
+      "seed_hue": "indigo/violet 265-285, or cyan 190-200 - the established vocabulary of the category",
+      "neutrals": "Dark-first. Design dark, derive light - the reverse always produces a weak dark mode.",
+      "accent": "One vivid accent against deep neutrals. Syntax colours are a separate, carefully-tuned scale - do not reuse UI accents for code.",
+      "semantic": "Map to build and run states: success, warning, error, pending, skipped. These need to be distinguishable at a glance in a long log.",
+      "density": "compact - maximise information per screen; this audience prefers it",
+      "type": "A real monospace for code, identifiers, paths and IDs - with ligatures optional and off by default, since they confuse some readers.",
+      "motion": "fast - 100-150ms. Anything slower feels like lag to this audience.",
+      "avoid": "Light-only design, decorative illustration, big hero sections inside the product, motion that delays a keyboard action."
+    },
+    {
+      "id": "ecommerce",
+      "signals": [
+        "product",
+        "cart",
+        "checkout",
+        "catalog",
+        "sku",
+        "inventory",
+        "order",
+        "shipping",
+        "storefront",
+        "shopify"
+      ],
+      "feeling": "The product is the hero. Every pixel of interface is competing with the thing being sold, and should lose.",
+      "seed_hue": "Follow the brand. With no brand, a near-neutral canvas and a single decisive accent.",
+      "neutrals": "Near-white surfaces so product photography sets the colour temperature, not the chrome.",
+      "accent": "One high-contrast CTA colour, used ONLY for add-to-cart and checkout. Its scarcity is what makes it work.",
+      "semantic": "Stock state, sale, and shipping status all need colour AND text - scarcity cues that rely on colour alone are both inaccessible and legally risky.",
+      "density": "comfortable - generous product grids, tight checkout",
+      "type": "Clear pricing hierarchy. Price is never smaller than the product title.",
+      "motion": "moderate - 200-250ms. Cart and quantity feedback must be immediate and obvious.",
+      "avoid": "A CTA colour reused for anything else, dark chrome around product photography, carousels as primary navigation, fake urgency."
+    },
+    {
+      "id": "enterprise",
+      "signals": [
+        "admin",
+        "tenant",
+        "workspace",
+        "rbac",
+        "audit",
+        "compliance",
+        "reporting",
+        "crm",
+        "erp",
+        "b2b",
+        "saas"
+      ],
+      "feeling": "Neutral, dense, learnable. Used for hours daily, often by someone who did not choose it. Consistency beats delight.",
+      "seed_hue": "blue 215-235 - the least opinionated choice, and appropriate here",
+      "neutrals": "True neutral grey, many steps. Most of the interface is neutral.",
+      "accent": "Restrained. The interface should recede; the customer data is the content.",
+      "semantic": "A full status vocabulary: draft, pending, active, suspended, archived, failed. Define it once, apply it everywhere.",
+      "density": "compact - dense tables, bulk actions, keyboard navigation",
+      "type": "System font stack is a legitimate and often correct choice. Tabular figures in tables.",
+      "motion": "minimal - 150ms. Repeated hundreds of times a day, any flourish becomes an irritation.",
+      "avoid": "Trend-driven redesigns, inconsistent table behaviour, hiding bulk actions, anything that slows a repeated task."
+    },
+    {
+      "id": "media",
+      "signals": [
+        "video",
+        "stream",
+        "episode",
+        "playlist",
+        "podcast",
+        "watch",
+        "player",
+        "subtitle",
+        "channel"
+      ],
+      "feeling": "Cinematic. The interface is a frame around content and should disappear during playback.",
+      "seed_hue": "Dark-first, near-neutral. A single saturated brand accent.",
+      "neutrals": "Deep surfaces around oklch(0.15-0.20). Never pure black behind video - it hides letterboxing and looks broken on OLED edges.",
+      "accent": "One accent for play and primary action. Artwork supplies all the other colour.",
+      "semantic": "Live, new, watched, downloaded, expiring - each needs a non-colour cue too.",
+      "density": "comfortable - large touch and remote targets; assume a TV and a couch as well as a mouse",
+      "type": "Large, high-contrast. Readable at distance and over imagery - which means a scrim, not just a heavier weight.",
+      "motion": "expressive - 250-350ms, generous easing. This is the one domain where motion is part of the product.",
+      "avoid": "Light chrome around video, text on imagery without a scrim, autoplay with sound, tiny remote targets."
+    },
+    {
+      "id": "education",
+      "signals": [
+        "course",
+        "lesson",
+        "student",
+        "quiz",
+        "curriculum",
+        "enrollment",
+        "grade",
+        "assignment",
+        "lms",
+        "learning"
+      ],
+      "feeling": "Encouraging and focused. Progress must feel visible; failure must not feel like punishment.",
+      "seed_hue": "warm blue 210-225 or a friendly green 145-160; violet 275-290 for higher education",
+      "neutrals": "Slightly warm grey - clinical neutrals feel discouraging over long sessions.",
+      "accent": "One accent for the next action. Progress indicators get their own consistent colour.",
+      "semantic": "Correct, incorrect, partial, not-attempted. Incorrect must read as informative rather than alarming - avoid the same red used for destructive actions.",
+      "density": "comfortable - reading and focus matter more than density",
+      "type": "Generous line height (1.6+) for long-form reading. Clear distinction between instruction and content.",
+      "motion": "moderate - 200ms. Reserve celebratory motion for genuine milestones or it stops meaning anything.",
+      "avoid": "Childish styling for adult learners, punitive red, dark patterns around streaks, hiding progress."
+    },
+    {
+      "id": "social",
+      "signals": [
+        "feed",
+        "post",
+        "follow",
+        "comment",
+        "profile",
+        "message",
+        "community",
+        "timeline",
+        "notification",
+        "chat"
+      ],
+      "feeling": "Alive and personal. User content is wildly varied in colour, so the chrome must be neutral enough to host anything.",
+      "seed_hue": "Brand-led. The interface accent must not collide with common avatar and photo colours.",
+      "neutrals": "Near-neutral, light and dark both first-class - this audience expects a real dark mode.",
+      "accent": "Reserved for actions and identity. Content supplies the colour.",
+      "semantic": "Unread, mention, reaction, moderated, muted. Mentions and DMs need to be distinguishable at a glance.",
+      "density": "comfortable - generous tap targets, mobile-first",
+      "type": "Optimised for short-form user text at small sizes. Must handle emoji, mixed scripts and RTL without breaking.",
+      "motion": "expressive - 200-300ms. Optimistic UI: the action lands instantly and reconciles after.",
+      "avoid": "Chrome that competes with user content, infinite scroll with no position memory, engagement dark patterns."
+    },
+    {
+      "id": "logistics",
+      "signals": [
+        "shipment",
+        "warehouse",
+        "fleet",
+        "route",
+        "tracking",
+        "carrier",
+        "dispatch",
+        "freight",
+        "delivery",
+        "manifest"
+      ],
+      "feeling": "Operational. Someone is scanning for exceptions, often on a handheld device, sometimes wearing gloves in poor light.",
+      "seed_hue": "blue 210-225 for chrome; status colour carries the real information",
+      "neutrals": "High-contrast neutrals. Assume direct sunlight and cheap screens.",
+      "accent": "Secondary to status. The exception is the thing the user came for.",
+      "semantic": "The most important palette in the product: on-time, delayed, at-risk, exception, delivered, returned. Distinguishable in greyscale, and each paired with an icon.",
+      "density": "compact - large lists scanned quickly",
+      "type": "Large, unambiguous. Tracking numbers and codes in tabular monospace so transposition errors are visible.",
+      "motion": "minimal - 120ms. Nothing that delays a scan-and-move workflow.",
+      "avoid": "Low contrast, status by hue alone, small touch targets, anything that assumes a stable network."
+    },
+    {
+      "id": "creative",
+      "signals": [
+        "portfolio",
+        "gallery",
+        "design",
+        "studio",
+        "agency",
+        "showcase",
+        "artwork",
+        "photography",
+        "editorial"
+      ],
+      "feeling": "The work is everything. Interface chrome is a liability to be minimised.",
+      "seed_hue": "Monochrome, or a single restrained accent. The work supplies the colour.",
+      "neutrals": "Committed - either near-white or near-black, not a timid mid grey.",
+      "accent": "Often none. A well-set type scale and real whitespace carry the whole design.",
+      "semantic": "Minimal - usually only form validation.",
+      "density": "spacious - whitespace is the primary design material here",
+      "type": "This is where a distinctive typeface earns its place. Establish a real scale and honour it absolutely.",
+      "motion": "expressive - 300-400ms, considered easing. Motion is part of the craft signal.",
+      "avoid": "Generic component-library look, cramped margins, more than two typefaces, motion that delays access to the work."
+    },
+    {
+      "id": "generic",
+      "signals": [],
+      "feeling": "No domain detected. Choose defensible defaults and say plainly that the domain was not determined.",
+      "seed_hue": "blue 220-235 - the safest neutral-professional choice",
+      "neutrals": "True neutral grey.",
+      "accent": "One accent, used sparingly.",
+      "semantic": "success, warning, danger, info - the standard four.",
+      "density": "comfortable",
+      "type": "System font stack. Fluid scale.",
+      "motion": "moderate - 200ms ease-out.",
+      "avoid": "Committing hard to a visual personality before the domain is known."
+    }
+  ],
+  "scales": {
+    "spacing": {
+      "base": "4px grid, 8px preferred rhythm",
+      "steps": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        6,
+        8,
+        12,
+        16,
+        24,
+        32,
+        48,
+        64,
+        96
+      ],
+      "rule": "Space is a token. A one-off margin is how a design system starts dying. Related things sit closer than unrelated things - proximity does more for hierarchy than borders or colour."
+    },
+    "type": {
+      "approach": "Fluid, using clamp() between a mobile and a desktop bound, so there is no jump at a breakpoint.",
+      "ratio": "1.200 (minor third) for dense product UI; 1.250 to 1.333 for marketing and editorial",
+      "body": "16px minimum, never below. 1.5 line height for UI, 1.6-1.75 for long-form.",
+      "measure": "45-75 characters per line. Long lines are the most common readability failure on the web.",
+      "weights": "Two or three only. A weight per heading level is unnecessary and slows the page.",
+      "numerals": "Tabular figures for any column, table, timer or price."
+    },
+    "radius": {
+      "rule": "One radius scale, applied consistently. Nested radii must be concentric - an inner radius equals the outer minus the padding, or the corners look wrong in a way people notice without knowing why.",
+      "steps": [
+        "0",
+        "4px",
+        "8px",
+        "12px",
+        "16px",
+        "9999px"
+      ]
+    },
+    "elevation": {
+      "light": "Layered shadows - a tight dark shadow for contact plus a wide soft one for distance. One flat shadow reads as a sticker.",
+      "dark": "Elevation by surface lightness, not shadow. Shadows barely register on dark surfaces.",
+      "rule": "At most four levels. More than that and nobody can tell them apart anyway."
+    },
+    "motion": {
+      "durations": {
+        "instant": "100ms",
+        "fast": "150ms",
+        "moderate": "200ms",
+        "slow": "300ms",
+        "expressive": "400ms"
+      },
+      "easing": {
+        "enter": "ease-out - fast start, settles gently",
+        "exit": "ease-in - can leave quickly",
+        "move": "ease-in-out",
+        "spring": "for direct manipulation and drag only"
+      },
+      "rules": [
+        "Animate transform and opacity only. Animating layout properties causes jank.",
+        "Respect prefers-reduced-motion - reduce to a near-instant opacity change, never remove the state change itself.",
+        "Motion communicates causality - where a thing came from and where it went. Motion that communicates nothing is decoration and costs performance.",
+        "Nothing that delays input. A user who knows what they want must never wait for an animation."
+      ]
+    }
+  }
+}

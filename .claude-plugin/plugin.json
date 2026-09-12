@@ -1,0 +1,64 @@
+{
+  "name": "onestop",
+  "version": "1.2.0",
+  "description": "One-stop SDLC orchestration. Describe what you want in plain language - onestop classifies the intent, searches the codebase, binds the right specialists automatically, and drives plan, design, code, test, web and app automation, review and ship. You never pick an agent or a skill; it asks only when information is genuinely missing or discovery surfaced several real options.",
+  "author": {
+    "name": "karthikeya"
+  },
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "sdlc",
+    "multi-agent",
+    "auto-routing",
+    "tdd",
+    "code-review",
+    "e2e-testing",
+    "mobile-automation",
+    "security",
+    "workflow"
+  ],
+  "userConfig": {
+    "gate_mode": {
+      "type": "string",
+      "title": "Gate mode",
+      "description": "standard keeps both gates (plan approval, ship approval). strict adds a gate before the automation phase. autonomous keeps only the ship gate. Invalid values fall back to standard.",
+      "default": "standard"
+    },
+    "coverage_threshold": {
+      "type": "number",
+      "title": "Coverage threshold",
+      "description": "Minimum line coverage the test phase must reach before the review phase runs.",
+      "default": 80
+    },
+    "auto_automation": {
+      "type": "boolean",
+      "title": "Generate end-to-end automation automatically",
+      "description": "When enabled, flow and feature work automatically produces web and app end-to-end suites for the described journey. Disable to keep unit and integration tests only.",
+      "default": true
+    },
+    "research_depth": {
+      "type": "string",
+      "title": "External research depth",
+      "description": "none searches only the repository. standard adds vendor docs and package registries for large work. deep always researches external prior art.",
+      "default": "standard"
+    },
+    "knowledge_graph": {
+      "type": "string",
+      "title": "Knowledge graph",
+      "description": "auto builds the graph on first run and refreshes it after every turn that changed code, so phases query the graph instead of re-reading files. manual only refreshes when you ask. off disables it entirely and every phase reads files directly.",
+      "default": "auto"
+    }
+  },
+  "mcpServers": {},
+  "skills": [
+    "./skills/"
+  ],
+  "commands": [
+    "./commands/"
+  ],
+  "agents": [
+    "./agents/"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

@@ -1,0 +1,123 @@
+---
+name: phase-automation
+description: Build end-to-end automation for the described journey across web and native app targets. Binds the existing or default framework per target, delegates to the web and app automation agents, and wires artifacts and CI. Loaded by the orchestrate skill; not usually invoked directly.
+version: 1.0.0
+user-invocable: false
+metadata:
+  origin: onestop
+  phase: automation
+---
+
+# Phase - Automation
+
+Turn the journey into end-to-end suites that run in CI and survive a redesign.
+
+Unit and integration coverage proved the pieces work. This phase proves the **journey**
+works - the thing the user actually described.
+
+## When This Phase Runs
+
+- Automatically for `flow` intent, and for `feature` and `mvp` at `standard` tier and
+  above.
+- Forced at `large` tier regardless of intent.
+- Skipped at `trivial` and `small`, and whenever the plugin `auto_automation` setting
+  is off.
+- Skipped, with the reason stated, when the change has no user-facing journey - a
+  library, a migration, an internal refactor.
+
+## Target Binding
+
+Determine the targets from the repo, not from the user:
+
+| Repo contains | Targets |
+|---|---|
+| A web app only | web |
+| A native or cross-platform app only | app |
+| Both | **both** - one suite each, not a choice between them |
+
+A repo with a web front end and a mobile client is two targets. That is not ambiguity
+and it is not a question - bind one framework from each list.
+
+Bind the framework per target from `${CLAUDE_PLUGIN_ROOT}/registry/stacks.json.automation_frameworks`.
+**A framework already present in the repo always wins over the default.** Never
+introduce a second framework for the same target.
+
+Ask only in the two genuinely equal cases named in the registry selection rules -
+React Native with a device-farm requirement, and a mixed Flutter plus native repo.
+
+## Delegation
+
+| Target | Agent |
+|---|---|
+| web | `web-automation-agent` |
+| app | `app-automation-agent` |
+
+Run them in parallel when both targets exist - they share no state.
+
+Pass each agent: the decomposed flow steps with their acceptance criteria, the
+discovery record showing which routes, screens and identifiers actually exist, and the
+bound framework.
+
+## The Gap Rule
+
+**Never write a spec for a step discovery could not locate in the code.**
+
+A test pointed at a route or screen that does not exist either fails permanently or,
+worse, passes vacuously. Report the gap instead:
+
+```
+gaps: step 4 (recent-orders list) - no matching route or component found;
+      automation deferred until the slice lands
+```
+
+If the implementation phase built the step, discovery from before implementation is
+stale - re-check against the current tree before declaring a gap.
+
+## Coverage Expectation
+
+Per journey, both targets:
+
+- The happy path as narrated, end to end.
+- The inferred states: loading, empty, error, unauthorised.
+- The boundaries the flow crosses: auth, pagination, and on app targets also
+  permissions, offline, cold start versus warm resume, and back-navigation.
+
+A happy path alone is not coverage. It is a demo.
+
+## CI Wiring
+
+Automation that does not run in CI decays within weeks. Before handing off:
+
+- The suite runs on pull requests.
+- Artifacts upload on failure - screenshots, video, traces, device logs.
+- Retries small in CI, zero locally, so flake surfaces instead of hiding.
+- The exact reproduction command is in the handoff.
+
+## Traceability
+
+Append the end-to-end spec to `Test-Ref` for every requirement the journey covers - a
+requirement can carry both a unit and an end-to-end reference, and knowing it has both is
+useful.
+
+## Output
+
+```
+AUTOMATION
+  targets:   <web / app / both>
+  web:       <framework, specs written, run command, executed result>
+  app:       <framework, platforms, flows written, run command, executed result>
+  coverage:  <journey steps covered / total>
+  ci:        <workflow files touched, or none>
+  gaps:      <steps without automation, and why>
+  flaky:     <anything quarantined, with the reason and what would release it>
+```
+
+## Rules
+
+1. **Never automate a step that does not exist.** Report the gap.
+2. **Never add a second framework** for a target that already has one.
+3. **Never use a fixed sleep.** Framework synchronisation only.
+4. **Never weaken an assertion to stop a flake.** Diagnose the cause.
+5. **Never claim a suite passed if it did not execute here.** Name what is missing.
+6. **Both targets when both exist.** A mobile app with only web automation is a gap,
+   and it is reported as one.

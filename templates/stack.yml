@@ -1,0 +1,35 @@
+# .onestop/stack.yml - declare your stack explicitly.
+#
+# Optional. onestop detects the stack from marker files and lockfiles on its own; this
+# file exists for the cases detection cannot settle - a monorepo with several
+# components, an unusual layout, or a stack you want pinned so it never drifts.
+#
+# When present, this file is AUTHORITATIVE and ends stack detection.
+
+components:
+  - name: web
+    path: apps/web
+    packs: [typescript, react]          # see packs/languages/
+    concerns: [visual-design, accessibility]
+    test_runner: vitest
+    web_automation: playwright
+
+  - name: api
+    path: apps/api
+    packs: [python, fastapi]
+    concerns: [api-contract, security]
+    test_runner: pytest
+
+  - name: mobile
+    path: apps/mobile
+    packs: [typescript, react, react-native]
+    concerns: [visual-design, accessibility]
+    test_runner: jest
+    app_automation: detox
+
+# Optional. Sets the design direction; see registry/design.json for the profiles.
+# Detected from the code when omitted.
+domain: fintech
+
+# Optional. Overrides the plugin coverage_threshold setting for this repo.
+coverage_threshold: 85

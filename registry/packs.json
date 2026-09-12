@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "generated_by": "scripts/build_registry.py",
+  "description": "Derived pack catalogue. A role agent loads the packs a stack names, in order, and applies them on top of its own role contract.",
+  "counts": {
+    "languages": 20,
+    "concerns": 5
+  },
+  "packs": {
+    "languages": [
+      {
+        "id": "cpp",
+        "path": "packs/languages/cpp.md"
+      },
+      {
+        "id": "csharp",
+        "path": "packs/languages/csharp.md"
+      },
+      {
+        "id": "dart",
+        "path": "packs/languages/dart.md"
+      },
+      {
+        "id": "django",
+        "path": "packs/languages/django.md"
+      },
+      {
+        "id": "fastapi",
+        "path": "packs/languages/fastapi.md"
+      },
+      {
+        "id": "fsharp",
+        "path": "packs/languages/fsharp.md"
+      },
+      {
+        "id": "generic",
+        "path": "packs/languages/generic.md"
+      },
+      {
+        "id": "go",
+        "path": "packs/languages/go.md"
+      },
+      {
+        "id": "java",
+        "path": "packs/languages/java.md"
+      },
+      {
+        "id": "kotlin",
+        "path": "packs/languages/kotlin.md"
+      },
+      {
+        "id": "ml",
+        "path": "packs/languages/ml.md"
+      },
+      {
+        "id": "php",
+        "path": "packs/languages/php.md"
+      },
+      {
+        "id": "python",
+        "path": "packs/languages/python.md"
+      },
+      {
+        "id": "react-native",
+        "path": "packs/languages/react-native.md"
+      },
+      {
+        "id": "react",
+        "path": "packs/languages/react.md"
+      },
+      {
+        "id": "rust",
+        "path": "packs/languages/rust.md"
+      },
+      {
+        "id": "sql",
+        "path": "packs/languages/sql.md"
+      },
+      {
+        "id": "swift",
+        "path": "packs/languages/swift.md"
+      },
+      {
+        "id": "typescript",
+        "path": "packs/languages/typescript.md"
+      },
+      {
+        "id": "vue",
+        "path": "packs/languages/vue.md"
+      }
+    ],
+    "concerns": [
+      {
+        "id": "accessibility",
+        "path": "packs/concerns/accessibility.md"
+      },
+      {
+        "id": "api-contract",
+        "path": "packs/concerns/api-contract.md"
+      },
+      {
+        "id": "data",
+        "path": "packs/concerns/data.md"
+      },
+      {
+        "id": "security",
+        "path": "packs/concerns/security.md"
+      },
+      {
+        "id": "visual-design",
+        "path": "packs/concerns/visual-design.md"
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "description": "onestop lifecycle hooks. Their only job is to keep the knowledge graph accurate so phases can query it instead of re-reading the codebase. Every hook exits 0 on failure - a stale graph degrades onestop to reading files, which is slower but never wrong.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/kg-mark-dirty.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/kg-refresh.sh\"",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}

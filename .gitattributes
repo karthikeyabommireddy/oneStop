@@ -1,0 +1,10 @@
+# Shell scripts and hooks MUST be LF. A CRLF line ending puts a carriage return in the
+# shebang, and Linux/macOS then fail with "bad interpreter" - which breaks the hooks and
+# CI for every non-Windows user while working fine on the machine that committed it.
+* text=auto eol=lf
+*.sh   text eol=lf
+*.py   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf

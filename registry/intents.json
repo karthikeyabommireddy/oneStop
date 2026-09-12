@@ -1,0 +1,724 @@
+{
+  "version": "1.0.0",
+  "description": "Intent taxonomy for the onestop orchestrator. The router classifies every request into exactly one intent, then runs that intent phase mask. NEVER ask the user to choose an intent - classify it. Ask only when two intents score within ambiguity_margin AND their phase masks differ materially.",
+  "classification": {
+    "method": "signal-scoring",
+    "ambiguity_margin": 0.15,
+    "instruction": "Normalise the request: lowercase it, reduce every non-alphanumeric run to a single space, and pad with a leading and trailing space. Match each signal the same way and test for containment of the padded signal, so matching is whole-word and whole-phrase - the signal `change` must not fire inside `changes`, and a multi-word signal matches only as a contiguous phrase. Score strong=1.0, weak=0.4, negative=-0.8, then divide by (1 + 0.15 * number of positive hits) so an intent with a long signal list is not automatically favoured. Take the highest scorer. If the top two are within ambiguity_margin AND their phase_mask differs by more than one phase, ask the user to pick between exactly those two - never present the full list. scripts/test_routing.py is the executable specification of this rule.",
+    "default_intent": "feature"
+  },
+  "intents": [
+    {
+      "id": "feature",
+      "label": "Build a new capability",
+      "description": "The capability does not exist yet. Net-new code.",
+      "signals": {
+        "strong": [
+          "add",
+          "build",
+          "create",
+          "implement",
+          "new feature",
+          "introduce",
+          "support for",
+          "enable users to"
+        ],
+        "weak": [
+          "want",
+          "need",
+          "should have"
+        ],
+        "negative": [
+          "broken",
+          "fails",
+          "regression",
+          "was working"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "requirements",
+        "discovery",
+        "research",
+        "plan",
+        "design",
+        "ui-design",
+        "implement",
+        "test",
+        "automation",
+        "qa-plan",
+        "review",
+        "ship"
+      ],
+      "first_move": "Research existing patterns and prior art before designing anything new.",
+      "primary_agents": [
+        "planner",
+        "architect",
+        "test-author",
+        "code-reviewer",
+        "ui-designer",
+        "ba-analyst",
+        "work-partitioner",
+        "merge-coordinator",
+        "qa-planner"
+      ]
+    },
+    {
+      "id": "flow",
+      "label": "Implement a described user flow",
+      "description": "The user narrates a multi-step journey (login to dashboard to checkout). Requires per-step discovery to find what already exists, and disambiguation when several implementations or approaches are found.",
+      "signals": {
+        "strong": [
+          "flow",
+          "journey",
+          "user goes",
+          "then they",
+          "step by step",
+          "walks through",
+          "end to end",
+          "e2e scenario",
+          "after that",
+          "user should be able to"
+        ],
+        "weak": [
+          "screen",
+          "page",
+          "navigate",
+          "redirect",
+          "then"
+        ],
+        "negative": []
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "flow-decomposition",
+        "requirements",
+        "discovery",
+        "research",
+        "plan",
+        "design",
+        "ui-design",
+        "implement",
+        "test",
+        "automation",
+        "qa-plan",
+        "review",
+        "ship"
+      ],
+      "first_move": "Decompose the narrated flow into discrete steps, then run discovery on EACH step independently before planning.",
+      "primary_agents": [
+        "discovery-scout",
+        "option-broker",
+        "planner",
+        "architect",
+        "test-author",
+        "web-automation-agent",
+        "app-automation-agent",
+        "ui-designer",
+        "ba-analyst",
+        "work-partitioner",
+        "merge-coordinator",
+        "qa-planner"
+      ],
+      "notes": "The headline intent: the user explains a flow, onestop searches for what exists, and asks the user to choose only when discovery returns several genuine options. Discovery is mandatory and per-step, never global."
+    },
+    {
+      "id": "defect",
+      "label": "Fix something broken",
+      "description": "Behavior is wrong. Reproduce as a failing test first.",
+      "signals": {
+        "strong": [
+          "bug",
+          "fix",
+          "broken",
+          "fails",
+          "error",
+          "crash",
+          "regression",
+          "not working",
+          "throws",
+          "exception",
+          "wrong result"
+        ],
+        "weak": [
+          "issue",
+          "problem",
+          "unexpected"
+        ],
+        "negative": [
+          "add",
+          "new feature"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "reproduce",
+        "implement",
+        "test",
+        "review",
+        "ship"
+      ],
+      "first_move": "Reproduce the defect as a failing regression test BEFORE touching implementation code.",
+      "primary_agents": [
+        "code-explorer",
+        "test-author",
+        "build-resolver",
+        "code-reviewer",
+        "work-partitioner"
+      ]
+    },
+    {
+      "id": "change",
+      "label": "Alter existing behavior",
+      "description": "It works, but the desired behavior is different. Tests must change with it.",
+      "signals": {
+        "strong": [
+          "change",
+          "modify",
+          "update",
+          "instead of",
+          "should now",
+          "rename",
+          "switch to",
+          "replace"
+        ],
+        "weak": [
+          "adjust",
+          "tweak",
+          "different"
+        ],
+        "negative": [
+          "broken",
+          "fails",
+          "my changes",
+          "these changes",
+          "review",
+          "audit"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "plan",
+        "ui-design",
+        "implement",
+        "test",
+        "qa-plan",
+        "review",
+        "ship"
+      ],
+      "first_move": "Update the tests to the NEW specification first, watch them fail, then change the implementation.",
+      "primary_agents": [
+        "code-explorer",
+        "planner",
+        "test-author",
+        "code-reviewer",
+        "work-partitioner",
+        "merge-coordinator"
+      ]
+    },
+    {
+      "id": "refactor",
+      "label": "Improve structure, preserve behavior",
+      "description": "Behavior stays identical; structure improves. Tests stay green throughout.",
+      "signals": {
+        "strong": [
+          "refactor",
+          "clean up",
+          "restructure",
+          "simplify",
+          "extract",
+          "dedupe",
+          "deduplicate",
+          "tech debt",
+          "reorganize"
+        ],
+        "weak": [
+          "tidy",
+          "improve",
+          "readable"
+        ],
+        "negative": [
+          "new feature",
+          "add support"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "verify-green",
+        "implement",
+        "test",
+        "review",
+        "ship"
+      ],
+      "first_move": "Confirm the existing suite is green and covers the code being moved. Never refactor untested code - add characterization tests first.",
+      "primary_agents": [
+        "code-explorer",
+        "refactor-agent",
+        "code-reviewer",
+        "work-partitioner"
+      ]
+    },
+    {
+      "id": "mvp",
+      "label": "Bootstrap a project or MVP",
+      "description": "Stand up something from nothing, or from a spec/design document.",
+      "signals": {
+        "strong": [
+          "mvp",
+          "from scratch",
+          "bootstrap",
+          "scaffold",
+          "new project",
+          "greenfield",
+          "start a new"
+        ],
+        "weak": [
+          "prototype",
+          "poc",
+          "demo"
+        ],
+        "negative": [
+          "existing",
+          "our current"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "requirements",
+        "discovery",
+        "research",
+        "plan",
+        "design",
+        "ui-design",
+        "scaffold",
+        "implement",
+        "test",
+        "automation",
+        "qa-plan",
+        "review",
+        "ship"
+      ],
+      "first_move": "Ingest the spec/design doc if one exists, then slice into thin vertical end-to-end increments - never build layer by layer.",
+      "primary_agents": [
+        "planner",
+        "architect",
+        "test-author",
+        "code-reviewer",
+        "ui-designer",
+        "ba-analyst",
+        "work-partitioner",
+        "merge-coordinator",
+        "qa-planner"
+      ]
+    },
+    {
+      "id": "review",
+      "label": "Review existing code",
+      "description": "Assess a diff, PR, or codebase area. No implementation.",
+      "signals": {
+        "strong": [
+          "review",
+          "audit",
+          "check my",
+          "look at this pr",
+          "critique",
+          "assess",
+          "is this correct",
+          "my changes",
+          "these changes",
+          "before i merge",
+          "before merging",
+          "the diff"
+        ],
+        "weak": [
+          "feedback",
+          "thoughts on"
+        ],
+        "negative": [
+          "implement",
+          "build",
+          "fix it"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "review"
+      ],
+      "first_move": "Identify the exact diff surface, then route to every reviewer whose trigger the diff touches.",
+      "primary_agents": [
+        "code-reviewer",
+        "security-reviewer"
+      ]
+    },
+    {
+      "id": "test",
+      "label": "Add or improve tests",
+      "description": "Coverage work, test repair, or new automation. No production behavior change.",
+      "signals": {
+        "strong": [
+          "write tests",
+          "add tests",
+          "coverage",
+          "test plan",
+          "e2e",
+          "unit test",
+          "integration test",
+          "automation test",
+          "flaky"
+        ],
+        "weak": [
+          "verify",
+          "validate"
+        ],
+        "negative": []
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "test",
+        "automation",
+        "review"
+      ],
+      "first_move": "Measure current coverage and identify untested behaviors before writing anything.",
+      "primary_agents": [
+        "test-author",
+        "web-automation-agent",
+        "app-automation-agent",
+        "validator"
+      ]
+    },
+    {
+      "id": "design",
+      "label": "Design or architect only",
+      "description": "Produce HLD/LLD/ADR without writing implementation code.",
+      "signals": {
+        "strong": [
+          "design",
+          "architecture",
+          "hld",
+          "lld",
+          "adr",
+          "how should we structure",
+          "tech stack",
+          "decide between",
+          "trade-off"
+        ],
+        "weak": [
+          "approach",
+          "options"
+        ],
+        "negative": [
+          "implement it",
+          "write the code"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "research",
+        "design",
+        "ui-design"
+      ],
+      "first_move": "Map the existing architecture before proposing a new one.",
+      "primary_agents": [
+        "architect",
+        "a11y-agent",
+        "ui-designer"
+      ]
+    },
+    {
+      "id": "investigate",
+      "label": "Understand or explain",
+      "description": "Read-only. Explain how something works, trace a path, answer a question.",
+      "signals": {
+        "strong": [
+          "how does",
+          "explain",
+          "why does",
+          "where is",
+          "trace",
+          "walk me through",
+          "what happens when"
+        ],
+        "weak": [
+          "curious",
+          "wondering",
+          "understand"
+        ],
+        "negative": [
+          "change",
+          "fix",
+          "add"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery"
+      ],
+      "first_move": "Trace real execution paths in the code; never answer from assumption.",
+      "primary_agents": [
+        "code-explorer"
+      ]
+    },
+    {
+      "id": "perf",
+      "label": "Performance work",
+      "description": "Latency, throughput, bundle size, memory.",
+      "signals": {
+        "strong": [
+          "slow",
+          "performance",
+          "optimize",
+          "latency",
+          "bottleneck",
+          "memory leak",
+          "bundle size",
+          "n plus one query",
+          "throughput"
+        ],
+        "weak": [
+          "faster",
+          "heavy"
+        ],
+        "negative": []
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "measure",
+        "plan",
+        "implement",
+        "test",
+        "review"
+      ],
+      "first_move": "Profile and produce a baseline measurement. Never optimize without a number to beat.",
+      "primary_agents": [
+        "performance-agent",
+        "code-reviewer"
+      ]
+    },
+    {
+      "id": "security",
+      "label": "Security work",
+      "description": "Vulnerability hunting, hardening, compliance-driven security.",
+      "signals": {
+        "strong": [
+          "security",
+          "vulnerability",
+          "cve",
+          "owasp",
+          "pentest",
+          "harden",
+          "injection",
+          "xss",
+          "secrets",
+          "auth bypass"
+        ],
+        "weak": [
+          "safe",
+          "risk"
+        ],
+        "negative": []
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "review",
+        "implement",
+        "test",
+        "compliance"
+      ],
+      "first_move": "Enumerate the attack surface before proposing fixes.",
+      "primary_agents": [
+        "security-reviewer",
+        "code-reviewer"
+      ]
+    },
+    {
+      "id": "ops",
+      "label": "Build, CI, deploy, infra",
+      "description": "Pipelines, containers, deployment, build failures.",
+      "signals": {
+        "strong": [
+          "ci",
+          "pipeline",
+          "deploy",
+          "docker",
+          "kubernetes",
+          "build fails",
+          "github actions",
+          "release"
+        ],
+        "weak": [
+          "environment",
+          "config"
+        ],
+        "negative": []
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "plan",
+        "implement",
+        "test",
+        "review",
+        "ship"
+      ],
+      "first_move": "Reproduce the pipeline behavior locally where possible before editing CI config.",
+      "primary_agents": [
+        "build-resolver",
+        "code-reviewer"
+      ]
+    },
+    {
+      "id": "docs",
+      "label": "Documentation",
+      "description": "READMEs, codemaps, API docs, guides.",
+      "signals": {
+        "strong": [
+          "document",
+          "readme",
+          "docs",
+          "codemap",
+          "changelog",
+          "api docs",
+          "write up"
+        ],
+        "weak": [
+          "explain in writing"
+        ],
+        "negative": []
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "implement",
+        "review"
+      ],
+      "first_move": "Read the source of truth (code, schemas, routes) - never document from memory.",
+      "primary_agents": [
+        "docs-agent"
+      ]
+    }
+  ],
+  "size_tiers": {
+    "instruction": "Score the classified request on three signals; take the HIGHEST tier any signal reaches. State the tier in one line so the user can override. NEVER ask the user for the tier.",
+    "tiers": [
+      {
+        "id": "trivial",
+        "files": "1 file, a few lines",
+        "novelty": "none",
+        "ambiguity": "none - the change is obvious",
+        "phase_overrides": {
+          "skip": [
+            "research",
+            "plan",
+            "design",
+            "discovery",
+            "automation"
+          ]
+        }
+      },
+      {
+        "id": "small",
+        "files": "1 file / 1 function",
+        "novelty": "none",
+        "ambiguity": "clear once you read the code",
+        "phase_overrides": {
+          "skip": [
+            "research",
+            "design",
+            "automation"
+          ],
+          "light": [
+            "discovery",
+            "plan"
+          ]
+        }
+      },
+      {
+        "id": "standard",
+        "files": "2-5 files",
+        "novelty": "maybe a new internal module",
+        "ambiguity": "one real choice to make",
+        "phase_overrides": {}
+      },
+      {
+        "id": "large",
+        "files": "many / cross-cutting",
+        "novelty": "new external dependency, public API, or a spec doc",
+        "ambiguity": "multiple open questions",
+        "phase_overrides": {
+          "force": [
+            "research",
+            "design",
+            "automation"
+          ]
+        }
+      }
+    ],
+    "escalation_rules": [
+      "Anything touching a security trigger is at least standard, regardless of file count.",
+      "Anything changing a public API or wire contract is at least standard.",
+      "Anything with 2 or more components sharing an interface is at least standard and forces the contract step.",
+      "A narrated multi-step flow (flow intent) is at least standard."
+    ]
+  },
+  "security_triggers": {
+    "instruction": "If the change surface touches ANY of these, the security-reviewer agent is MANDATORY in the review phase. Never skipped for size.",
+    "surfaces": [
+      "authentication or authorization",
+      "user-input handling or deserialization",
+      "database queries or ORM filters",
+      "file-system paths or uploads",
+      "outbound network or external API calls",
+      "cryptography, hashing, or randomness",
+      "secrets, tokens, credentials, or environment config",
+      "session, cookie, or CORS handling",
+      "payment, PII, or PHI data paths"
+    ]
+  },
+  "phase_notes": {
+    "context": "Builds or refreshes the graphify knowledge graph and reads the report, so later phases query structure instead of re-reading the codebase. Cheap after the first build; degrades to reading files when graphify is unavailable.",
+    "ui-design": "Establishes or extends the design system before components are written. Runs light when a system already exists; skipped entirely for non-UI work.",
+    "qa-plan": "Drafts the manual testing plan as a document plus an importable CSV. Documents only - every automated test belongs to the test and automation phases. Skipped when there is no human-observable change.",
+    "requirements": "Runs only when the input lacks acceptance criteria a plan can be built on. Produces the FRD, stories and the traceability matrix that later phases fill in. Skips itself when the ticket already carries usable criteria."
+  },
+  "parallelism": {
+    "engine": "skills/parallel-execution/SKILL.md",
+    "rules": "registry/parallel.json",
+    "note": "Discovery, review and automation fan out by construction. Implementation fans out only after work-partitioner proves the write surfaces are disjoint. Every wave is dispatched in ONE message - Agent calls in separate turns are sequential.",
+    "always_parallel_phases": [
+      "discovery",
+      "review",
+      "automation",
+      "research"
+    ],
+    "conditionally_parallel_phases": [
+      "implement",
+      "test"
+    ],
+    "never_parallel_phases": [
+      "ship",
+      "compliance"
+    ]
+  }
+}
