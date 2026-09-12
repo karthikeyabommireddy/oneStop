@@ -1,15 +1,12 @@
 {
   "version": "1.0.0",
   "description": "Per-phase gate protocol. Every phase boundary stops, reports what happened, states what comes next, and asks the user to approve, skip, adjust or stop. The user is never surprised by what onestop did, and can redirect at any boundary.",
-
   "why": "onestop's first real end-to-end run completed with 10 of 15 phases silently skipped and the user never told. Two gates at the far ends of a long pipeline meant everything between them was invisible. A gate at every boundary makes the run legible as it happens rather than auditable afterwards.",
-
   "mechanism": {
     "tool": "AskUserQuestion",
     "instruction": "A gate is a real AskUserQuestion call, not a sentence in prose asking the user to confirm. Prose requests for confirmation get skipped under context pressure - that is exactly how the invisible run happened. The tool call is the mechanism; the ledger stamp is the record; the Stop hook is the check.",
     "record": "Every gate decision is written to .onestop/run.json as the phase's gate field before the next phase starts. A phase that ran with no recorded gate decision is a conformance failure and the Stop hook reports it."
   },
-
   "gate_modes": {
     "every-phase": {
       "default": true,
@@ -18,40 +15,55 @@
     },
     "milestone": {
       "description": "Gate only at the decision-heavy boundaries: after plan, after design, after implement, before ship. Phases in between report but do not stop.",
-      "gates": ["plan", "design", "implement", "ship"]
+      "gates": [
+        "plan",
+        "design",
+        "implement",
+        "ship"
+      ]
     },
     "autonomous": {
       "description": "Gate only before ship. Everything else flows. Use when the task is well understood and the user wants the result, not the journey.",
-      "gates": ["ship"]
+      "gates": [
+        "ship"
+      ]
     }
   },
-
   "gate_shape": {
-    "instruction": "Every gate presents the same four things, in this order. Keep each one short - a gate the user must read for a minute is a gate they will start rubber-stamping, which defeats the purpose.",
+    "instruction": "Every gate shows the whole journey, not just the step. The user must be able to see, without asking: where the run is, everything it has done so far, what happens next, and what is still to come. Keep each line short - the value is in completeness, not volume.",
     "sections": [
       {
-        "name": "DONE",
-        "content": "What the phase just produced, in two or three concrete lines. Files written, decisions taken, findings. Never a restatement of what the phase is for.",
-        "rule": "Concrete artifacts and outcomes only. 'Discovery complete' is not a report; 'found 3 existing auth implementations, one dominant' is."
+        "name": "PROGRESS",
+        "content": "A compact one-line-per-phase map of the entire run: done, current, remaining. Mark each done phase with its one-line outcome.",
+        "rule": "Show EVERY phase in the mask, not a window around the current one. The user should never have to scroll back to find out what happened in phase 2."
+      },
+      {
+        "name": "JUST DID",
+        "content": "What the phase that just finished actually produced - files, findings, decisions, numbers.",
+        "rule": "Concrete artifacts. 'Discovery complete' is not a report; 'found 3 auth implementations, next-auth dominant at src/auth/options.ts:14' is."
       },
       {
         "name": "NEXT",
-        "content": "The next phase, what it will actually do, and which agents it will spawn.",
+        "content": "The next phase, what it will do, and which agents it will spawn by name.",
         "rule": "Name the agents. The user should know who is about to work and on what."
       },
       {
-        "name": "RECOMMENDATION",
+        "name": "REMAINING",
+        "content": "The phases after the next one, so the user can see how much is left and redirect early rather than at the end.",
+        "rule": "List them. A user who can see that review is five phases away can ask to reorder now."
+      },
+      {
+        "name": "RECOMMEND",
         "content": "What onestop advises, and the one-line reason.",
-        "rule": "Always recommend something. A gate that presents options without a recommendation pushes the decision back onto the user without helping them make it - that is the failure this is meant to avoid, not create."
+        "rule": "Always recommend. A gate that lists options without advising pushes the decision back without helping."
       },
       {
         "name": "OPTIONS",
-        "content": "The concrete choices, recommendation first.",
-        "rule": "Four at most, since that is what the question tool takes. Free-text redirect is always implicitly available and never needs to be listed."
+        "content": "Continue / skip / adjust / stop, recommendation first.",
+        "rule": "Four at most. Free-text redirect is always implicitly available."
       }
     ]
   },
-
   "standard_options": {
     "instruction": "The default option set at a phase boundary. Adapt the labels to the actual phase - 'Continue to review' beats 'Continue'.",
     "options": [
@@ -80,7 +92,6 @@
       }
     ]
   },
-
   "narration": {
     "instruction": "Between gates, the user still sees what is happening. Announce each significant action as it starts - not a running commentary, but never silent work either.",
     "announce": [
@@ -96,7 +107,6 @@
       "Anything that would repeat what the last gate already said."
     ]
   },
-
   "skip_policy": {
     "instruction": "The user may skip any phase. Two exceptions are never silently honoured, because skipping them has consequences the user may not have in mind at that moment.",
     "confirm_twice": [
@@ -113,12 +123,48 @@
     ],
     "rule": "Never refuse a skip. Warn once, with specifics, then do what the user decides and write down that they decided it."
   },
-
   "tier_scaling": {
     "instruction": "Gate content scales with tier; the gate itself does not disappear. A trivial change still shows the user what it is about to do - it just does it in two lines instead of ten.",
     "trivial": "One-line DONE and NEXT. Options reduce to continue/stop.",
     "small": "Short DONE and NEXT, full option set.",
     "standard": "Full gate shape.",
     "large": "Full gate shape, plus the open decisions the phase surfaced."
+  },
+  "no_batching": {
+    "rule": "One gate per phase. ALWAYS. Never combine two or more phases behind a single gate, however little each one had to decide.",
+    "why": "Batching was tried and rejected. On a real run, four analysis phases were combined behind one gate on the reasoning that none of them individually had a decision for the user. The user could no longer see what each phase actually did, which is the precise thing per-phase gating exists to provide. 'Nothing to decide here' is a judgement the user makes, not the orchestrator.",
+    "forbidden_stamps": [
+      "batched-analysis",
+      "batched",
+      "grouped",
+      "combined"
+    ],
+    "enforcement": "The Stop hook flags any ledger gate stamp matching a batched pattern, and any two phases sharing one gate value.",
+    "no_exception_for": [
+      "analysis phases",
+      "phases that produced no artifact",
+      "phases that were skipped",
+      "trivial tier",
+      "phases the orchestrator judged uninteresting"
+    ]
+  },
+  "gate_zero": {
+    "name": "Classification and phase plan",
+    "when": "Immediately after classifying the request, BEFORE the first phase runs.",
+    "why": "The user has to know what kind of task onestop decided this is, and which phases follow from that, before any work happens. A request the user thought was an automation task and onestop classified as a feature will run the wrong pipeline end to end, and the user finds out far too late.",
+    "must_state": [
+      "The detected intent, in plain words - 'this is an automation task', 'this is a bug fix' - not just the id.",
+      "Why it classified that way, citing the signals in the request that decided it.",
+      "The tier, and what that changes.",
+      "The full ordered phase list this intent produces, with any phase that will be skipped and why.",
+      "The stack and the specialists that will be bound."
+    ],
+    "options": [
+      "Continue with this plan",
+      "It is a different kind of task  (reclassify - the user names the real intent, the phase mask is rebuilt, and this gate is presented again)",
+      "Adjust the phase list  (add or drop phases before anything runs)",
+      "Stop"
+    ],
+    "rule": "Never start phase 1 without passing gate zero. Classification is automatic; proceeding on it is not."
   }
 }

@@ -27,30 +27,91 @@ confirm is trivially skipped under context pressure and leaves no trace. A tool 
 a real stop with a real answer. The ledger stamp is the record. The Stop hook checks
 both.
 
+## Gate zero — before any phase runs
+
+Classification is automatic. **Proceeding on it is not.** The moment the intent and tier
+are decided, present gate zero and state, in plain words:
+
+- **What kind of task this is** — "this is an automation task", "this is a bug fix" —
+  not just an intent id.
+- **Why it classified that way**, citing the words in the request that decided it.
+- **The tier**, and what it changes.
+- **The full ordered phase list** this intent produces, marking any phase that will be
+  skipped and why.
+- **The stack and specialists** about to be bound.
+
+Options: continue · **it is a different kind of task** (the user names the real intent,
+the phase mask is rebuilt, and gate zero is presented again) · adjust the phase list ·
+stop.
+
+A request the user thought was automation work, classified as a feature, runs the wrong
+pipeline from end to end and the user finds out far too late. Gate zero is where that
+costs one sentence instead of an hour.
+
 ## What a gate presents
 
-Four sections, short. A gate that takes a minute to read becomes a gate that gets
-rubber-stamped, which defeats the point.
+Six sections. The user sees the **whole journey at every gate**, not just the current
+step — where the run is, everything done so far, what is next, and what is still to come.
 
 ```
-DONE      <what this phase actually produced - files, findings, decisions>
-NEXT      <the next phase, what it will do, which agents it spawns>
-RECOMMEND <what onestop advises, and why, in one line>
-OPTIONS   <continue / skip / adjust / stop - recommendation first>
+PROGRESS   every phase in the mask, with its state and one-line outcome
+JUST DID   what the phase that just finished actually produced
+NEXT       the next phase, what it does, which agents it spawns
+REMAINING  the phases after that, so the user can redirect early
+RECOMMEND  what onestop advises, and why
+OPTIONS    continue / skip / adjust / stop
 ```
 
-**DONE** is concrete artifacts, never a restatement of the phase's purpose. "Discovery
-complete" says nothing. "Found 3 existing auth implementations; `next-auth` at
-`src/auth/options.ts:14` is dominant - already installed, already used by 4 routes" is
-a report.
+Worked example:
 
-**NEXT** names the agents. The user should know who is about to work, on what, before
-it happens.
+```
+PROGRESS  6/15
+  [x] intake        mvp intent, large tier
+  [x] context       greenfield - graph deferred
+  [x] requirements  10 FR, 5 NFR, 9 AC -> docs/requirements.md
+  [x] discovery     empty repo, no conventions to inherit
+  [x] research      nanoid adopted; ua-parser-js rejected (AGPL)
+  [x] plan          7 tasks -> 4 waves
+  [>] design        <- you are here
+  [ ] ui-design  [ ] scaffold  [ ] implement  [ ] test
+  [ ] automation [ ] qa-plan   [ ] review     [ ] ship
 
-**RECOMMEND** always recommends. A gate that lists options without advising pushes the
-decision back onto the user without helping - that is the thing this is meant to
-prevent, not introduce. If onestop cannot form a recommendation, say what is missing
-and recommend the step that would resolve it.
+JUST DID   plan - 7 vertical slices, partitioned into 4 waves.
+           T1 owns src/db.js so T2/T3/T4/T6 run as one 4-lane wave.
+
+NEXT       design - onestop:architect fixes the schema, the redirect
+           contract (302/410/404) and the recordClick signature.
+
+REMAINING  ui-design -> scaffold -> implement -> test -> automation
+           -> qa-plan -> review -> ship   (8 phases after this one)
+
+RECOMMEND  Continue. The contract has to be settled before implement,
+           or T3 and T4 cannot run in parallel.
+
+OPTIONS    Continue to design | Skip design | Adjust first | Stop here
+```
+
+**PROGRESS shows every phase**, not a window around the current one. A user who has to
+scroll back to find out what happened in phase two has lost the thread, which is the
+thing this is meant to prevent.
+
+## One gate per phase — always
+
+**Never combine two or more phases behind a single gate.** Not analysis phases, not
+phases that produced nothing, not skipped phases, not at trivial tier.
+
+This was tried and rejected. On a real run four analysis phases were batched behind one
+gate, reasoning that none of them individually had a decision for the user. The effect
+was that the user could no longer see what each phase did — which is exactly what
+per-phase gating exists to provide. **"Nothing to decide here" is the user's judgement
+to make, not the orchestrator's.**
+
+A phase with no decision still gets its own gate. It is a short one: PROGRESS, one line
+of JUST DID, NEXT, RECOMMEND continue. That costs the user one keystroke and buys them
+a run they can actually follow.
+
+Stamps like `batched-analysis` or `grouped` are a conformance failure and the Stop hook
+reports them.
 
 ## Options
 

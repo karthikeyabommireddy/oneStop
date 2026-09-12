@@ -201,6 +201,31 @@ def main():
             err("hooks.json no longer registers " + h)
         print("  conformance hooks    " + ("ok" if not missing_hooks else "FAIL"))
 
+    # 11 - the gate protocol must keep its teeth: one gate per phase, a progress-bearing
+    # gate shape, and gate zero. Each of these was added after a real run lost them.
+    g = load_json("registry/gates.json")
+    if g:
+        gate_problems = []
+        if "no_batching" not in g:
+            gate_problems.append("no_batching rule missing")
+        if "gate_zero" not in g:
+            gate_problems.append("gate_zero (classification consent) missing")
+        shape = [s["name"] for s in g.get("gate_shape", {}).get("sections", [])]
+        for required in ("PROGRESS", "REMAINING"):
+            if required not in shape:
+                gate_problems.append(f"gate_shape is missing {required}")
+        for p_ in gate_problems:
+            err("registry/gates.json: " + p_)
+        print("  gate protocol       " + ("ok" if not gate_problems else "FAIL"))
+
+        # Every intent must be able to announce itself in plain words at gate zero.
+        ints = load_json("registry/intents.json")
+        if ints:
+            silent = [i["id"] for i in ints["intents"] if not i.get("announce_as")]
+            for s in silent:
+                err("intent '" + s + "' has no announce_as text for gate zero")
+            print("  intent announcements " + ("ok" if not silent else "FAIL"))
+
     return report()
 
 

@@ -5,7 +5,8 @@
     "method": "signal-scoring",
     "ambiguity_margin": 0.15,
     "instruction": "Normalise the request: lowercase it, reduce every non-alphanumeric run to a single space, and pad with a leading and trailing space. Match each signal the same way and test for containment of the padded signal, so matching is whole-word and whole-phrase - the signal `change` must not fire inside `changes`, and a multi-word signal matches only as a contiguous phrase. Score strong=1.0, weak=0.4, negative=-0.8, then divide by (1 + 0.15 * number of positive hits) so an intent with a long signal list is not automatically favoured. Take the highest scorer. If the top two are within ambiguity_margin AND their phase_mask differs by more than one phase, ask the user to pick between exactly those two - never present the full list. scripts/test_routing.py is the executable specification of this rule.",
-    "default_intent": "feature"
+    "default_intent": "feature",
+    "gate_zero": "Classification is automatic, but NEVER silent. After classifying, state the intent in plain words using its announce_as text, cite the signals that decided it, show the full phase list that follows, and get consent before phase one runs. See registry/gates.json gate_zero."
   },
   "intents": [
     {
@@ -62,7 +63,8 @@
         "work-partitioner",
         "merge-coordinator",
         "qa-planner"
-      ]
+      ],
+      "announce_as": "This is a new-capability task - building something that does not exist yet."
     },
     {
       "id": "flow",
@@ -88,7 +90,14 @@
           "redirect",
           "then"
         ],
-        "negative": []
+        "negative": [
+          "automate",
+          "automation",
+          "e2e",
+          "playwright",
+          "cypress",
+          "regression suite"
+        ]
       },
       "phase_mask": [
         "intake",
@@ -122,7 +131,8 @@
         "merge-coordinator",
         "qa-planner"
       ],
-      "notes": "The headline intent: the user explains a flow, onestop searches for what exists, and asks the user to choose only when discovery returns several genuine options. Discovery is mandatory and per-step, never global."
+      "notes": "The headline intent: the user explains a flow, onestop searches for what exists, and asks the user to choose only when discovery returns several genuine options. Discovery is mandatory and per-step, never global.",
+      "announce_as": "This is a user-flow task - a multi-step journey, decomposed and discovered step by step."
     },
     {
       "id": "defect",
@@ -140,7 +150,17 @@
           "not working",
           "throws",
           "exception",
-          "wrong result"
+          "wrong result",
+          "crashes",
+          "crashed",
+          "crashing",
+          "breaks",
+          "broke",
+          "breaking",
+          "failing",
+          "erroring",
+          "throwing",
+          "returns the wrong"
         ],
         "weak": [
           "issue",
@@ -169,7 +189,8 @@
         "build-resolver",
         "code-reviewer",
         "work-partitioner"
-      ]
+      ],
+      "announce_as": "This is a bug fix. The first move is reproducing it as a failing test, before any fix."
     },
     {
       "id": "change",
@@ -220,7 +241,8 @@
         "code-reviewer",
         "work-partitioner",
         "merge-coordinator"
-      ]
+      ],
+      "announce_as": "This is a behaviour change to something that already works. Tests move to the new spec first."
     },
     {
       "id": "refactor",
@@ -236,7 +258,10 @@
           "dedupe",
           "deduplicate",
           "tech debt",
-          "reorganize"
+          "reorganize",
+          "refactoring",
+          "cleaning up",
+          "simplifying"
         ],
         "weak": [
           "tidy",
@@ -264,7 +289,8 @@
         "refactor-agent",
         "code-reviewer",
         "work-partitioner"
-      ]
+      ],
+      "announce_as": "This is a refactor - structure changes, behaviour must not. The suite stays green throughout."
     },
     {
       "id": "mvp",
@@ -318,7 +344,8 @@
         "work-partitioner",
         "merge-coordinator",
         "qa-planner"
-      ]
+      ],
+      "announce_as": "This is a bootstrap / MVP task - standing a project up from nothing or from a spec."
     },
     {
       "id": "review",
@@ -359,11 +386,12 @@
       "primary_agents": [
         "code-reviewer",
         "security-reviewer"
-      ]
+      ],
+      "announce_as": "This is a review task. Nothing will be implemented; the diff is assessed and reported."
     },
     {
       "id": "test",
-      "label": "Add or improve tests",
+      "label": "Add or improve tests / automation",
       "description": "Coverage work, test repair, or new automation. No production behavior change.",
       "signals": {
         "strong": [
@@ -375,7 +403,23 @@
           "unit test",
           "integration test",
           "automation test",
-          "flaky"
+          "flaky",
+          "playwright",
+          "cypress",
+          "selenium",
+          "appium",
+          "detox",
+          "maestro",
+          "browser test",
+          "ui test",
+          "automate",
+          "automation",
+          "regression suite",
+          "e2e suite",
+          "test suite",
+          "smoke test",
+          "xcuitest",
+          "espresso"
         ],
         "weak": [
           "verify",
@@ -397,7 +441,9 @@
         "web-automation-agent",
         "app-automation-agent",
         "validator"
-      ]
+      ],
+      "announce_as": "This is an automation / testing task. It builds or repairs test coverage; it does not change production behaviour. If the intent is to change how the product works, say so at gate zero and it will be reclassified.",
+      "notes": "A direct automation request lands here. The mask deliberately excludes plan, design and implement: writing tests for behaviour that already exists needs discovery and coverage measurement, not a design phase. If discovery finds the behaviour under test does not exist yet, say so at the gate rather than silently building it."
     },
     {
       "id": "design",
@@ -437,7 +483,8 @@
         "architect",
         "a11y-agent",
         "ui-designer"
-      ]
+      ],
+      "announce_as": "This is a design task. Architecture and contracts only - no implementation code."
     },
     {
       "id": "investigate",
@@ -472,7 +519,8 @@
       "first_move": "Trace real execution paths in the code; never answer from assumption.",
       "primary_agents": [
         "code-explorer"
-      ]
+      ],
+      "announce_as": "This is an investigation. Read-only: the code is traced and explained, nothing is changed."
     },
     {
       "id": "perf",
@@ -488,7 +536,10 @@
           "memory leak",
           "bundle size",
           "n plus one query",
-          "throughput"
+          "throughput",
+          "slowing",
+          "timing out",
+          "times out"
         ],
         "weak": [
           "faster",
@@ -510,7 +561,8 @@
       "primary_agents": [
         "performance-agent",
         "code-reviewer"
-      ]
+      ],
+      "announce_as": "This is performance work. A baseline is measured and profiled before anything is optimised."
     },
     {
       "id": "security",
@@ -548,7 +600,8 @@
       "primary_agents": [
         "security-reviewer",
         "code-reviewer"
-      ]
+      ],
+      "announce_as": "This is security work. The attack surface is enumerated before any fix is proposed."
     },
     {
       "id": "ops",
@@ -585,7 +638,8 @@
       "primary_agents": [
         "build-resolver",
         "code-reviewer"
-      ]
+      ],
+      "announce_as": "This is build / CI / deploy work."
     },
     {
       "id": "docs",
@@ -616,7 +670,8 @@
       "first_move": "Read the source of truth (code, schemas, routes) - never document from memory.",
       "primary_agents": [
         "docs-agent"
-      ]
+      ],
+      "announce_as": "This is a documentation task, written from the source of truth rather than from memory."
     }
   ],
   "size_tiers": {

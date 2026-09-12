@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.5.0
+
+### Changed - one gate per phase, every gate shows the whole journey, and the intent is announced before anything runs
+
+Three gaps found by running v1.4.0 on a real build (the LinkStack challenge):
+
+**Batching is now forbidden.** On that run four analysis phases were combined behind a
+single gate, on the reasoning that none of them individually had a decision for the
+user. The effect was that the user could no longer see what each phase did - which is
+precisely what per-phase gating exists to provide. "Nothing to decide here" is the
+user's judgement, not the orchestrator's. A phase with no decision still gets its own
+short gate. `run-conformance.sh` now flags any batched gate stamp.
+
+**Every gate shows the whole run, not just the current step.** The gate shape grew from
+four sections to six: PROGRESS (every phase in the mask, with its state and one-line
+outcome), JUST DID, NEXT, REMAINING, RECOMMEND, OPTIONS. A user should never have to
+scroll back to learn what happened in phase two, and seeing REMAINING lets them redirect
+early rather than at the end.
+
+**Gate zero - the intent is announced and consented to before phase one.** Classification
+stays automatic; proceeding on it no longer is. Every intent now carries `announce_as`
+text stating in plain words what kind of task it is - "This is an automation / testing
+task", "This is a bug fix" - alongside the signals that decided it, the tier, the full
+phase list, and the specialists about to be bound. The user can reclassify at that point
+and the mask is rebuilt. A request meant as automation work, classified as a feature,
+otherwise runs the wrong pipeline end to end.
+
+### Fixed - two real classifier bugs
+
+- **`automate the login journey` classified as `flow`**, because "journey" fired and tied
+  with "automate" on score, losing on sort order. Automation verbs are now negative
+  signals for `flow`: a journey you want to *automate* is a testing task.
+- **`crashes` never matched the `crash` signal at all.** Matching is whole-word, which
+  correctly stopped `change` firing inside `changes` but also stopped every inflection.
+  Rather than reintroduce suffix matching and that bug with it, the inflected forms that
+  actually occur in real requests are listed explicitly.
+- The `test` intent gained 15 automation signals (playwright, cypress, appium, detox,
+  regression suite, smoke test, ...) so a direct automation request lands on the right
+  mask. Six routing cases added permanently; the suite is now 35.
+
 ## 1.4.0
 
 ### Changed - a gate at every phase boundary, not two at the ends

@@ -87,6 +87,17 @@ CASES = [
     ("update the readme and document the api", "docs"),
     ("design the architecture for multi-tenant support, decide between two approaches", "design"),
     ("change the date format to ISO instead of US format", "change"),
+
+    # A direct automation request must land on `test`, not drift into flow or feature.
+    # "automate the login journey" used to tie with flow (because "journey" fires) and
+    # lose on sort order; "crashes" never matched the `crash` signal at all, because
+    # matching is whole-word and does not handle inflections.
+    ("write playwright e2e tests for the checkout flow", "test"),
+    ("automate the login journey", "test"),
+    ("add a regression suite for the orders API", "test"),
+    ("set up cypress and cover the signup page", "test"),
+    ("write appium tests for the mobile app", "test"),
+    ("the checkout page crashes on submit", "defect"),
 ]
 
 

@@ -57,6 +57,17 @@ if [ -f "$LEDGER" ]; then
   fi
 fi
 
+# 2b. Batched gates. One gate per phase, always - combining phases behind a single
+#     gate hides what each one did, which is the whole point of per-phase gating.
+#     Catches both an explicit batched stamp and two phases sharing one gate value.
+if [ -f "$LEDGER" ]; then
+  batched=$(grep -oE '"gate"[[:space:]]*:[[:space:]]*"[^"]*(batch|group|combined)[^"]*"' "$LEDGER" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${batched:-0}" -gt 0 ]; then
+    lines+=("BATCHED GATES - $batched phase(s) share a combined gate stamp")
+    lines+=("  One gate per phase (registry/gates.json no_batching). Nothing to decide is the user's call, not the orchestrator's.")
+  fi
+fi
+
 # 3. Run ledger present but phases unstamped.
 if [ -f "$LEDGER" ]; then
   if grep -q '"status"[[:space:]]*:[[:space:]]*"active"' "$LEDGER" 2>/dev/null; then
