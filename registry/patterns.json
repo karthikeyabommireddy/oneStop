@@ -1,0 +1,377 @@
+{
+  "version": "1.7.0",
+  "description": "Architecture patterns onestop binds automatically. stacks.json answers WHICH framework; this file answers HOW it is structured. Picking Playwright over Cypress is half a decision - a Playwright suite built as an inheritance-based page-object tree is materially worse than one built as composed fixtures, and the difference shows up as flake and as rewrite cost, not as a failing test. Every binding here names the modern choice, the pattern it supersedes, and the reason, so the orchestrator can state a defensible one-line rationale rather than asking the user to pick.",
+
+  "selection_rule": {
+    "order": [
+      "A pattern already established in the repository ALWAYS wins over the default. Two patterns for the same concern is worse than either pattern alone - consistency is the higher-order property.",
+      "If the repo has no established pattern, bind the `default` entry for the detected framework.",
+      "Escalate to a `scale_up_from` entry only when at least one of its `triggers` is objectively true in the repo. Never adopt a heavier pattern speculatively.",
+      "Ask the user only when two entries are marked `equally_viable_when` and that condition holds."
+    ],
+    "announce": "State the bound pattern and its one-line reason alongside the bound framework, in the same line. Example: 'Playwright, fixture-composed page objects (parallel-safe, no BasePage god-object).'",
+    "never": "Never introduce a second architectural pattern for a concern the repo already answers. Migrating an existing pattern is its own planned task, never a side effect of adding a feature."
+  },
+
+  "application_architecture": {
+    "note": "The smart/dumb split is the load-bearing rule here. A component that both fetches and renders cannot be tested without a network stub, cannot be previewed in isolation, and cannot be reused on a second screen. Splitting it is not ceremony - it is what makes the rest of the standards enforceable.",
+
+    "frontend": [
+      {
+        "id": "container-presentational",
+        "label": "Container / presentational (smart and dumb components)",
+        "default_for": ["react", "vue", "angular", "svelte", "react-native", "typescript"],
+        "smart": {
+          "role": "Knows where data comes from. Owns fetching, mutations, global/store state, routing, permissions, and error/loading orchestration. Renders almost no markup of its own - it composes presentational children and passes them plain data and callbacks.",
+          "location_hint": "Route- or feature-level: pages/, routes/, features/<x>/<X>Container, or the route component itself.",
+          "budget": "One smart component per route or per feature area. A second one on the same screen usually means the feature should be split, not that a second container is needed."
+        },
+        "dumb": {
+          "role": "Props in, events out. No fetching, no store access, no router access, no environment reads, no direct clock or randomness. Given the same props it renders the same output, so it can be rendered in a test or a preview with nothing mocked.",
+          "location_hint": "components/, components/ui/, or a design-system package.",
+          "budget": "No limit - these are the reusable surface. Prefer many small ones over one configurable one with eight boolean props."
+        },
+        "rules": [
+          "A presentational component that imports a data client, a store hook, or the router has stopped being presentational. Move the import up to the container and pass the result down.",
+          "Boolean props that change layout mode are a smell at three or more - that component is two components wearing one name.",
+          "Data shaping belongs in the container or in a pure mapper, never in the presentational component's render.",
+          "The container holds the loading, empty, error and unauthorised branches. The presentational component receives whichever state it should draw, and knows how to draw all of them."
+        ],
+        "per_framework": {
+          "react": "Containers are route components plus custom hooks (useOrders) that encapsulate fetching. Presentational components take props only. Co-locate a component with its test and its styles.",
+          "angular": "Smart components are routed standalone components; dumb components are standalone with signal input() / output() and ChangeDetectionStrategy.OnPush. A dumb component must never inject a service - injection is the tell that a component became smart.",
+          "vue": "Logic lives in composables/; SFCs stay presentational and take defineProps / defineEmits. A composable called from a leaf component is the same violation as a service injected into a dumb Angular component.",
+          "svelte": "State via runes in the route ($state, $derived); children take props and dispatch events. Avoid stores for state that is only ever local to one route.",
+          "react-native": "Identical split. Screens are smart, components are dumb - and the dumb layer is what lets the same component render under both the iOS and Android snapshot suites."
+        },
+        "supersedes": "Every component doing its own fetching - the 'just call the API in useEffect' default",
+        "why": "It draws the only boundary that makes UI testable without mocking a network, and it is the precondition for component previews, design-system extraction and reuse across screens."
+      },
+      {
+        "id": "feature-sliced",
+        "label": "Feature-sliced structure",
+        "scale_up_from": "container-presentational",
+        "triggers": [
+          "More than roughly 15 routes",
+          "More than one team committing to the same frontend",
+          "A shared component directory past ~40 files with no internal grouping"
+        ],
+        "structure": "Group by feature, then by layer inside it - features/orders/{api,model,ui} - with a shared/ layer only for genuinely cross-feature code. Imports run one way: features may import shared; shared may never import a feature; features should not import each other laterally.",
+        "why": "Grouping by technical layer at the top level (components/, hooks/, services/) stops scaling the moment two features both have an OrderCard - the top-level grouping should be the thing that changes together."
+      }
+    ],
+
+    "backend": [
+      {
+        "id": "layered-ports",
+        "label": "Layered with ports (route -> service -> repository)",
+        "default_for": ["typescript", "python", "fastapi", "django", "go", "java", "kotlin", "csharp", "php", "ruby", "elixir", "rust"],
+        "layers": [
+          {"name": "transport", "owns": "HTTP/RPC/CLI concerns only - parsing, shape validation, status codes, serialisation. Knows the framework. Contains no business rules.", "hint": "routes/, controllers/, handlers/, api/"},
+          {"name": "service", "owns": "Business rules and orchestration. Framework-free: no request object, no response object, no ORM session leaking in. This is the layer worth unit-testing.", "hint": "services/, usecases/, domain/"},
+          {"name": "repository", "owns": "Persistence and outbound I/O behind an interface the service declares. The only layer that knows the database or the third-party API.", "hint": "repositories/, adapters/, gateways/, infra/"}
+        ],
+        "rules": [
+          "Dependency direction is inward and never reversed. The service declares the interface it needs; the repository implements it. A service that imports a concrete database client has inverted the dependency and become untestable without that database.",
+          "Never construct an adapter inside a service (new PostgresOrderRepo()), and never import a module-level singleton connection into the domain. Wire concrete implementations at one composition root.",
+          "Transport types stop at the transport layer. A service taking a framework Request is a layering break even though it compiles.",
+          "No business rule in a route handler and no SQL in a service. Each is the most common way this pattern silently degrades into the thing it replaced."
+        ],
+        "supersedes": "Fat controllers - route handlers that validate, query, apply rules and serialise in one function",
+        "why": "It puts every rule worth testing in a layer that needs no HTTP server and no database to test, which is the difference between a suite that runs in two seconds and one nobody runs."
+      },
+      {
+        "id": "hexagonal",
+        "label": "Hexagonal / ports and adapters (explicit)",
+        "scale_up_from": "layered-ports",
+        "triggers": [
+          "Two or more transports over the same domain (HTTP plus a queue consumer, or HTTP plus a CLI)",
+          "Two or more interchangeable implementations of the same outbound port (a real payment provider plus a sandbox)",
+          "A stated requirement to swap a major infrastructure dependency"
+        ],
+        "structure": "domain/ holds entities and use cases and imports nothing outward. ports/ holds the interfaces the domain declares - inbound (driving) and outbound (driven). adapters/ holds one directory per concrete implementation. Composition happens in a single bootstrap module.",
+        "why": "It is the same dependency rule as layered-ports, made explicit because the number of edges has grown past what convention alone keeps straight."
+      },
+      {
+        "id": "cqrs",
+        "label": "CQRS (separate read and write models)",
+        "scale_up_from": "hexagonal",
+        "triggers": [
+          "Read and write loads differ by more than an order of magnitude",
+          "The read shape genuinely cannot be served from the write model without expensive joins on every request",
+          "A measured, profiled query bottleneck that denormalisation demonstrably fixes"
+        ],
+        "caution": "Bind this only when a trigger is objectively true and evidenced. Adopted speculatively it doubles the model count and introduces eventual consistency the product did not ask for. Absence of a trigger is a sufficient reason to say no.",
+        "why": "A real answer to a real asymmetry, and an expensive answer to an imagined one."
+      },
+      {
+        "id": "modular-monolith",
+        "label": "Modular monolith",
+        "default_for": ["mvp", "greenfield"],
+        "structure": "One deployable, hard internal module boundaries: each module owns its tables, exposes a narrow public interface, and may not reach into another module's internals or query its tables directly.",
+        "rules": [
+          "Do not start from microservices. Start here, keep the boundaries honest, and extract a service only when a module has an independent scaling or deployment reason.",
+          "A module that other modules query directly at the database level has no boundary, whatever the directory tree says."
+        ],
+        "why": "It buys the boundary discipline that makes later extraction cheap, without paying the operational cost of distribution before there is any evidence it is needed."
+      }
+    ]
+  },
+
+  "automation_patterns": {
+    "note": "Bound per automation framework after the framework itself is bound. The web entries answer the question directly: within Playwright there are several structures, and they are not equal.",
+
+    "web": [
+      {
+        "framework": "playwright",
+        "default": "fixture-composed-pom",
+        "id": "fixture-composed-pom",
+        "label": "Fixture-composed page objects",
+        "structure": {
+          "tests/": "Spec files only. A spec reads as the journey - no selectors, no waits, no setup plumbing.",
+          "pages/": "One page or component object per screen area. Plain classes taking page in the constructor. Expose intent-level methods (login(user), openOrder(id)) and expose Locator properties for assertions - never raw selector strings.",
+          "fixtures/": "test.extend<Fixtures>() declares each page object and each piece of seeded state as a typed fixture. Tests receive what they need as arguments.",
+          "data/": "Test-data builders and factories. Deterministic by default; randomised only where uniqueness is required, and then seeded and logged.",
+          "support/": "Auth storageState setup, API seeding helpers, custom expect matchers."
+        },
+        "rules": [
+          "Compose, never inherit. A BasePage superclass accumulates every helper any page ever needed and becomes a god-object every spec transitively depends on. Page objects share code by holding a collaborator, not by extending one.",
+          "Page objects expose Locators and never assert. Assertions belong in the spec, where the failure message names the behaviour that broke. A page object that asserts hides which expectation failed.",
+          "Locator priority: getByRole > getByLabel / getByPlaceholder > getByTestId > CSS. Never XPath, never positional nth-child, never a build-generated class (an Angular ng-tns-c* scope class, a CSS-module hash, a Tailwind JIT artefact) - those pass locally and break on the next build.",
+          "Web-first assertions only: await expect(locator).toHaveText(x), which retries. Never expect(await locator.textContent()).toBe(x), which samples once and is the single largest source of flake.",
+          "Never page.waitForTimeout. Wait on the condition - a locator state, a response, a URL - never on the clock.",
+          "No conditional logic in a spec. if (await el.isVisible()) means the test has two possible outcomes and asserts neither; it will pass while the feature is broken.",
+          "Authenticate once via storageState and reuse it; seed everything else through the API request context. Driving the login form in every spec is slow, and it makes every test a login test.",
+          "One journey per spec file, independent of every other spec. Tests that must run in order cannot run in parallel and fail as a block."
+        ],
+        "supersedes": "Inheritance-based POM (a BasePage superclass with per-page subclasses), and the Selenium-era habit of asserting inside page objects",
+        "why": "Fixtures give per-test setup and teardown, typed injection and parallel-safe isolation for free - precisely what the BasePage hierarchy was hand-rolling badly. The page-object idea survives; the inheritance tree does not.",
+        "config": [
+          "retries: 2 in CI, 0 locally - so flake surfaces during development instead of being papered over.",
+          "trace: 'on-first-retry', screenshot: 'only-on-failure', video: 'retain-on-failure'.",
+          "fullyParallel: true, workers tuned in CI.",
+          "A webServer block so the suite starts what it tests."
+        ]
+      },
+      {
+        "framework": "playwright",
+        "id": "screenplay",
+        "label": "Screenplay (actors, tasks, questions)",
+        "equally_viable_when": "The suite already uses Screenplay, or several distinct user personas have heavily overlapping journeys that are being duplicated per persona.",
+        "caution": "Significantly more indirection than fixture-composed page objects. Adopt when persona duplication is a demonstrated problem, not by default.",
+        "why": "Models who does the thing, so shared journeys parameterise by actor rather than being copied."
+      },
+      {
+        "framework": "cypress",
+        "default": "app-actions",
+        "id": "app-actions",
+        "label": "App actions with cy.session",
+        "rules": [
+          "Set up state through app actions or the API, not by driving the UI. The UI is what is under test, not a fixture-creation tool.",
+          "cy.session() for authentication, cached across specs.",
+          "Thin custom commands over deep page-object hierarchies - Cypress's chaining makes inheritance trees especially painful.",
+          "data-cy attributes for anything not addressable by role or text.",
+          "Never cy.wait(<number>). Alias the request and cy.wait('@alias')."
+        ],
+        "supersedes": "Classic POM ported from Selenium, and fixed cy.wait durations",
+        "why": "Cypress's own guidance, and the chaining model makes intent-level commands read better than object graphs."
+      },
+      {
+        "framework": "selenium",
+        "default": "page-objects-explicit-waits",
+        "id": "page-objects-explicit-waits",
+        "label": "Page objects with explicit waits",
+        "adopt_only_when": "The repository already runs Selenium. Never introduce Selenium into a repo that has no browser automation - Playwright is the default for new work, and a second framework for one target is worse than either alone.",
+        "rules": [
+          "Page objects hold locators and intent methods; assertions stay in the test.",
+          "WebDriverWait with an ExpectedCondition for every interaction. Never Thread.sleep, and never implicit waits mixed with explicit ones - the two compose in ways that produce timeouts nobody can reproduce.",
+          "Prefer relative locators and stable ids over XPath. An absolute XPath is a path through the DOM as it happened to look that day.",
+          "One WebDriver per test, quit in teardown even on failure, or the grid leaks sessions until it stops accepting new ones."
+        ],
+        "supersedes": "PageFactory with @FindBy - its lazy proxies produce StaleElementReferenceException at a distance from the cause",
+        "why": "Selenium gives no auto-waiting, so the explicit-wait discipline is what the page object exists to hold. Modernising an existing suite means this, not a rewrite to Playwright mid-feature."
+      },
+      {
+        "framework": "playwright-python",
+        "default": "fixture-composed-pom",
+        "adaptation": "Same structure; page objects become plain classes and fixtures become pytest fixtures in conftest.py. expect() from playwright.sync_api for auto-retrying assertions - never a bare assert on a sampled value."
+      },
+      {
+        "framework": "playwright-java",
+        "default": "fixture-composed-pom",
+        "adaptation": "Page objects as classes; JUnit 5 extensions or TestNG listeners take the role of fixtures. assertThat(locator) from com.microsoft.playwright.assertions for retrying assertions."
+      },
+      {
+        "framework": "playwright-dotnet",
+        "default": "fixture-composed-pom",
+        "adaptation": "Page objects as classes; NUnit [SetUp] on a PageTest base handles injection. Expect(locator) for retrying assertions."
+      }
+    ],
+
+    "app": [
+      {
+        "framework": "detox",
+        "default": "robot-screens",
+        "id": "robot-screens",
+        "label": "Robot pattern over screen objects",
+        "structure": {
+          "screens/": "One robot per screen exposing intent-level actions and returning the robot for the screen it navigates to - so a flow reads as a chain of user intentions.",
+          "flows/": "Journey specs composed from robots. No matchers here.",
+          "data/": "Builders for accounts and fixtures, seeded over the API before the app launches."
+        },
+        "rules": [
+          "Match on testID only. Text matching breaks the first time the app is localised, and it breaks silently on copy changes.",
+          "Never a fixed sleep. waitFor(element).toBeVisible().withTimeout(n) - Detox's synchronisation already knows about the bridge and the animation queue.",
+          "Relaunch with a known state per journey (device.launchApp({ newInstance: true })) rather than carrying state between flows.",
+          "Cover the platform boundaries, not just the happy path: permission prompts, background/foreground resume, offline, cold start, and hardware back on Android."
+        ],
+        "supersedes": "Flat spec files full of raw matchers",
+        "why": "The robot layer is the only thing that stops a testID rename from touching thirty specs."
+      },
+      {
+        "framework": "maestro",
+        "default": "composed-flows",
+        "id": "composed-flows",
+        "label": "Composed YAML flows",
+        "rules": [
+          "One flow file per journey; shared setup extracted into subflows invoked with runFlow.",
+          "Address elements by accessibility id; fall back to text only where the string is a stable product term, never a sentence.",
+          "Parameterise environments with env: rather than forking a flow per environment.",
+          "Assertions are explicit assertVisible / assertNotVisible steps - a flow that only taps proves navigation, not behaviour."
+        ],
+        "why": "Maestro's value is that a flow stays readable by someone who does not write test code; deep abstraction destroys that, and zero abstraction duplicates login into every file."
+      },
+      {
+        "framework": "xcuitest",
+        "default": "screen-objects",
+        "label": "Screen objects with accessibility identifiers",
+        "rules": [
+          "Query by accessibilityIdentifier - never by localised label, never by index.",
+          "XCTestExpectation and waitForExistence for synchronisation; never sleep().",
+          "Launch arguments to select the fixture state, so each test starts from a known app state without UI setup.",
+          "Screen objects expose element queries and intent methods; assertions stay in the test."
+        ]
+      },
+      {
+        "framework": "espresso",
+        "default": "robot-pattern",
+        "label": "Robot pattern",
+        "rules": [
+          "Robots hold every ViewMatcher and ViewAction; the test body reads as prose and contains no matchers.",
+          "IdlingResource for async work - never Thread.sleep.",
+          "Hilt/Dagger test modules to swap real dependencies for fakes, rather than testing against live services.",
+          "One robot per screen, named for the screen, with methods named for user intentions."
+        ],
+        "why": "The canonical Android structure precisely because matchers are verbose enough that inlining them makes tests unreadable within a month."
+      },
+      {
+        "framework": "appium",
+        "default": "screen-objects",
+        "label": "Cross-platform screen objects",
+        "equally_viable_when": "One suite must cover both platforms from shared code AND a real-device cloud grid is a requirement. Otherwise prefer the per-platform native framework, which is faster and less flaky.",
+        "rules": [
+          "One screen object per screen with a per-platform locator map, so the journey is written once and only the addressing differs.",
+          "W3C actions for gestures; never coordinate taps, which break on every new device size.",
+          "Explicit waits only."
+        ]
+      },
+      {
+        "framework": "winappdriver",
+        "default": "screen-objects",
+        "label": "Screen objects for Windows desktop",
+        "rules": [
+          "Address by AutomationId - never by name, which is localised, and never by index, which changes when a control is added.",
+          "One screen object per window or dialog; modal dialogs get their own object because their lifetime differs from the window beneath them.",
+          "Explicit waits on element existence. Desktop apps have no load event, so there is nothing to wait on implicitly.",
+          "Start each test from a launched application with known state, and close it in teardown - a leaked process makes the next test fail for reasons that have nothing to do with it."
+        ],
+        "why": "Same structure as XCUITest and Espresso, because the problem is the same: verbose addressing that makes an inlined test unreadable."
+      },
+      {
+        "framework": "flutter-integration-test",
+        "default": "page-objects",
+        "label": "Page objects over WidgetTester",
+        "rules": [
+          "Address by Key / find.byKey, not by widget type or by text.",
+          "await tester.pumpAndSettle() for settlement - never a raw Future.delayed.",
+          "Objects wrap WidgetTester and expose intent methods; assertions with expect(find..., findsOneWidget) stay in the test."
+        ]
+      }
+    ]
+  },
+
+  "solid": {
+    "note": "SOLID cited in a review comment changes nothing. Each principle below is stated as something mechanically checkable in a diff, with the signal that betrays a violation and the move that fixes it. The code-reviewer and architect agents apply these; the implement phase writes to them.",
+    "principles": [
+      {
+        "id": "srp",
+        "name": "Single responsibility",
+        "operational_test": "Can this file be described in one sentence with no 'and'? Does it have exactly one reason to change?",
+        "violation_signals": [
+          "A file whose name needs 'and', or whose name is a category (utils, helpers, manager, common)",
+          "A file over 400 lines - onestop's hard cap",
+          "A class whose methods split cleanly into two groups sharing no fields"
+        ],
+        "fix": "Extract along the seam the field usage already reveals, not along an arbitrary line count."
+      },
+      {
+        "id": "ocp",
+        "name": "Open for extension, closed for modification",
+        "operational_test": "To add the next variant, do you add a file and one registry entry - or edit an existing switch?",
+        "violation_signals": [
+          "A switch or if-else chain on a type discriminator that has grown a case per feature",
+          "The same conditional on the same enum repeated in more than one file - the compiler will not tell you when one copy is missed"
+        ],
+        "fix": "Replace with a map from discriminator to handler, or with polymorphism. A single switch in one place is fine; the smell is the same switch in three places."
+      },
+      {
+        "id": "lsp",
+        "name": "Liskov substitution",
+        "operational_test": "Can every implementation be swapped in without the caller checking which one it got?",
+        "violation_signals": [
+          "An implementation that throws NotImplemented / UnsupportedOperation for a declared method",
+          "An override that narrows accepted input or widens thrown errors",
+          "A caller doing instanceof / isinstance on its own abstraction"
+        ],
+        "fix": "Split the interface so no implementation has to refuse part of it."
+      },
+      {
+        "id": "isp",
+        "name": "Interface segregation",
+        "operational_test": "Does every consumer use most of the interface it depends on?",
+        "violation_signals": [
+          "A twelve-method interface whose callers each use two",
+          "Test doubles that stub eight methods to exercise one",
+          "An implementation stubbing methods purely to satisfy a contract"
+        ],
+        "fix": "Split by consumer. The number of test stubs needed is a direct measure of how wrong the interface's width is."
+      },
+      {
+        "id": "dip",
+        "name": "Dependency inversion",
+        "operational_test": "Does the high-level module import the abstraction, with the concrete wired in from outside?",
+        "violation_signals": [
+          "A service importing a database driver, an HTTP client, or a vendor SDK directly",
+          "new ConcreteThing() inside business logic",
+          "A module-level singleton connection imported into the domain",
+          "A unit test that needs a running database or network"
+        ],
+        "fix": "Declare the port where it is consumed, implement it in the adapter layer, inject at the composition root. The test that stops needing infrastructure is the proof it worked."
+      }
+    ],
+    "anti_overreach": "These are diagnostics, not quotas. A two-file script does not need a ports layer, and an interface with one implementation and no second in prospect is usually speculative generality - which is its own defect. Apply a principle when its violation signal is actually present in the diff."
+  },
+
+  "file_roles": {
+    "note": "Every file written gets one declared role. The role fixes what the file may import, which is what keeps the architecture true after the first month.",
+    "roles": [
+      {"role": "smart", "may_import": "data clients, stores, router, services, dumb components", "may_not": "nothing broad - but it should contain little markup and no styling beyond composition"},
+      {"role": "dumb", "may_import": "design tokens, other dumb components, pure utilities", "may_not": "data clients, stores, router, environment, clock, randomness"},
+      {"role": "service", "may_import": "ports, domain models, pure utilities", "may_not": "framework request/response types, ORM sessions, concrete adapters, vendor SDKs"},
+      {"role": "adapter", "may_import": "the port it implements, its vendor SDK, config", "may_not": "other adapters, transport types, unrelated services"},
+      {"role": "transport", "may_import": "services, schemas, framework", "may_not": "repositories or the database directly"},
+      {"role": "pure", "may_import": "nothing but other pure modules", "may_not": "I/O of any kind - this is what makes it trivially testable"}
+    ],
+    "enforcement": "The code-reviewer checks the import list of every changed file against its role. A violated import is a finding with a named fix, not a style note."
+  }
+}

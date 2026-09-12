@@ -45,6 +45,38 @@ introduce a second framework for the same target.
 Ask only in the two genuinely equal cases named in the registry selection rules -
 React Native with a device-farm requirement, and a mixed Flutter plus native repo.
 
+## Pattern Binding
+
+**A framework is half a decision.** Within Playwright there are several structures and
+they are not equal - a suite built on an inheritance-based `BasePage` tree flakes more
+and costs more to change than one built on composed fixtures, and the difference never
+shows up as a failing test. Bind the structure too, from
+`${CLAUDE_PLUGIN_ROOT}/registry/patterns.json` -> `automation_patterns`.
+
+| Target | Default pattern |
+|---|---|
+| Playwright (any language) | fixture-composed page objects |
+| Cypress | app actions with `cy.session` |
+| Selenium *(only if already present)* | page objects with explicit waits |
+| Detox, Espresso | robot pattern |
+| XCUITest, Appium, WinAppDriver | screen objects |
+| Maestro | composed YAML flows |
+
+Selection order: **a pattern already in the repo always wins**; otherwise the registry
+default; escalate only when a `scale_up_from` trigger is objectively true; ask only when
+an `equally_viable_when` condition actually holds.
+
+State both bindings on one line before writing anything:
+
+```
+Bound: Playwright, fixture-composed page objects (parallel-safe, no BasePage god-object)
+```
+
+Worked skeletons - structure, config, locator priority, the flake table:
+
+- web: `${CLAUDE_PLUGIN_ROOT}/skills/phase-automation/references/playwright.md`
+- app: `${CLAUDE_PLUGIN_ROOT}/skills/phase-automation/references/native.md`
+
 ## Delegation
 
 | Target | Agent |
@@ -104,20 +136,32 @@ useful.
 ```
 AUTOMATION
   targets:   <web / app / both>
-  web:       <framework, specs written, run command, executed result>
-  app:       <framework, platforms, flows written, run command, executed result>
+  web:       <framework + pattern, specs written, run command, executed result>
+  app:       <framework + pattern, platforms, flows written, run command, executed result>
+  wrote:     <every path - suite root, docs/qa/<slug>/automation.md, CI workflow>
   coverage:  <journey steps covered / total>
   ci:        <workflow files touched, or none>
   gaps:      <steps without automation, and why>
   flaky:     <anything quarantined, with the reason and what would release it>
 ```
 
+Artifact placement: `${CLAUDE_PLUGIN_ROOT}/skills/shared/artifacts.md`. The suite is
+source and lives where the runner looks - never under `docs/`.
+
 ## Rules
 
 1. **Never automate a step that does not exist.** Report the gap.
 2. **Never add a second framework** for a target that already has one.
-3. **Never use a fixed sleep.** Framework synchronisation only.
-4. **Never weaken an assertion to stop a flake.** Diagnose the cause.
-5. **Never claim a suite passed if it did not execute here.** Name what is missing.
-6. **Both targets when both exist.** A mobile app with only web automation is a gap,
+3. **Never bind a framework without binding its pattern**, and never invent a structure
+   the registry already answers. An unstructured suite works this week and is rewritten
+   next quarter.
+4. **Never assert inside a page object, robot or screen object.** Assertions live in the
+   spec, where the failure message names the behaviour that broke.
+5. **Never select on a build-generated class** - an Angular `ng-tns-c*` scope class, a
+   CSS-module hash, a Tailwind JIT artefact. They pass locally and break on the next
+   deploy, and the failure looks like a product bug.
+6. **Never use a fixed sleep.** Framework synchronisation only.
+7. **Never weaken an assertion to stop a flake.** Diagnose the cause.
+8. **Never claim a suite passed if it did not execute here.** Name what is missing.
+9. **Both targets when both exist.** A mobile app with only web automation is a gap,
    and it is reported as one.

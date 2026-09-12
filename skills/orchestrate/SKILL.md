@@ -283,6 +283,8 @@ From Context and the classified intent, bind using `${CLAUDE_PLUGIN_ROOT}/regist
 | Test runner and coverage command | stack `test_runner` and `coverage_cmd` |
 | Web automation framework | stack `web_automation`, overridden by any framework already in the repo |
 | App automation framework | stack `app_automation`, overridden by any framework already in the repo |
+| **Architecture pattern** | `patterns.json.application_architecture` - overridden by any pattern already in the repo |
+| **Automation pattern** | `patterns.json.automation_patterns`, per bound framework |
 | `security-reviewer` | MANDATORY when the change surface hits any `security_triggers` surface |
 | `a11y-agent` | when the stack declares the accessibility concern and the change touches UI |
 | `data-reviewer` | whenever migrations or query files are in the change surface |
@@ -295,8 +297,25 @@ them. State the bound set in one compact line - do not ask for confirmation:
 
 ```
 Bound: code-reviewer [typescript, react, accessibility], test-author (vitest),
-       playwright (web), detox (app), security-reviewer [auth surface].
+       playwright + fixture-composed page objects (web), detox + robot pattern (app),
+       layered-ports / container-presentational, security-reviewer [auth surface].
 ```
+
+**A framework without its pattern is half a decision.** Within Playwright alone there are
+several structures and they are not equal - an inheritance-based page-object tree flakes
+more and costs more to change than composed fixtures, and that difference never appears
+as a failing test. The same holds for the application itself: smart/dumb separation and a
+dependency direction are bound here, not discovered during implementation.
+
+### Shared protocols
+
+Loaded by the phases that need them - read once, apply throughout:
+
+| Protocol | Covers |
+|---|---|
+| `${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md` | pattern binding, smart/dumb file roles, SOLID as diff checks, system design |
+| `${CLAUDE_PLUGIN_ROOT}/skills/shared/artifacts.md` | where every phase writes, and the RTM relay |
+| `${CLAUDE_PLUGIN_ROOT}/skills/shared/agent-flow.md` | which agent runs in which phase, and the delegation brief |
 
 ## Step 6 - Execute the Phase Mask
 

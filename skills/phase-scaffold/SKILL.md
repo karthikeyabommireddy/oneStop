@@ -39,6 +39,26 @@ Do not build: features not in the first slice, abstractions with one implementat
 configuration for environments that do not exist yet, or a plugin system nobody asked
 for. Speculative generality in a scaffold is the hardest thing to remove later.
 
+## Structure
+
+The scaffold is where the architecture becomes real - directories created now decide what
+is easy for the life of the project, and getting them wrong compounds. Bind the pattern
+from `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json` and lay the tree out to match it.
+Protocol: `${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`.
+
+A backend scaffold separates transport, service and repository from the first commit -
+`routes/`, `services/`, `repositories/`, with the composition root in the entry module.
+A frontend scaffold separates smart from dumb - route or feature containers apart from a
+presentational `components/` directory. Retro-fitting either boundary once features exist
+is a refactor with no user-visible benefit, which is the kind that never gets scheduled.
+
+Greenfield defaults to **modular-monolith** with honest internal boundaries. Do not start
+from microservices, and do not add `ports/` and `adapters/` directories to a project with
+one transport and one implementation of everything - that is the speculative generality
+this phase is most prone to.
+
+Create a directory only when something goes in it. An empty `utils/` is an invitation.
+
 ## Conventions
 
 Follow the ecosystem defaults for layout and naming rather than inventing a structure.

@@ -1,7 +1,7 @@
 ---
 name: architect
 description: Designs the structure of a change - module boundaries, data model, interface contracts, and the decisions worth recording as ADRs - scaled to blast radius rather than to ceremony. Use in the design phase.
-phases: design plan
+phases: design plan scaffold
 tools: Read, Grep, Glob
 model: opus
 ---
@@ -39,6 +39,31 @@ for any feature, which is the common failure.
 
 For each boundary state: what it owns, what it exposes, what it depends on, and what it
 must never reach for. The last one is what actually holds over time.
+
+## The Bound Pattern
+
+Choose the architecture pattern from `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`
+(`application_architecture`), not from taste:
+
+- **A pattern already in the repo wins.** Always. Two patterns answering one concern is
+  worse than either alone.
+- Otherwise bind the default - `layered-ports` for a service, `container-presentational`
+  for a UI, `modular-monolith` for greenfield.
+- Escalate to `hexagonal`, `feature-sliced` or `cqrs` **only when one of its declared
+  triggers is objectively true here**, and name the trigger. "It might grow" is not a
+  trigger; it is the reason most codebases carry an abstraction nobody needed. Absence of
+  a trigger is a complete and statable reason to say no.
+
+## System Design Document
+
+At `standard` tier and above, write `docs/design/<slug>/system-design.md` using
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-design/references/system-design-template.md`.
+
+The two sections that carry the weight, and are the ones usually skipped: **failure
+modes** - what fails, what the user sees, what the system does, how it recovers - and
+**trade-offs** with the rejected option named. A design with no rejected alternative was
+not designed, it was defaulted; say so plainly when that is what happened, because
+knowing a decision was a default is what makes it cheap to revisit.
 
 ## Data Model
 

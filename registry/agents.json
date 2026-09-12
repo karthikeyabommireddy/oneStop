@@ -33,11 +33,21 @@
       "ui-designer",
       "work-partitioner"
     ],
+    "measure": [
+      "performance-agent"
+    ],
     "plan": [
       "architect",
       "option-broker",
       "planner",
       "work-partitioner"
+    ],
+    "qa-plan": [
+      "qa-planner"
+    ],
+    "reproduce": [
+      "code-explorer",
+      "test-author"
     ],
     "requirements": [
       "ba-analyst"
@@ -50,14 +60,24 @@
       "security-reviewer",
       "validator"
     ],
+    "scaffold": [
+      "architect"
+    ],
     "ship": [
-      "docs-agent"
+      "docs-agent",
+      "validator"
     ],
     "test": [
       "app-automation-agent",
-      "qa-planner",
       "test-author",
       "web-automation-agent"
+    ],
+    "ui-design": [
+      "ui-designer"
+    ],
+    "verify-green": [
+      "build-resolver",
+      "validator"
     ]
   },
   "agents": [
@@ -108,7 +128,8 @@
       "model": "opus",
       "phases": [
         "design",
-        "plan"
+        "plan",
+        "scaffold"
       ]
     },
     {
@@ -142,7 +163,8 @@
       ],
       "model": "sonnet",
       "phases": [
-        "implement"
+        "implement",
+        "verify-green"
       ]
     },
     {
@@ -157,7 +179,8 @@
       ],
       "model": "sonnet",
       "phases": [
-        "discovery"
+        "discovery",
+        "reproduce"
       ]
     },
     {
@@ -286,6 +309,7 @@
       ],
       "model": "sonnet",
       "phases": [
+        "measure",
         "implement",
         "review"
       ]
@@ -318,7 +342,7 @@
       ],
       "model": "sonnet",
       "phases": [
-        "test"
+        "qa-plan"
       ]
     },
     {
@@ -368,6 +392,7 @@
       ],
       "model": "sonnet",
       "phases": [
+        "reproduce",
         "implement",
         "test"
       ]
@@ -386,6 +411,7 @@
       ],
       "model": "opus",
       "phases": [
+        "ui-design",
         "design",
         "implement"
       ]
@@ -402,7 +428,9 @@
       ],
       "model": "sonnet",
       "phases": [
-        "review"
+        "review",
+        "verify-green",
+        "ship"
       ]
     },
     {

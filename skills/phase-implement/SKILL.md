@@ -86,6 +86,32 @@ The intent decides how the loop starts. This is not optional:
   behavior change is permitted, and no test assertion may be weakened.
 - **feature, flow, mvp** - straight red-green-refactor per slice.
 
+## Architecture
+
+Bound before the first line is written, never retrofitted. Protocol:
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`. Data:
+`${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`.
+
+**Every file written declares one role**, and the role fixes what it may import:
+
+| Role | Never imports |
+|---|---|
+| **dumb** (presentational) | data clients, stores, router, environment, clock, randomness |
+| **smart** (container) | - it is the layer that owns fetching, state, routing and the loading/empty/error branches |
+| **service** | framework request/response types, ORM sessions, concrete adapters, vendor SDKs |
+| **transport** | repositories, the database |
+| **adapter** | other adapters, transport types |
+| **pure** | any I/O at all |
+
+A presentational component that fetches cannot be tested without a network stub, cannot
+be previewed, and cannot be reused on a second screen - and none of that shows up as a
+failing test. Worked examples, before and after, in both directions:
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-implement/references/smart-dumb.md`.
+
+SOLID applies as diff-level diagnostics, not as a quota - a growing switch on a type
+discriminator in three files, a service importing a driver, a unit test that needs a
+database. Apply a principle when its signal is actually present, and name the signal.
+
 ## Code Standards
 
 Enforced on every file written, and checked in review:
@@ -122,7 +148,7 @@ the slice needs mid-flight judgement.
 
 ## Traceability
 
-If an RTM exists at `docs/ba/<feature>/RTM.md`, fill `Impl-Ref` for every requirement a
+If an RTM exists at `docs/requirements/<slug>/RTM.md`, fill `Impl-Ref` for every requirement a
 completed slice satisfies, with the `path:line` of the implementation, and move its
 `Status` to `implemented`. Update the CSV to match.
 

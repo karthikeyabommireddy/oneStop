@@ -70,6 +70,30 @@ Consistency with the surrounding code beats theoretical superiority. If the chan
 deliberately departs from a convention, that needs a stated reason - flag it when the
 reason is absent, not when you would have chosen differently.
 
+## Architecture Fit
+
+Check every changed file's **import list against its role**. This is mechanical, it is
+visible in the diff, and it catches the structural defects that no test ever fails on.
+Roles and their import rules: `${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`.
+
+| Finding | Why it matters |
+|---|---|
+| a presentational component importing a data client, store or router | it can no longer be tested or previewed without mocking a network - and every state below it loses coverage |
+| a service importing a driver, vendor SDK or framework request type | the dependency is inverted; the rules now need infrastructure to test |
+| `new ConcreteAdapter()` inside business logic | the adapter is welded in at the worst possible place |
+| a route handler holding a business rule, or a service holding SQL | layered-ports quietly degrading back into the fat controller it replaced |
+| a third layout-mode boolean prop | that component is two components sharing one name |
+
+SOLID applies here as **diagnostics, not quotas** - a growing switch on a type
+discriminator repeated across files, an implementation throwing `NotImplemented`, a
+twelve-method interface whose callers use two, a unit test that needs a database. Raise a
+principle only when its signal is actually present, and **name the signal you saw**.
+"Violates SRP" is not a finding; "this file both parses the webhook and charges the card,
+so it changes for two unrelated reasons" is.
+
+Do not flag the opposite failure either: an interface with one implementation and no
+second in prospect is speculative generality, which is its own defect.
+
 ## Severity
 
 Assign exactly one level per finding:

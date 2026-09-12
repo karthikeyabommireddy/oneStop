@@ -1,5 +1,78 @@
 # Changelog
 
+## 1.7.0
+
+### Added - the pattern inside the framework
+
+Binding Playwright was only half a decision. Within Playwright there are several
+structures and they are not equal: an inheritance-based page-object tree flakes more and
+costs more to change than composed fixtures, and that difference shows up as rewrite cost
+rather than as a failing test. The same gap existed everywhere - Cypress, Detox, Espresso,
+XCUITest - and for the application code itself, which had no declared architecture at all.
+
+**`registry/patterns.json`** now answers *how*, where `stacks.json` answers *which*:
+
+- **Automation patterns** for all 13 bindable frameworks. Playwright and its four language
+  ports bind **fixture-composed page objects** - compose, never inherit; page objects
+  expose `Locator`s and never assert; `getByRole` before `getByTestId` before CSS; no
+  `waitForTimeout`; no conditional assertion; auth once via `storageState`. Cypress binds
+  app actions with `cy.session`. Detox and Espresso bind the robot pattern. XCUITest,
+  Appium and WinAppDriver bind screen objects. Maestro binds composed flows. Each entry
+  names what it supersedes and why.
+- **Application architecture** - `container-presentational` (smart/dumb) for frontends,
+  `layered-ports` for services, `modular-monolith` for greenfield, with `feature-sliced`,
+  `hexagonal` and `cqrs` reachable only when a declared trigger is objectively true.
+  Escalating without a fired trigger is how codebases acquire abstractions nobody needed.
+- **SOLID as diff-level checks** - each principle stated as a signal visible in a diff
+  with the fix, not as a phrase to cite. "Violates SRP" is not a finding; "this file both
+  parses the webhook and charges the card" is.
+- **File roles** - every file written declares one role (`smart`, `dumb`, `service`,
+  `adapter`, `transport`, `pure`), and the role fixes what it may import. The
+  `code-reviewer` now checks import lists against roles, which catches the structural
+  defects no test ever fails on.
+
+### Added - where artifacts go
+
+**`registry/artifacts.json`** maps all 19 producing phases to their output paths, with a
+resolution rule that defers to whatever documentation home the repository already has.
+
+This fixed a live divergence: `ba-analyst` wrote the requirements matrix to
+`docs/ba/<feature>/RTM.md`, nothing else in the pipeline agreed on that path, and the
+`ui-design` phase named a contrast report with no path at all. A matrix one phase writes
+and another cannot find stops being maintained inside a sprint, and then it lies.
+Requirements now live at `docs/requirements/<slug>/`, and the RTM's relay - `Impl-Ref` by
+implement, `Test-Ref` by test and automation, `Status` through review - is written down.
+
+### Added - techwave-style skill layout
+
+Each phase skill can now carry its own `references/`, and `skills/shared/` holds the
+protocols every phase reads: `architecture.md`, `artifacts.md`, `agent-flow.md`. New
+worked references - the full Playwright fixture skeleton, the native robot and screen
+patterns, smart/dumb before-and-after in React, Angular, Vue and Python, and a system
+design template. Role agents stay in the plugin-root `agents/`, since those are registered
+Claude Code subagents rather than inline prompt files.
+
+### Fixed - four agents declared phases that could never bind
+
+`qa-planner` declared `phases: test` while the phase it serves is `qa-plan`, so the manual
+test planner could never be selected - a run would silently skip QA planning with nothing
+reporting it. `ui-designer` did not declare `ui-design`, `performance-agent` did not
+declare `measure`, `test-author` did not declare `reproduce`, and `build-resolver` and
+`validator` did not declare `verify-green`.
+
+### Added - four validator checks
+
+1. **Agent phase coverage** - every phase in a `phase_mask` has an agent declaring it, and
+   no agent declares a phase that does not exist. This is the check that catches the class
+   of bug above.
+2. **Automation pattern coverage** - every bindable framework has a pattern. It immediately
+   found two gaps: `selenium` and `winappdriver` had none, so an agent would have invented
+   a structure. Both now have entries.
+3. **Artifact map coverage** - warns on any phase that writes without a declared path.
+4. **Internal reference integrity** - every `${CLAUDE_PLUGIN_ROOT}` path resolves on disk.
+   A broken one is silent at runtime: the model simply does not load the protocol it was
+   told to follow.
+
 ## 1.6.0
 
 ### Fixed - onestop shipped no MCP servers, so a real run borrowed another plugin's

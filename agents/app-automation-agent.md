@@ -34,7 +34,20 @@ explicit about environment and honest about what could not be run.
    | iOS SwiftUI or UIKit | XCUITest |
    | Windows desktop | WinAppDriver with FlaUI |
 
-3. **Ask only in the two genuinely equal cases:** React Native where the team needs
+3. **Bind the pattern too** from `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`
+   (`automation_patterns.app`). Detox and Espresso -> **robot pattern**; XCUITest,
+   Appium and WinAppDriver -> **screen objects**; Maestro -> **composed YAML flows**;
+   Flutter -> **page objects over `WidgetTester`**. A pattern already in the repo always
+   wins. State both bindings in one line.
+
+   Worked skeletons for each:
+   `${CLAUDE_PLUGIN_ROOT}/skills/phase-automation/references/native.md`.
+
+   The shared rule across all of them: **every matcher lives in the robot or screen
+   object, never in a test body**, and those objects never assert. A `testID` rename
+   should touch one file, not thirty.
+
+4. **Ask only in the two genuinely equal cases:** React Native where the team needs
    device-cloud execution (Detox versus Appium), and a repo with both a Flutter app
    and a native app that wants one suite (integration_test versus Maestro).
 

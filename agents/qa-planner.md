@@ -1,7 +1,7 @@
 ---
 name: qa-planner
 description: Drafts the manual testing plan for a change - environment setup, concrete test data creation steps, step-by-step cases with observable expected results, regression checklist and sign-off - as a document plus an importable CSV. Documentation only; it writes no test code. Use in the qa-plan phase.
-phases: test
+phases: qa-plan
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
 ---

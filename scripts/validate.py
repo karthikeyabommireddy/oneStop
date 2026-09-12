@@ -22,6 +22,10 @@ FM = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
 # Phases the orchestrate skill handles inline rather than in a phase-* skill.
 INLINE_PHASES = {"intake", "flow-decomposition"}
 
+# Phases the orchestrator runs itself, with no delegated agent. Everything else must
+# have an agent declaring it, or the phase has nobody to execute it.
+ORCHESTRATOR_PHASES = {"intake", "flow-decomposition", "context", "research"}
+
 errors, warnings = [], []
 
 
@@ -250,6 +254,90 @@ def main():
         for p_ in orphan_packs:
             warn("language pack '" + p_ + "' is not reachable from any stack - nothing can bind it")
         print("  pack reachability   " + ("ok" if not orphan_packs else str(len(orphan_packs)) + " orphaned"))
+
+    # 14 - every phase that runs must have an agent that declares it. This is the check
+    # that would have caught qa-planner declaring `phases: test` while the phase it
+    # serves is `qa-plan` - a binding that could never fire, invisible until a run
+    # silently skipped manual test planning.
+    declared = {}
+    for fn in sorted(os.listdir(os.path.join(ROOT, "agents"))):
+        if not fn.endswith(".md"):
+            continue
+        fm = frontmatter(os.path.join(ROOT, "agents", fn)) or {}
+        for ph in fm.get("phases", "").split():
+            declared.setdefault(ph, []).append(fm.get("name", fn))
+    unstaffed = sorted(p for p in all_phases
+                       if p not in ORCHESTRATOR_PHASES and p not in declared)
+    for p in unstaffed:
+        err("phase '" + p + "' runs in a phase_mask but no agent declares it")
+    ghost = sorted(p for p in declared if p not in all_phases)
+    for p in ghost:
+        err("agent(s) " + ", ".join(declared[p]) + " declare phase '" + p +
+            "' which is in no intent phase_mask - that binding can never fire")
+    print("  agent phase cover   " + ("ok" if not (unstaffed or ghost) else "FAIL"))
+
+    # 15 - patterns.json must answer, for every automation framework onestop can bind,
+    # HOW that framework is structured. Binding Playwright without binding its pattern
+    # is half a decision: the suite works today and is rewritten in a quarter.
+    patterns = load_json("registry/patterns.json")
+    if patterns and stacks:
+        patterned = {e["framework"] for tgt in patterns["automation_patterns"].values()
+                     if isinstance(tgt, list) for e in tgt}
+        # automation_frameworks also carries `instruction` (a string) and
+        # `selection_rules` (a list of strings) - only the target lists hold entries.
+        bindable = {f["id"] for tgt in ("web", "app")
+                    for f in stacks["automation_frameworks"].get(tgt, [])}
+        no_pattern = sorted(bindable - patterned)
+        for f in no_pattern:
+            err("automation framework '" + f + "' is bindable but patterns.json names no "
+                "pattern for it - the agent would invent a structure")
+        print("  automation patterns " + ("ok (" + str(len(patterned)) + ")"
+                                          if not no_pattern else "FAIL"))
+
+    # 16 - artifacts.json must cover every phase that produces something durable, or a
+    # phase writes to a path nothing else in the pipeline knows to look for. That is how
+    # the RTM ended up written to docs/ba/ and read from nowhere else.
+    arts = load_json("registry/artifacts.json")
+    if arts:
+        mapped = {a["phase"] for a in arts["by_phase"]}
+        stray = sorted(p for p in mapped if p not in all_phases and p != "gate")
+        for p in stray:
+            err("artifacts.json maps phase '" + p + "' which is in no phase_mask")
+        for p in sorted(all_phases - mapped - ORCHESTRATOR_PHASES):
+            warn("phase '" + p + "' has no entry in artifacts.json - if it writes "
+                 "anything, the path is undeclared")
+        print("  artifact map        " + ("ok (" + str(len(mapped)) + " phases)"
+                                          if not stray else "FAIL"))
+
+    # 17 - every plugin-internal file referenced with ${CLAUDE_PLUGIN_ROOT} must exist.
+    # A broken reference is silent at runtime: the model simply does not load the
+    # protocol it was told to follow, and the run degrades with no error anywhere.
+    ref = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([A-Za-z0-9_./-]+)")
+    broken = set()
+    for sub in ("skills", "agents", "commands", "rules", "packs"):
+        for dirpath, _, files in os.walk(os.path.join(ROOT, sub)):
+            for fn in files:
+                if not fn.endswith(".md"):
+                    continue
+                src = os.path.join(dirpath, fn)
+                try:
+                    body = open(src, encoding="utf-8").read()
+                except (OSError, UnicodeDecodeError):
+                    continue
+                for rel in ref.findall(body):
+                    rel = rel.rstrip(".,)")
+                    # A reference may name a file, a directory of them, or a JSON
+                    # registry with a dotted key path appended (stacks.json.web).
+                    target = os.path.join(ROOT, rel)
+                    if os.path.isfile(target) or os.path.isdir(target):
+                        continue
+                    if ".json" in rel and os.path.isfile(
+                            os.path.join(ROOT, rel[:rel.index(".json") + 5])):
+                        continue
+                    broken.add(os.path.relpath(src, ROOT) + " -> " + rel)
+    for b in sorted(broken):
+        err("broken plugin reference: " + b)
+    print("  internal references " + ("ok" if not broken else "FAIL (" + str(len(broken)) + ")"))
 
     return report()
 

@@ -25,7 +25,7 @@ open questions - they are known properties of the shape of thing being built, an
 who asks about them is wasting the user's attention.
 
 **The ticket context.** Linked issues, the epic, recent related commits, prior artifacts
-in `docs/ba/`.
+in `docs/requirements/`.
 
 Ask only for what genuinely cannot be derived and would change the build if wrong. Batch
 it into one message, each item carrying your derived assumption as the default so the
@@ -88,14 +88,20 @@ exactly the column list above.
 
 ## Artifacts
 
-Write to `docs/ba/<feature>/`, following the repo docs conventions if it has any:
+Write to `docs/requirements/<slug>/`, resolving the path per
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/artifacts.md` - a repo with its own documentation
+home wins over this default:
 
 | File | Contents |
 |---|---|
-| `requirements.md` | scope, actors, FRs, NFRs, business rules, assumptions, out-of-scope |
-| `stories.md` | epics and stories with Given/When/Then criteria |
+| `brd.md` | scope, actors, FRs, NFRs, business rules, assumptions, out-of-scope |
+| `user-stories.md` | epics and stories with Given/When/Then criteria |
 | `domain-model.md` | entities, relationships, states - only when the feature changes the model |
 | `RTM.md` / `RTM.csv` | the traceability matrix, both formats, identical rows |
+
+The slug is fixed once at intake and recorded in `.onestop/run.json`. Later phases fill
+`Impl-Ref`, `Test-Ref` and `Status` in this same file - so writing it anywhere else means
+the implement phase fills a matrix nobody reads, and the real one silently rots.
 
 Every artifact ends with a version log (`| Version | Date | Change |`) starting at 1.
 When revising an existing artifact, edit it in place and bump the log - never write a

@@ -11,7 +11,7 @@
       "name": "onestop",
       "source": "./",
       "description": "Describe what you want; onestop does the rest. Classifies intent, searches the codebase before asking anything, binds the right reviewers, build resolvers, test runners and automation frameworks for your stack, and drives plan, design, code, test, web and app end-to-end automation, review and ship. Asks only when information is genuinely missing or several real options were found.",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "author": {
         "name": "karthikeya"
       },

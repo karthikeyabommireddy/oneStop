@@ -1,7 +1,7 @@
 ---
 name: validator
 description: Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before Gate 2. Use at the end of the review phase.
-phases: review
+phases: review verify-green ship
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

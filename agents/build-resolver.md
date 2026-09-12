@@ -1,7 +1,7 @@
 ---
 name: build-resolver
 description: Gets a failing build, compile or type-check green again with the smallest correct change, specialising to the toolchain by loading its language pack. Fixes build breakage only - never refactors, never redesigns. Use whenever a build or type check fails.
-phases: implement
+phases: implement verify-green
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---

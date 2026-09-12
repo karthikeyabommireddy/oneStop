@@ -23,8 +23,28 @@ end-to-end suite that a team will actually keep.
    Never introduce a second one - that is the most common way E2E suites rot.
 2. **No framework present** - bind the stack default from `${CLAUDE_PLUGIN_ROOT}/registry/stacks.json`
    (`automation_frameworks.web`). Playwright is the default for most stacks.
-3. **State the binding in one line.** Do not ask which framework unless the repo has
+3. **Bind the pattern too** from `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`
+   (`automation_patterns.web`). The framework is half the decision - within Playwright,
+   a `BasePage` inheritance tree and composed fixtures are not equally good, and the
+   difference surfaces as flake and rewrite cost rather than as a failing test. Defaults:
+   Playwright -> **fixture-composed page objects**; Cypress -> **app actions with
+   `cy.session`**; Selenium (only if already present) -> **page objects with explicit
+   waits**. A pattern already in the repo always wins over the default.
+4. **State both bindings in one line.** Do not ask which framework unless the repo has
    none and two are genuinely equal for the target - a rare case.
+
+   ```
+   Bound: Playwright, fixture-composed page objects (parallel-safe, no BasePage god-object)
+   ```
+
+Worked skeleton - directory layout, the fixture file, a page object, a spec, the config,
+`storageState` auth, locator priority and the flake table:
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-automation/references/playwright.md`.
+
+**Compose, never inherit.** A `BasePage` accumulates every helper any page ever needed
+and becomes a god-object every spec transitively depends on. **Page objects expose
+`Locator`s and never assert** - assertions belong in the spec, where the failure message
+names the behaviour that broke.
 
 ## Input
 

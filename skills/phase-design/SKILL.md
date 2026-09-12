@@ -18,11 +18,17 @@ tax on the team, so this phase is deliberately scaled to blast radius.
 | Tier | Artifacts |
 |---|---|
 | trivial, small | none - the plan is the design |
-| standard | interface contract if two or more components meet; a short LLD section in the plan |
-| large | HLD, LLD, interface contract, and one ADR per expensive decision |
+| standard | `docs/design/<slug>/system-design.md`; interface contract if two or more components meet |
+| large | the above, plus a full LLD and one ADR per expensive decision |
 
-Never produce an HLD for a change that touches one module. Never skip the contract
-when two components have to agree on a wire format.
+Never produce a system design for a change that touches one module. Never skip the
+contract when two components have to agree on a wire format.
+
+**Bind the architecture pattern here**, before any code exists, from
+`${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`. A pattern already in the repo wins;
+otherwise the default; escalate only on a fired trigger, and name it. Protocol:
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`. Template:
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-design/references/system-design-template.md`.
 
 ## The Interface Contract
 
@@ -88,8 +94,20 @@ Do not write an ADR for a reversible choice. The option-broker already resolved 
 
 ## Output
 
-Write artifacts to the repo `docs/` directory, following its existing layout. Report
-the paths and the key decisions - never echo the document bodies into chat.
+Resolve every path through `${CLAUDE_PLUGIN_ROOT}/skills/shared/artifacts.md` - a repo
+with its own documentation home wins over the default layout.
+
+```
+DESIGN
+  pattern:  <bound pattern, and the reason or the trigger that fired>
+  wrote:    docs/design/<slug>/system-design.md
+            docs/design/<slug>/contracts/<contract file>   (or: none - single component)
+            docs/design/<slug>/adr/ADR-<n>-<title>.md      (or: none - nothing expensive to reverse)
+  decided:  <the decisions that shape implementation>
+  open:     <anything unresolved, and what would resolve it>
+```
+
+Report the paths and the key decisions - never echo the document bodies into chat.
 
 ## Rules
 

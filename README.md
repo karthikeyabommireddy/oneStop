@@ -364,20 +364,27 @@ onestop/
   commands/         onestop, onestop-status, onestop-resume
   registry/         the routing brain
     intents.json    14 intents, size tiers, security triggers
-    stacks.json     20 stacks, 6 web + 7 app automation frameworks
+    stacks.json     24 stacks, 6 web + 7 app automation frameworks
+    patterns.json   architecture + automation patterns, SOLID checks, file roles
+    artifacts.json  where every phase writes what it produces
     design.json     11 domain design profiles, OKLCH system, scales
+    gates.json      gate protocol - shape, no-batching, gate zero
     parallel.json   wave scheduling, write-surface and failure rules
     agents.json     derived role-agent catalogue  (generated)
     packs.json      derived pack catalogue        (generated)
     skills.json     derived skill catalogue       (generated)
   agents/   23 role agents
   packs/
-    languages/      20 language packs
+    languages/      24 language packs
     concerns/       5 concern packs
   skills/
     orchestrate/          the engine
     parallel-execution/   the wave scheduler
-    phase-*/              18 phase skills
+    phase-*/              18 phase skills, each with its own references/
+    shared/               protocols every phase reads
+      architecture.md     pattern binding, smart/dumb roles, SOLID, system design
+      artifacts.md        artifact placement and the RTM relay
+      agent-flow.md       phase-to-agent map and the delegation brief
   hooks/            PostToolUse + Stop, keeping the knowledge graph fresh
   rules/common/     operating rules and the authority order
   templates/        stack.yml, adr.md

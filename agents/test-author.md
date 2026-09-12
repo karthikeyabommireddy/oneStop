@@ -1,7 +1,7 @@
 ---
 name: test-author
 description: Writes tests first and drives the red-green-refactor loop, specialising to the stack by loading its language pack for idiom, runner and assertion style. Writes complete runnable test bodies, never stubs. Use in the implement and test phases.
-phases: implement test
+phases: reproduce implement test
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---
