@@ -77,7 +77,7 @@ Rank the merged list by severity, then by blast radius.
 
 ## Resolving
 
-- **CRITICAL and HIGH must be fixed before Gate 2.** Not deferred, not ticketed, not
+- **CRITICAL and HIGH must be fixed before the ship gate.** Not deferred, not ticketed, not
   waved past - unless the user explicitly decides otherwise after seeing them, and
   that decision is recorded in the run ledger.
 - Fix in place, then **re-run the tests**. A review fix is a code change and gets the
@@ -105,14 +105,14 @@ REVIEW
       fix: <what was changed>  status: fixed | outstanding
   dismissed: <finding, and the evidence that it does not apply>
   retest:    <suite result after the review fixes>
-  verdict:   READY FOR GATE 2 | BLOCKED on <n> findings
+  verdict:   READY FOR SHIP | BLOCKED on <n> findings
 ```
 
 ## Rules
 
 1. **Security review is mandatory on a security trigger.** At every tier, no exception.
 2. **Never downgrade a hardcoded secret.**
-3. **CRITICAL and HIGH block Gate 2.**
+3. **CRITICAL and HIGH block the ship gate.**
 4. **Re-run tests after every review fix.**
 5. **Deduplicate before reporting.**
 6. **Dismiss only with evidence.**

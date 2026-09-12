@@ -5,7 +5,7 @@ Written to `docs/design/<slug>/system-design.md` before implementation starts, a
 an empty heading is worse than an absent one.
 
 Date: <YYYY-MM-DD>
-Status: draft | approved at Gate 1 | superseded
+Status: draft | approved at the plan gate | superseded
 
 ---
 

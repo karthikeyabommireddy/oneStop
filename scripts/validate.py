@@ -300,7 +300,7 @@ def main():
     arts = load_json("registry/artifacts.json")
     if arts:
         mapped = {a["phase"] for a in arts["by_phase"]}
-        stray = sorted(p for p in mapped if p not in all_phases and p != "gate")
+        stray = sorted(p for p in mapped if p not in all_phases)
         for p in stray:
             err("artifacts.json maps phase '" + p + "' which is in no phase_mask")
         for p in sorted(all_phases - mapped - ORCHESTRATOR_PHASES):
@@ -359,6 +359,38 @@ def main():
             err("registry/ui-styles.json: " + p_)
         print("  ui styles           " + ("ok (" + str(len(ui["styles"])) + ")"
                                           if not problems else "FAIL"))
+
+    # 19 - the run.json shape documented by orchestrate must be the shape the conformance
+    # hook parses. These drifted once: orchestrate documented phases as bare status
+    # strings with a top-level {gate_1, gate_2}, while the hook detected an ungated phase
+    # by finding `"status": "done"` with no `"gate"` on the line. Nothing matched, so the
+    # only mechanical check that per-phase gating happened reported clean on runs that
+    # gated nothing. Enforcement that cannot fire is worse than none, because it is
+    # trusted.
+    orch = os.path.join(ROOT, "skills", "orchestrate", "SKILL.md")
+    hook = os.path.join(ROOT, "hooks", "run-conformance.sh")
+    if os.path.isfile(orch) and os.path.isfile(hook):
+        orch_src = open(orch, encoding="utf-8").read()
+        hook_src = open(hook, encoding="utf-8").read()
+        drift = []
+        # The superseded two-gate object, in any file that documents run state.
+        if re.search(r'"gate_[12]"', orch_src):
+            drift.append("orchestrate still documents a top-level gate_1/gate_2 object")
+        # A phase mapped straight to a status string is the shape the hook cannot read.
+        flat = re.search(
+            r'"(?:intake|context|discovery|research|plan|design|ui-design|scaffold|'
+            r'implement|test|automation|qa-plan|review|compliance|measure|reproduce|'
+            r'verify-green|ship)"\s*:\s*"(?:pending|active|done|skipped)"', orch_src)
+        if flat:
+            drift.append("orchestrate documents a phase as a bare status string (" +
+                         flat.group(0) + ") - the hook needs a per-phase object")
+        # And the hook must still be looking for the fields the schema provides.
+        for token in ('"status"', '"gate"'):
+            if token not in hook_src:
+                drift.append("run-conformance.sh no longer reads " + token)
+        for d_ in drift:
+            err("run.json schema drift: " + d_)
+        print("  run.json schema     " + ("ok" if not drift else "FAIL"))
 
     # 17 - every plugin-internal file referenced with ${CLAUDE_PLUGIN_ROOT} must exist.
     # A broken reference is silent at runtime: the model simply does not load the

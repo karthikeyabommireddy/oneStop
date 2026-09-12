@@ -58,7 +58,7 @@ Across every regime, these are the surfaces that actually fail audits:
 | MEDIUM | a control present but incomplete or unverified |
 | LOW | documentation or process gap, no data exposure |
 
-CRITICAL and HIGH block Gate 2, exactly as in the review phase.
+CRITICAL and HIGH block the ship gate, exactly as in the review phase.
 
 ## Boundaries
 

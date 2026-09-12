@@ -15,7 +15,7 @@ boundary.
 
 ## Preconditions
 
-Gate 1 is approved. The contract exists if the design phase produced one. If either
+The plan gate is approved. The contract exists if the design phase produced one. If either
 is missing, stop - implementing against an unapproved plan is how scope escapes.
 
 ## Partition First

@@ -1,6 +1,6 @@
 ---
 name: phase-ship
-description: Close the loop after review - conventional commits scoped to logical changes, a pull request with the repo template, and documentation sync. Owns Gate 2, the last stop before anything leaves the machine. Loaded by the orchestrate skill; not usually invoked directly.
+description: Close the loop after review - conventional commits scoped to logical changes, a pull request with the repo template, and documentation sync. Owns the ship gate, the last stop before anything leaves the machine. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 # Phase - Ship
 
-Turn a finished change into a delivered one. This phase owns **Gate 2** - the last
+Turn a finished change into a delivered one. This phase owns **the ship gate** - the last
 point before anything becomes visible outside this machine.
 
 ## Preconditions
@@ -22,7 +22,7 @@ point before anything becomes visible outside this machine.
 
 If any is unmet, stop and report. Do not ship past an unresolved blocker.
 
-## Gate 2
+## The Ship Gate
 
 Present this and **wait**. Nothing is committed, pushed, or published before approval:
 
@@ -49,7 +49,7 @@ THEN
 Approve to ship, or tell me what to change.
 ```
 
-Gate 2 always stops - at every tier, including `trivial`.
+The ship gate always stops - in every gate mode and at every tier, including `trivial`.
 
 ## Commits
 
@@ -104,7 +104,7 @@ Mark the run `status: complete` in `.onestop/run.json`.
 
 ## Rules
 
-1. **Never commit, push, or publish before Gate 2 approval.** Not even a WIP commit.
+1. **Never commit, push, or publish before the ship gate approval.** Not even a WIP commit.
 2. **Never ship with an unresolved CRITICAL or HIGH finding.**
 3. **Never commit a secret.** Scan the staged diff before committing; a hit stops the
    ship and the credential must be rotated, not just removed.

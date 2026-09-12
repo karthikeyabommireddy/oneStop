@@ -71,8 +71,19 @@ fi
 # 3. Run ledger present but phases unstamped.
 if [ -f "$LEDGER" ]; then
   if grep -q '"status"[[:space:]]*:[[:space:]]*"active"' "$LEDGER" 2>/dev/null; then
-    pending=$(grep -oE '"[a-z-]+"[[:space:]]*:[[:space:]]*"(pending|active)"' "$LEDGER" 2>/dev/null \
-      | sed 's/"\([a-z-]*\)".*/\1/' | grep -vE '^(status|gate_1|gate_2)$' | paste -sd, - 2>/dev/null)
+    # Same per-phase object shape as check 2: a phase line is `"name": { "status": ... }`.
+    # Requiring the `"name": {` prefix is what keeps the run's own top-level
+    # `"status": "active"` line from being counted as a phase called "status".
+    pending=$(awk '
+      /"status"[[:space:]]*:[[:space:]]*"(pending|active)"/ {
+        if (match($0, /"[a-z][a-z-]*"[[:space:]]*:[[:space:]]*\{/)) {
+          name = substr($0, RSTART + 1)
+          sub(/".*/, "", name)
+          out = (out == "" ? name : out ", " name)
+        }
+      }
+      END { print out }
+    ' "$LEDGER" 2>/dev/null)
     [ -n "$pending" ] && lines+=("RUN INCOMPLETE - phases not yet done: $pending")
   fi
 elif [ -s "$FLAGS" ]; then

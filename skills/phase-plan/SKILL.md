@@ -1,6 +1,6 @@
 ---
 name: phase-plan
-description: Turn the discovery picture into an ordered task list of thin vertical slices, each with its own acceptance criteria and test strategy. Produces the artifact presented at Gate 1. Loaded by the orchestrate skill; not usually invoked directly.
+description: Turn the discovery picture into an ordered task list of thin vertical slices, each with its own acceptance criteria and test strategy. Produces the artifact presented at the plan gate. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
 metadata:
@@ -11,7 +11,7 @@ metadata:
 # Phase - Plan
 
 Produce the task list the implementation phase will execute, and the artifact the user
-approves at **Gate 1**. This is the cheapest point in the pipeline to be wrong, so it
+approves at **the plan gate**. This is the cheapest point in the pipeline to be wrong, so it
 is the point where being precise pays most.
 
 ## Inputs
@@ -71,7 +71,7 @@ List, briefly, only the risks that would actually change the plan:
 
 Skip generic risk boilerplate. A register nobody acts on is noise.
 
-## Gate 1 Artifact
+## Plan Gate Artifact
 
 Present exactly this, then stop and wait:
 
@@ -102,7 +102,7 @@ stopping - there is nothing meaningful to approve.
 
 ## Rules
 
-1. **No implementation code before Gate 1 approval.** Not a scaffold, not a stub.
+1. **No implementation code before the plan gate approval.** Not a scaffold, not a stub.
 2. **Never plan around a gap discovery did not confirm.** Verify, do not assume.
 3. **Every task is independently verifiable.** If you cannot say how a task is proven
    done, it is not a task yet.

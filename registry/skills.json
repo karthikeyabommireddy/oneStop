@@ -67,7 +67,7 @@
     {
       "name": "phase-plan",
       "path": "skills/phase-plan/SKILL.md",
-      "description": "Turn the discovery picture into an ordered task list of thin vertical slices, each with its own acceptance criteria and test strategy. Produces the artifact presented at Gate 1. Loaded by the orchestrate skill; not usually invoked directly.",
+      "description": "Turn the discovery picture into an ordered task list of thin vertical slices, each with its own acceptance criteria and test strategy. Produces the artifact presented at the plan gate. Loaded by the orchestrate skill; not usually invoked directly.",
       "phase": ""
     },
     {
@@ -109,7 +109,7 @@
     {
       "name": "phase-ship",
       "path": "skills/phase-ship/SKILL.md",
-      "description": "Close the loop after review - conventional commits scoped to logical changes, a pull request with the repo template, and documentation sync. Owns Gate 2, the last stop before anything leaves the machine. Loaded by the orchestrate skill; not usually invoked directly.",
+      "description": "Close the loop after review - conventional commits scoped to logical changes, a pull request with the repo template, and documentation sync. Owns the ship gate, the last stop before anything leaves the machine. Loaded by the orchestrate skill; not usually invoked directly.",
       "phase": ""
     },
     {

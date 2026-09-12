@@ -317,7 +317,7 @@
     {
       "name": "planner",
       "path": "agents/planner.md",
-      "description": "Turns a discovery picture into an ordered task list of thin vertical slices, each with observable acceptance criteria, the files it touches, and the test level that proves it. Produces the artifact approved at Gate 1. Use in the plan phase.",
+      "description": "Turns a discovery picture into an ordered task list of thin vertical slices, each with observable acceptance criteria, the files it touches, and the test level that proves it. Produces the artifact approved at the plan gate. Use in the plan phase.",
       "tools": [
         "Read",
         "Grep",
@@ -419,7 +419,7 @@
     {
       "name": "validator",
       "path": "agents/validator.md",
-      "description": "Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before Gate 2. Use at the end of the review phase.",
+      "description": "Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before the ship gate. Use at the end of the review phase.",
       "tools": [
         "Read",
         "Grep",

@@ -1,7 +1,6 @@
 {
-  "version": "1.7.0",
+  "version": "1.9.1",
   "description": "Where every phase puts what it produces. Before this existed each phase invented a path - the analyst wrote docs/ba/<feature>/RTM.md, the UI phase named a contrast report with no path at all - so the matrix written by one phase was not always the one the next phase looked for. That is how a traceability matrix silently stops being maintained. One map, one owner per artifact, and a resolution rule that defers to whatever the repository already does.",
-
   "resolution": {
     "order": [
       "If the repository already has a home for this kind of document, use it. A repo with docs/adr/ gets its ADRs there, not in docs/design/<slug>/adr/. A repo with a docs site (docusaurus, mkdocs, vitepress, sphinx) gets documents inside that site's content root so they are actually published.",
@@ -9,10 +8,17 @@
       "Slug is the feature or change name in kebab-case, decided once at intake and recorded in .onestop/run.json so every phase resolves to the same directory.",
       "Never create a second documentation root. If docs/ and doc/ and documentation/ all exist, use the one with the most recently modified file and say which you chose."
     ],
-    "detect_existing": ["docs/", "doc/", "documentation/", "website/docs/", "docs/adr/", "adr/", "architecture/decisions/"],
+    "detect_existing": [
+      "docs/",
+      "doc/",
+      "documentation/",
+      "website/docs/",
+      "docs/adr/",
+      "adr/",
+      "architecture/decisions/"
+    ],
     "announce": "Name every path written in the phase output block. An artifact the user cannot locate was not delivered."
   },
-
   "roots": {
     "docs": {
       "path": "docs/",
@@ -31,62 +37,128 @@
       "audience": "the test runner"
     }
   },
-
   "by_phase": [
     {
       "phase": "context",
       "owner": "orchestrate",
       "artifacts": [
-        {"path": ".onestop/run.json", "format": "json", "what": "Run state: intent, size tier, slug, phase list, per-phase status, gate decisions. The resume point."},
-        {"path": ".onestop/stack.yml", "format": "yaml", "what": "Detected stack, bound language and concern packs, bound architecture pattern, bound automation frameworks and their patterns, bound runners. Written once, read by every later phase instead of re-detecting."},
-        {"path": ".onestop/ledger.md", "format": "markdown", "what": "Append-only human-readable log: one line per phase started, per agent dispatched, per gate shown and answered. This is what makes a run auditable after the fact."}
+        {
+          "path": ".onestop/run.json",
+          "format": "json",
+          "what": "Run state and the run ledger in one file: intent, tier, slug, gate mode, and per phase a status plus the gate decision the user gave. This is what 'the ledger' means throughout onestop, what the Stop hook reads, and the resume point."
+        },
+        {
+          "path": ".onestop/stack.yml",
+          "format": "yaml",
+          "what": "Detected stack, bound language and concern packs, bound architecture pattern, bound automation frameworks and their patterns, bound runners. Written once, read by every later phase instead of re-detecting."
+        }
       ]
     },
     {
       "phase": "requirements",
       "owner": "ba-analyst",
       "artifacts": [
-        {"path": "docs/requirements/<slug>/brd.md", "format": "markdown", "what": "Objective, stakeholders, scope and explicit out-of-scope, domain model, process flows, functional and non-functional requirements."},
-        {"path": "docs/requirements/<slug>/user-stories.md", "format": "markdown", "what": "Stories with testable acceptance criteria, each carrying its requirement id."},
-        {"path": "docs/requirements/<slug>/RTM.md", "format": "markdown", "what": "Requirements traceability matrix. Columns: Req-Id, Requirement, Source, Story, Impl-Ref, Test-Ref, Status."},
-        {"path": "docs/requirements/<slug>/RTM.csv", "format": "csv", "what": "The same matrix, importable into a tracker. Kept in step with the markdown - if they disagree, both are wrong."}
+        {
+          "path": "docs/requirements/<slug>/brd.md",
+          "format": "markdown",
+          "what": "Objective, stakeholders, scope and explicit out-of-scope, domain model, process flows, functional and non-functional requirements."
+        },
+        {
+          "path": "docs/requirements/<slug>/user-stories.md",
+          "format": "markdown",
+          "what": "Stories with testable acceptance criteria, each carrying its requirement id."
+        },
+        {
+          "path": "docs/requirements/<slug>/RTM.md",
+          "format": "markdown",
+          "what": "Requirements traceability matrix. Columns: Req-Id, Requirement, Source, Story, Impl-Ref, Test-Ref, Status."
+        },
+        {
+          "path": "docs/requirements/<slug>/RTM.csv",
+          "format": "csv",
+          "what": "The same matrix, importable into a tracker. Kept in step with the markdown - if they disagree, both are wrong."
+        }
       ],
       "filled_later": [
-        {"column": "Impl-Ref", "by_phase": "implement", "value": "path:line of the code that satisfies the requirement"},
-        {"column": "Test-Ref", "by_phase": "test and automation", "value": "test id or spec path; a requirement may carry both a unit and an end-to-end reference"},
-        {"column": "Status", "by_phase": "implement, test, review", "value": "specified -> implemented -> tested -> verified"}
+        {
+          "column": "Impl-Ref",
+          "by_phase": "implement",
+          "value": "path:line of the code that satisfies the requirement"
+        },
+        {
+          "column": "Test-Ref",
+          "by_phase": "test and automation",
+          "value": "test id or spec path; a requirement may carry both a unit and an end-to-end reference"
+        },
+        {
+          "column": "Status",
+          "by_phase": "implement, test, review",
+          "value": "specified -> implemented -> tested -> verified"
+        }
       ]
     },
     {
       "phase": "research",
       "owner": "orchestrate",
       "artifacts": [
-        {"path": "docs/research/<slug>/findings.md", "format": "markdown", "what": "What was looked up, from which source and version, and what it means for this change. Dated, because library guidance expires."}
+        {
+          "path": "docs/research/<slug>/findings.md",
+          "format": "markdown",
+          "what": "What was looked up, from which source and version, and what it means for this change. Dated, because library guidance expires."
+        }
       ]
     },
     {
       "phase": "discovery",
       "owner": "discovery-scout",
       "artifacts": [
-        {"path": ".onestop/discovery/<slug>.md", "format": "markdown", "what": "Found / gaps / options with file-level evidence, per flow step. Run state rather than product documentation - it describes the repo at one moment and goes stale immediately."}
+        {
+          "path": ".onestop/discovery/<slug>.md",
+          "format": "markdown",
+          "what": "Found / gaps / options with file-level evidence, per flow step. Run state rather than product documentation - it describes the repo at one moment and goes stale immediately."
+        }
       ]
     },
     {
       "phase": "design",
       "owner": "architect",
       "artifacts": [
-        {"path": "docs/design/<slug>/system-design.md", "format": "markdown", "what": "The system design: component diagram, the bound architecture pattern and why, data model, sequence for the primary flow, failure modes, scaling and security posture, and the trade-offs considered."},
-        {"path": "docs/design/<slug>/adr/ADR-<NNN>-<title>.md", "format": "markdown", "what": "One decision per file, numbered, using templates/adr.md. Written only for decisions that are expensive to reverse."},
-        {"path": "docs/design/<slug>/contracts/", "format": "openapi | graphql | proto | asyncapi | typed interface", "what": "The interface contract, written by contract-agent before either side is implemented. This is the artifact that unlocks parallel implementation."}
+        {
+          "path": "docs/design/<slug>/system-design.md",
+          "format": "markdown",
+          "what": "The system design: component diagram, the bound architecture pattern and why, data model, sequence for the primary flow, failure modes, scaling and security posture, and the trade-offs considered."
+        },
+        {
+          "path": "docs/design/<slug>/adr/ADR-<NNN>-<title>.md",
+          "format": "markdown",
+          "what": "One decision per file, numbered, using templates/adr.md. Written only for decisions that are expensive to reverse."
+        },
+        {
+          "path": "docs/design/<slug>/contracts/",
+          "format": "openapi | graphql | proto | asyncapi | typed interface",
+          "what": "The interface contract, written by contract-agent before either side is implemented. This is the artifact that unlocks parallel implementation."
+        }
       ]
     },
     {
       "phase": "ui-design",
       "owner": "ui-designer",
       "artifacts": [
-        {"path": "docs/design-system/palette.md", "format": "markdown", "what": "The domain-matched OKLCH palette with measured contrast ratios per pair - measured, never estimated."},
-        {"path": "docs/design-system/tokens.css", "format": "css", "what": "Design tokens as custom properties: colour, spacing, type scale, radius, elevation, motion. Light and dark. This is the file components import; the markdown explains it."},
-        {"path": "docs/design-system/components.md", "format": "markdown", "what": "Component inventory with every interactive state specified - rest, hover, active, focus, disabled, loading, error, empty."}
+        {
+          "path": "docs/design-system/palette.md",
+          "format": "markdown",
+          "what": "The domain-matched OKLCH palette with measured contrast ratios per pair - measured, never estimated."
+        },
+        {
+          "path": "docs/design-system/tokens.css",
+          "format": "css",
+          "what": "Design tokens as custom properties: colour, spacing, type scale, radius, elevation, motion. Light and dark. This is the file components import; the markdown explains it."
+        },
+        {
+          "path": "docs/design-system/components.md",
+          "format": "markdown",
+          "what": "Component inventory with every interactive state specified - rest, hover, active, focus, disabled, loading, error, empty."
+        }
       ],
       "note": "If the repo already has a design system, extend it in place and write no new token file. Two token sources is the failure mode this phase exists to prevent."
     },
@@ -94,17 +166,37 @@
       "phase": "plan",
       "owner": "planner",
       "artifacts": [
-        {"path": "docs/design/<slug>/plan.md", "format": "markdown", "what": "The ordered task list of thin vertical slices - each with acceptance criteria, the files it touches, and the test level that proves it. This is the artifact approved at Gate 1."},
-        {"path": ".onestop/partition/<slug>.json", "format": "json", "what": "The execution DAG with declared write surfaces per task, grouped into waves. Produced by work-partitioner; consumed by parallel-execution."}
+        {
+          "path": "docs/design/<slug>/plan.md",
+          "format": "markdown",
+          "what": "The ordered task list of thin vertical slices - each with acceptance criteria, the files it touches, and the test level that proves it. This is the artifact approved at the plan gate."
+        },
+        {
+          "path": ".onestop/partition/<slug>.json",
+          "format": "json",
+          "what": "The execution DAG with declared write surfaces per task, grouped into waves. Produced by work-partitioner; consumed by parallel-execution."
+        }
       ]
     },
     {
       "phase": "scaffold",
       "owner": "architect",
       "artifacts": [
-        {"path": "<repo root>", "format": "source", "what": "The project structure for the bound architecture pattern - directories, entry point, config, a runnable empty app, and the test harness proven to run. No feature code."},
-        {"path": "README.md", "format": "markdown", "what": "Setup and run instructions that actually work from a clean clone. Verified by following them, not by writing them."},
-        {"path": ".env.example", "format": "env", "what": "Every key the scaffold needs, with a placeholder value and a one-line comment."}
+        {
+          "path": "<repo root>",
+          "format": "source",
+          "what": "The project structure for the bound architecture pattern - directories, entry point, config, a runnable empty app, and the test harness proven to run. No feature code."
+        },
+        {
+          "path": "README.md",
+          "format": "markdown",
+          "what": "Setup and run instructions that actually work from a clean clone. Verified by following them, not by writing them."
+        },
+        {
+          "path": ".env.example",
+          "format": "env",
+          "what": "Every key the scaffold needs, with a placeholder value and a one-line comment."
+        }
       ]
     },
     {
@@ -117,82 +209,142 @@
       "phase": "implement",
       "owner": "test-author and the bound implementers",
       "artifacts": [
-        {"path": "<repo source convention>", "format": "source", "what": "Application code, written to the bound architecture pattern with declared file roles."},
-        {"path": "docs/requirements/<slug>/RTM.md", "format": "markdown", "what": "Updated in place - Impl-Ref and Status filled for every requirement a completed slice satisfies."}
+        {
+          "path": "<repo source convention>",
+          "format": "source",
+          "what": "Application code, written to the bound architecture pattern with declared file roles."
+        },
+        {
+          "path": "docs/requirements/<slug>/RTM.md",
+          "format": "markdown",
+          "what": "Updated in place - Impl-Ref and Status filled for every requirement a completed slice satisfies."
+        }
       ]
     },
     {
       "phase": "test",
       "owner": "test-author",
       "artifacts": [
-        {"path": "<repo test convention>", "format": "source", "what": "Unit and integration tests beside the code they cover, following the repo's existing test location."},
-        {"path": "docs/requirements/<slug>/RTM.md", "format": "markdown", "what": "Test-Ref filled."}
+        {
+          "path": "<repo test convention>",
+          "format": "source",
+          "what": "Unit and integration tests beside the code they cover, following the repo's existing test location."
+        },
+        {
+          "path": "docs/requirements/<slug>/RTM.md",
+          "format": "markdown",
+          "what": "Test-Ref filled."
+        }
       ]
     },
     {
       "phase": "automation",
       "owner": "web-automation-agent and app-automation-agent",
       "artifacts": [
-        {"path": "tests/e2e/", "format": "source", "what": "Web end-to-end suite, structured per the bound automation pattern - for fixture-composed page objects that means tests/, pages/, fixtures/, data/, support/ beneath this root."},
-        {"path": "e2e/ or <platform test convention>", "format": "source", "what": "App end-to-end suite - screens or robots, flows, data - per the bound pattern for the bound framework."},
-        {"path": "docs/qa/<slug>/automation.md", "format": "markdown", "what": "How to run each suite, which journeys are covered, which are not and why, and anything quarantined with the condition that would release it."},
-        {"path": ".github/workflows/<existing or new>.yml", "format": "yaml", "what": "CI wiring - the suite on pull requests, artifacts uploaded on failure. Extend the existing workflow rather than adding a second one."}
+        {
+          "path": "tests/e2e/",
+          "format": "source",
+          "what": "Web end-to-end suite, structured per the bound automation pattern - for fixture-composed page objects that means tests/, pages/, fixtures/, data/, support/ beneath this root."
+        },
+        {
+          "path": "e2e/ or <platform test convention>",
+          "format": "source",
+          "what": "App end-to-end suite - screens or robots, flows, data - per the bound pattern for the bound framework."
+        },
+        {
+          "path": "docs/qa/<slug>/automation.md",
+          "format": "markdown",
+          "what": "How to run each suite, which journeys are covered, which are not and why, and anything quarantined with the condition that would release it."
+        },
+        {
+          "path": ".github/workflows/<existing or new>.yml",
+          "format": "yaml",
+          "what": "CI wiring - the suite on pull requests, artifacts uploaded on failure. Extend the existing workflow rather than adding a second one."
+        }
       ]
     },
     {
       "phase": "qa-plan",
       "owner": "qa-planner",
       "artifacts": [
-        {"path": "docs/qa/<slug>/test-plan.md", "format": "markdown", "what": "Manual plan: environment setup, concrete test-data creation steps, step-by-step cases with observable expected results, regression checklist, sign-off."},
-        {"path": "docs/qa/<slug>/test-cases.csv", "format": "csv", "what": "The same cases, importable into a test management tool."}
+        {
+          "path": "docs/qa/<slug>/test-plan.md",
+          "format": "markdown",
+          "what": "Manual plan: environment setup, concrete test-data creation steps, step-by-step cases with observable expected results, regression checklist, sign-off."
+        },
+        {
+          "path": "docs/qa/<slug>/test-cases.csv",
+          "format": "csv",
+          "what": "The same cases, importable into a test management tool."
+        }
       ]
     },
     {
       "phase": "review",
       "owner": "code-reviewer, security-reviewer, data-reviewer, a11y-agent, validator",
       "artifacts": [
-        {"path": ".onestop/review/<slug>.md", "format": "markdown", "what": "Findings by severity with file:line, which reviewer raised each, and the disposition - fixed, accepted with reason, or deferred with an owner. Run evidence, not product documentation."}
+        {
+          "path": ".onestop/review/<slug>.md",
+          "format": "markdown",
+          "what": "Findings by severity with file:line, which reviewer raised each, and the disposition - fixed, accepted with reason, or deferred with an owner. Run evidence, not product documentation."
+        }
       ]
     },
     {
       "phase": "compliance",
       "owner": "security-reviewer",
       "artifacts": [
-        {"path": "docs/compliance/<slug>.md", "format": "markdown", "what": "Which regime applies, which controls this change touches, and the evidence for each. Committed - this one is product documentation, because an auditor will ask for it."}
+        {
+          "path": "docs/compliance/<slug>.md",
+          "format": "markdown",
+          "what": "Which regime applies, which controls this change touches, and the evidence for each. Committed - this one is product documentation, because an auditor will ask for it."
+        }
       ]
     },
     {
       "phase": "measure",
       "owner": "performance-agent",
       "artifacts": [
-        {"path": "docs/performance/<slug>.md", "format": "markdown", "what": "Baseline before, measurement method, profile findings, result after, and the regression guard that keeps it. A performance claim without a before number is not a claim."}
+        {
+          "path": "docs/performance/<slug>.md",
+          "format": "markdown",
+          "what": "Baseline before, measurement method, profile findings, result after, and the regression guard that keeps it. A performance claim without a before number is not a claim."
+        }
       ]
     },
     {
       "phase": "reproduce",
       "owner": "orchestrate",
       "artifacts": [
-        {"path": "<repo test convention>", "format": "source", "what": "The failing regression test that reproduces the defect. It is the first artifact of a defect run and it is committed with the fix."}
+        {
+          "path": "<repo test convention>",
+          "format": "source",
+          "what": "The failing regression test that reproduces the defect. It is the first artifact of a defect run and it is committed with the fix."
+        }
       ]
     },
     {
       "phase": "ship",
       "owner": "docs-agent",
       "artifacts": [
-        {"path": "README.md", "format": "markdown", "what": "Updated only where the change actually invalidated it - new commands, new env vars, changed setup."},
-        {"path": "CHANGELOG.md", "format": "markdown", "what": "One entry describing the user-visible change."},
-        {"path": ".env.example", "format": "env", "what": "An entry for every new key. A key that exists in .env and not here breaks the next person's clone."}
-      ]
-    },
-    {
-      "phase": "gate",
-      "owner": "orchestrate",
-      "artifacts": [
-        {"path": ".onestop/gates/gate-<n>.md", "format": "markdown", "what": "What the gate showed - progress, just did, next, remaining, recommendation, options - and what the user chose. Written when the gate is answered, so a resumed run knows what was already agreed."}
+        {
+          "path": "README.md",
+          "format": "markdown",
+          "what": "Updated only where the change actually invalidated it - new commands, new env vars, changed setup."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "format": "markdown",
+          "what": "One entry describing the user-visible change."
+        },
+        {
+          "path": ".env.example",
+          "format": "env",
+          "what": "An entry for every new key. A key that exists in .env and not here breaks the next person's clone."
+        }
       ]
     }
   ],
-
   "never": [
     "Never write a document into the application source tree. src/ is code; docs/ is documentation. A design document under src/ is invisible to everyone who reads documentation and noise to everyone who reads code.",
     "Never put test or automation code under docs/. It is source, it must be runnable, and it belongs where the runner looks for it.",

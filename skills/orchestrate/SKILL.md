@@ -45,10 +45,29 @@ This is not bookkeeping. It is the only thing that makes this pipeline real.
 > nothing was tracking. A run with no ledger is a run that did not happen.
 
 ```json
-{ "run_id": "<date>-<slug>", "status": "active", "intent": "...", "tier": "...",
-  "phases": { "context": "pending", "discovery": "pending", "plan": "pending" },
-  "gates": { "gate_1": "pending", "gate_2": "pending" } }
+{
+  "run_id": "<date>-<slug>",
+  "status": "active",
+  "intent": "feature",
+  "tier": "standard",
+  "slug": "meter-ops",
+  "gate_mode": "every-phase",
+  "phases": {
+    "intake":    { "status": "done", "gate": "approved" },
+    "context":   { "status": "done", "gate": "approved" },
+    "discovery": { "status": "active" },
+    "plan":      { "status": "pending" }
+  }
+}
 ```
+
+**Every phase is an object carrying its own `status` and `gate`**, written one per line.
+That shape is not cosmetic: the Stop hook detects an ungated phase by finding a line that
+is `"status": "done"` with no `"gate"` on it. A flatter shape - a phase mapped straight to
+a status string, or one pair of gate fields at the top level - makes that check
+unmatchable, and the conformance hook then reports clean on a run that gated nothing.
+`status` is one of `pending`, `active`, `done` or `skipped`; `gate` records the user's
+decision at that boundary and is absent only while the phase has not reached its gate.
 
 A `Stop` hook reads this file and reports unstamped phases and unreviewed security
 surfaces at every turn boundary. It cannot block you. It can only make skipping
@@ -374,7 +393,7 @@ way an orchestrator claims concurrency it does not have.
 
 **Implementation is the one that needs proof.** Two agents editing the same file
 concurrently corrupt it, and the corruption looks plausible. So `work-partitioner` runs
-after Gate 1: it resolves each task real write surface - including the registration and
+after the plan gate: it resolves each task real write surface - including the registration and
 barrel files the plan never mentions - and forms waves whose write sets are disjoint.
 `merge-coordinator` joins each wave, verifies the combination with the full suite, and
 hunts the semantic conflicts a file-level partition cannot prevent.
@@ -452,10 +471,17 @@ crash. Write it after every phase completes.
     { "id": 1, "title": "Google OAuth sign-in", "status": "done",
       "decision": "extended existing next-auth", "evidence": "src/auth/options.ts:14" }
   ],
-  "phases": { "discovery": "done", "plan": "done", "implement": "active" },
-  "bound": { "reviewer": "react-reviewer", "web_automation": "playwright" },
-  "open_questions": [],
-  "gates": { "gate_1": "approved", "gate_2": "pending" }
+  "phases": {
+    "discovery": { "status": "done", "gate": "approved" },
+    "plan":      { "status": "done", "gate": "adjusted",
+                   "note": "user moved the email step out of scope" },
+    "implement": { "status": "active" }
+  },
+  "bound": {
+    "reviewer": "code-reviewer [typescript, react, accessibility]",
+    "web_automation": "playwright + fixture-composed page objects"
+  },
+  "open_questions": []
 }
 ```
 
@@ -506,8 +532,8 @@ Multi-phase orchestration burns context fast. These rules keep cost proportional
 5. **Security review is not optional** when a security trigger is touched, at any tier.
 6. **Never downgrade a hardcoded secret finding.** It is CRITICAL, always.
 7. **Never automate a flow step that discovery could not locate.** Report the gap.
-8. **Respect both gates.** Never write implementation before Gate 1, never ship before
-   Gate 2.
+8. **Gate every phase boundary**, and respect the two that carry extra force: never
+   write implementation before the plan gate, never ship before the ship gate.
 9. **Repo conventions outrank plugin defaults,** every time.
 10. **Report honestly.** If a phase was skipped, say so and why. If tests fail, show
     the output. Never claim a phase passed that did not run.
@@ -523,5 +549,5 @@ Before declaring a run complete, confirm every one of these:
 - `security-reviewer` ran if and only if a security trigger was touched
 - new and changed behavior has tests, and coverage meets the repo threshold
 - web automation exists for web flows, app automation for app flows
-- both gates were honoured
+- every phase boundary was gated, and the plan and ship gates were honoured
 - the run ledger reflects the final state

@@ -27,9 +27,16 @@ OPEN
   <questions waiting on the user, or none>
 
 GATES
-  gate 1 (plan): <approved | pending | not reached>
-  gate 2 (ship): <approved | pending | not reached>
+  mode: <every-phase | milestone | autonomous>
+  <one line per gated phase - <phase>: approved | skipped | adjusted | pending |
+   not reached - and for a skip or an adjustment, the reason the user gave>
 ```
+
+Read gate state from each phase's `gate` field in `.onestop/run.json`, not from a fixed
+list - there is no fixed number of gates. An `every-phase` run has one per phase in the
+mask, `milestone` has four, `autonomous` has one. A phase marked `done` with no `gate`
+field is a conformance failure: report it as ungated rather than quietly rendering it
+as approved.
 
 Then state in one line what happens next if the user says continue.
 

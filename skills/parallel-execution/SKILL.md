@@ -32,7 +32,7 @@ partition  ->  wave 1 (n lanes, one message)  ->  join  ->  verify
 ```
 
 1. **Partition.** `work-partitioner` builds the DAG, resolves true write surfaces, and
-   forms the waves. Done once, after Gate 1.
+   forms the waves. Done once, after the plan gate.
 2. **Dispatch.** All lanes of the wave in one message. Each agent receives only what it
    needs - its task, its acceptance criteria, its write surface, the contract, the
    relevant knowledge-graph extract, and the coding standards verbatim. Never the

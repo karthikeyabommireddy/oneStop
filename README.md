@@ -63,12 +63,18 @@ Step 1 - Google OAuth sign-in. Three viable paths found:
    [ partition ]  task DAG + write surfaces -> waves that can run concurrently
         |
    [ phases ]     plan -> design -> implement -> test -> automation -> review -> ship
-        |            ^         (waves run in parallel)                    ^
-     GATE 1 --------                                          GATE 2 ------
-     approve the plan                                    approve the ship
+                     |       |          |        |         |          |       |
+                   gate    gate       gate     gate      gate       gate    gate
 ```
 
-Everything between the two gates flows without stopping.
+**Every phase boundary is a gate** - the run stops, shows what it did and what comes
+next, and you approve, skip, adjust or stop. Two of them carry extra force: no
+implementation exists before the **plan gate**, and nothing is committed, pushed or
+published before the **ship gate**, which stops in every mode at every tier.
+
+Prefer fewer interruptions? `gate_mode` takes `milestone` (plan, design, implement,
+ship) or `autonomous` (ship only). The mode changes which boundaries stop; it never
+changes what a gate shows, and it never turns off the narration in between.
 
 ## Role agents and knowledge packs
 
@@ -164,7 +170,7 @@ It produces a traceability matrix, and **the pipeline fills it in as work lands*
 | `Req-ID`, `Story`, `Acceptance-Criteria`, `Design-Ref` | requirements phase |
 | `Impl-Ref` | implement phase, as each slice lands |
 | `Test-Ref` | test and automation phases, as coverage arrives |
-| verified against reality | `validator`, before Gate 2 |
+| verified against reality | `validator`, before the ship gate |
 
 So the matrix is a live coverage report rather than a document that goes stale in a
 sprint. The number it exists to surface is the one that usually disappears: requirements

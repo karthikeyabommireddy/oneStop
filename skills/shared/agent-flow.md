@@ -13,30 +13,47 @@ reviews that each see half of it. Adding a language is a pack, never a new agent
 
 ## The flow
 
+The order below is the `feature` mask from `${CLAUDE_PLUGIN_ROOT}/registry/intents.json`.
+**The registry is the source of truth for ordering** - if this diagram and a `phase_mask`
+ever disagree, the mask is right.
+
 ```
-context -> requirements -> research -> discovery -> design -> ui-design -> plan
-                                                                            |
-                                                                       [ GATE 1 ]
-                                                                            |
-     +----------------------------------------------------------------------+
-     v
-  scaffold -> implement -> test -> automation -> qa-plan -> review -> compliance
-                                                                        |
-                                                                   [ GATE 2 ]
-                                                                        |
-                                                                      ship
+intake -> context -> requirements -> discovery -> research -> plan -> design -> ui-design
+   |                                                           ^
+[gate zero]                                          the plan gate
+                                                               |
+   +-----------------------------------------------------------+
+   v
+implement -> test -> automation -> qa-plan -> review -> ship
+                                                         ^
+                                                 the ship gate
 ```
 
-Defect runs insert `reproduce` before `implement`. Performance runs insert `measure`
-before and after. `verify-green` runs wherever the suite must be proven clean before
-proceeding. Which phases run at all is the intent's `phase_mask`; **every phase that runs
-has its own gate** - never a batched one.
+**Every arrow is a gate.** Under the default `every-phase` mode the run stops at all of
+them; `milestone` stops at plan, design, implement and ship; `autonomous` stops only at
+ship. Two of those gates are named because they carry extra force, not because they are
+the only ones:
+
+- **The plan gate** - no implementation code exists before it is approved. Not a
+  scaffold, not a stub.
+- **The ship gate** - nothing is committed, pushed or published before it is approved.
+  It stops in **every mode and at every tier**, including `trivial`.
+
+Variations by intent: `flow` inserts `flow-decomposition` after `context`; `defect` drops
+straight from `context` to `discovery` then `reproduce`, and skips the design phases;
+`mvp` inserts `scaffold` before `implement`; performance runs insert `measure` either
+side of `implement`; `verify-green` appears wherever a suite must be proven clean before
+proceeding. `intake` and `flow-decomposition` are run inline by the orchestrator rather
+than delegated.
+
+Which phases run at all is the intent's `phase_mask`, and **every phase that runs has its
+own gate** - never a batched one.
 
 ## Phase to agent
 
 | Phase | Primary agent | Also | Produces |
 |---|---|---|---|
-| context | *orchestrate, inline* | - | `.onestop/run.json`, `stack.yml`, `ledger.md` |
+| context | *orchestrate, inline* | - | `.onestop/run.json` (the run ledger), `stack.yml` |
 | requirements | `ba-analyst` | - | BRD, user stories, RTM |
 | research | *orchestrate, inline* (context7) | - | `docs/research/<slug>/findings.md` |
 | discovery | `discovery-scout` | `code-explorer`, `option-broker` | `.onestop/discovery/<slug>.md` |

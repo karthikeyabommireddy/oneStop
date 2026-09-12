@@ -1,5 +1,86 @@
 # Changelog
 
+## 1.9.1
+
+A flow review found ten defects, all of them drift between something that was changed in
+v1.5.0 and something that was not. The first is the one that mattered.
+
+### Fixed - the per-phase gate check could never fire
+
+Two incompatible schemas existed for `.onestop/run.json`. `orchestrate/SKILL.md` - the
+file that *creates* it - documented phases as bare status strings under a top-level
+`{gate_1, gate_2}` object. `phase-gate/SKILL.md` - the file that *updates* it -
+documented a per-phase object carrying `status` and `gate`.
+
+`run-conformance.sh` detects an ungated phase by finding a line that is
+`"status": "done"` with no `"gate"` on it. A run written to orchestrate's schema has no
+`status` key anywhere, so that pattern could never match: **the only mechanical check
+that per-phase gating actually happened reported clean on runs that gated nothing.**
+Enforcement that cannot fire is worse than no enforcement, because it is trusted.
+
+Verified against a fixture rather than by inspection. The fixed schema now reports:
+
+```
+PHASES RAN WITHOUT A GATE - context
+BATCHED GATES - 1 phase(s) share a combined gate stamp
+RUN INCOMPLETE - phases not yet done: plan, design
+```
+
+The old shape reports none of that, and its pending-phase scan additionally emitted a
+phantom phase called `phases` - it was matching the container key. Both the schema and
+that scan are fixed.
+
+### Fixed - the two-gate model survived in twenty files
+
+`gates.json` names two-gates-at-the-ends as the *defect* v1.5.0 removed, and sets
+`every-phase` as the default. The vocabulary outlived the model, including in both
+user-facing diagrams and in `commands/onestop.md`, which is the contract passed to the
+orchestrator - so it was actively instructing the superseded behaviour.
+
+Gate 1 and Gate 2 are now **the plan gate** and **the ship gate**: two named gates among
+many, keeping their extra force. No implementation before the plan gate; nothing
+committed, pushed or published before the ship gate, which stops in every mode at every
+tier. Migrated across agents, skills, rules, commands, the README diagram and the
+derived registries.
+
+### Fixed - the status command could not report what the protocol records
+
+`onestop-status` emitted exactly two gate lines. An `every-phase` run has one gate per
+phase in the mask, so it could show two of fourteen. It now reads each phase's `gate`
+field and reports the mode alongside them - and names an ungated phase as a conformance
+failure rather than rendering it as approved.
+
+### Fixed - the flow diagram contradicted the registry
+
+`skills/shared/agent-flow.md` showed `design -> ui-design -> plan`. Every real
+`phase_mask` has **plan before design**, and `gates.json` `milestone` mode agrees with
+the registry. The diagram also omitted `intake` and `flow-decomposition` - which begin
+every mask - and showed `scaffold` as a normal step when it appears only in `mvp`. Fixed,
+with the registry named as the source of truth for ordering.
+
+### Fixed - two artifacts nothing wrote or read
+
+`.onestop/ledger.md` and `.onestop/gates/gate-<n>.md` were both declared in
+`artifacts.json` in v1.7.0 with no writer and no reader. Worse, "the ledger" already
+meant `run.json` everywhere else in the plugin, so the first one added a second thing
+with an existing name. Both removed; `run.json` is the run ledger and its per-phase
+`gate` field is the gate record.
+
+### Fixed - the resume example bound an ECC agent
+
+The run-state example in `orchestrate/SKILL.md` showed `"reviewer": "react-reviewer"`.
+onestop has no such agent - it is an ECC one. onestop binds role agents plus packs, so
+the example now reads `code-reviewer [typescript, react, accessibility]`, alongside the
+bound automation pattern.
+
+### Added - a validator check for schema drift
+
+The root cause of six of these was a declaration and its consumer drifting apart with
+nothing checking the join - the same class as the `qa-planner` phase bug in v1.7.0. The
+validator now fails if `orchestrate` documents a phase as a bare status string, if a
+`gate_1`/`gate_2` object reappears, or if the conformance hook stops reading the fields
+the schema provides. Tested against both regressions to confirm the check itself fires.
+
 ## 1.9.0
 
 ### Added - a coding-standards floor, separate from architecture

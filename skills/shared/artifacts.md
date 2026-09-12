@@ -44,7 +44,7 @@ Ensure the `.onestop/` gitignore entry exists **before** the first write to it, 
 
 | Phase | Writes |
 |---|---|
-| context | `.onestop/run.json`, `.onestop/stack.yml`, `.onestop/ledger.md` |
+| context | `.onestop/run.json` (the run ledger), `.onestop/stack.yml` |
 | requirements | `docs/requirements/<slug>/` - `brd.md`, `user-stories.md`, `RTM.md`, `RTM.csv` |
 | research | `docs/research/<slug>/findings.md` |
 | discovery | `.onestop/discovery/<slug>.md` |
@@ -59,9 +59,12 @@ Ensure the `.onestop/` gitignore entry exists **before** the first write to it, 
 | compliance | `docs/compliance/<slug>.md` |
 | measure | `docs/performance/<slug>.md` |
 | ship | `README.md`, `CHANGELOG.md`, `.env.example` |
-| gate | `.onestop/gates/gate-<n>.md` |
 
 Full detail - format, contents, owner - in the registry.
+
+Gate decisions are not a separate artifact: each phase's `gate` field in
+`.onestop/run.json` records what the user chose at that boundary, which is also
+what the Stop hook reads to detect a phase that ran ungated.
 
 ## 4. The RTM is a relay
 

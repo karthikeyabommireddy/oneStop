@@ -25,8 +25,8 @@ Follow the orchestrate skill exactly. In particular:
 - Bind the reviewers, build resolver, test runner, and web and app automation
   frameworks from the detected stack automatically, and state the bound set in one
   line.
-- Honour both gates: plan approval before implementation, ship approval before any
-  commit, push, or publish.
+- Gate every phase boundary. Two carry extra force: no implementation before the plan
+  gate is approved, and nothing committed, pushed or published before the ship gate is.
 
 If `$ARGUMENTS` is empty, read `.onestop/run.json`. If an active run exists, resume it
 from the first incomplete phase. If there is no active run, ask the user what they

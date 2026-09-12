@@ -67,8 +67,8 @@ A confident wrong report is the most expensive thing this pipeline can produce.
 
 ## Gates
 
-No implementation before Gate 1 approval. Nothing committed, pushed or published before
-Gate 2 approval. CRITICAL and HIGH findings block Gate 2 unless the user explicitly
+No implementation before the plan gate approval. Nothing committed, pushed or published before
+the ship gate is approved. CRITICAL and HIGH findings block the ship gate unless the user explicitly
 accepts them, and that acceptance is recorded in the run ledger.
 
 ## Cost
