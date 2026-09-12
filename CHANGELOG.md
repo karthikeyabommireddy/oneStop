@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.2.1
+
+### Fixed
+
+- **`kg.sh build` no longer requires an LLM API key.** Bare `graphify <path>` extracts
+  every file type it finds, including docs - and the moment a corpus has any markdown
+  file alongside code (true of nearly every real repo, starting with `README.md`) it
+  demands an LLM key for semantic extraction and hard-fails without one. This defeated
+  the entire promise of the knowledge graph feature: a structural code graph that needs
+  no LLM. `kg.sh build` now defaults to `--code-only` (local AST extraction, zero LLM
+  calls) whenever no key is configured, and only uses full extraction when one is
+  present. Found by running the plugin end-to-end against a real mixed code+docs
+  project during dogfooding - confirmed fixed against that same project (126 nodes,
+  253 edges, 0 token cost). Guarded against regression in `scripts/validate.py`.
+
 ## 1.2.0
 
 ### Added

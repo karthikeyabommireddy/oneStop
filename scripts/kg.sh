@@ -65,7 +65,24 @@ cmd_build() {
   need_graphify || return 1
   check_path_depth
   echo "Building knowledge graph (first build - this is the slow one)..."
-  graphify "$TARGET" || return 1
+
+  # Bare `graphify <path>` extracts EVERY file type it finds, including docs/papers/
+  # images. The moment a corpus has any markdown alongside code - which is nearly
+  # every real repo, starting with README.md - graphify demands an LLM API key for
+  # semantic extraction and hard-fails without one. That defeats the entire point of
+  # this feature: the promise is a structural code graph that needs no LLM. So this
+  # checks for a key first, and defaults to --code-only (local AST, no key, and
+  # exactly the "who calls what, where is it defined" graph onestop actually uses)
+  # whenever none is configured. A key present is still honoured, for the richer
+  # doc-aware graph, since that is then a free upgrade rather than a requirement.
+  local build_flags=()
+  if ! { [ -n "${GEMINI_API_KEY:-}" ] || [ -n "${GOOGLE_API_KEY:-}" ] || \
+         [ -n "${ANTHROPIC_API_KEY:-}" ] || [ -n "${OPENAI_API_KEY:-}" ] || \
+         [ -n "${MOONSHOT_API_KEY:-}" ] || [ -n "${DEEPSEEK_API_KEY:-}" ]; }; then
+    build_flags+=(--code-only)
+  fi
+
+  graphify "$TARGET" "${build_flags[@]}" || return 1
   # `graphify <path>` writes graph.json but NOT the report; cluster-only produces it.
   # --no-label skips LLM community naming, --no-viz skips the HTML render.
   graphify cluster-only "$TARGET" --no-label --no-viz || return 1

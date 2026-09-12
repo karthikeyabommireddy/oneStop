@@ -174,6 +174,21 @@ def main():
 
     print("  registry sync       " + ("ok" if agents_reg["count"] == len(have_agents) else "STALE"))
 
+    # 9 - kg.sh build must not require an LLM key. Bare `graphify <path>` demands one
+    # the moment the corpus has any doc/markdown file - true of nearly every real repo,
+    # starting with README.md - which would silently break the graph for every user
+    # without an LLM key configured. This was a real bug, found by running kg.sh
+    # against a genuine mixed code+docs project. Guard against it regressing.
+    kg = os.path.join(ROOT, "scripts", "kg.sh")
+    if os.path.isfile(kg):
+        kg_src = open(kg, encoding="utf-8").read()
+        build_fn = kg_src.split("cmd_build()")[1].split("\ncmd_refresh()")[0] if "cmd_build()" in kg_src else ""
+        kg_llm_safe = "--code-only" in build_fn and "API_KEY" in build_fn
+        if not kg_llm_safe:
+            err("kg.sh build calls bare `graphify <path>` with no --code-only fallback - "
+                "this fails on any repo with a doc/markdown file unless an LLM key is set")
+        print("  kg.sh no-LLM build   " + ("ok" if kg_llm_safe else "FAIL"))
+
     return report()
 
 
