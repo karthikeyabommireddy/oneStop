@@ -561,6 +561,128 @@
       ]
     },
     {
+      "id": "angular",
+      "label": "Angular",
+      "markers": [
+        "angular.json",
+        ".angular"
+      ],
+      "dependency_markers": [
+        "@angular/core"
+      ],
+      "extensions": [
+        ".ts",
+        ".html"
+      ],
+      "test_runner": {
+        "detect": [
+          "karma",
+          "jest",
+          "vitest"
+        ],
+        "default": "ng test"
+      },
+      "coverage_cmd": "ng test --code-coverage",
+      "web_automation": "playwright",
+      "app_automation": null,
+      "packs": [
+        "typescript",
+        "angular"
+      ],
+      "concern_packs": [
+        "visual-design",
+        "accessibility"
+      ],
+      "note": "Never select on ng-tns-c* scope classes in automation - they are build-generated and change every deploy."
+    },
+    {
+      "id": "svelte",
+      "label": "Svelte / SvelteKit",
+      "markers": [
+        "svelte.config.js"
+      ],
+      "dependency_markers": [
+        "svelte",
+        "@sveltejs/kit"
+      ],
+      "extensions": [
+        ".svelte"
+      ],
+      "test_runner": {
+        "detect": [
+          "vitest"
+        ],
+        "default": "vitest"
+      },
+      "coverage_cmd": "npx vitest run --coverage",
+      "web_automation": "playwright",
+      "app_automation": null,
+      "packs": [
+        "typescript",
+        "svelte"
+      ],
+      "concern_packs": [
+        "visual-design",
+        "accessibility"
+      ]
+    },
+    {
+      "id": "ruby",
+      "label": "Ruby / Rails",
+      "markers": [
+        "Gemfile",
+        "config/application.rb"
+      ],
+      "extensions": [
+        ".rb",
+        ".erb"
+      ],
+      "test_runner": {
+        "detect": [
+          "rspec",
+          "minitest"
+        ],
+        "default": "bundle exec rspec"
+      },
+      "coverage_cmd": "COVERAGE=true bundle exec rspec",
+      "web_automation": "playwright",
+      "app_automation": null,
+      "packs": [
+        "ruby"
+      ],
+      "concern_packs": [
+        "security",
+        "data"
+      ]
+    },
+    {
+      "id": "elixir",
+      "label": "Elixir / Phoenix",
+      "markers": [
+        "mix.exs"
+      ],
+      "extensions": [
+        ".ex",
+        ".exs",
+        ".heex"
+      ],
+      "test_runner": {
+        "detect": [
+          "exunit"
+        ],
+        "default": "mix test"
+      },
+      "coverage_cmd": "mix test --cover",
+      "web_automation": "playwright",
+      "app_automation": null,
+      "packs": [
+        "elixir"
+      ],
+      "concern_packs": [
+        "data"
+      ]
+    },
+    {
       "id": "generic",
       "label": "Unrecognised stack",
       "markers": [],

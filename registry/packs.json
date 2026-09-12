@@ -3,11 +3,15 @@
   "generated_by": "scripts/build_registry.py",
   "description": "Derived pack catalogue. A role agent loads the packs a stack names, in order, and applies them on top of its own role contract.",
   "counts": {
-    "languages": 20,
+    "languages": 24,
     "concerns": 5
   },
   "packs": {
     "languages": [
+      {
+        "id": "angular",
+        "path": "packs/languages/angular.md"
+      },
       {
         "id": "cpp",
         "path": "packs/languages/cpp.md"
@@ -23,6 +27,10 @@
       {
         "id": "django",
         "path": "packs/languages/django.md"
+      },
+      {
+        "id": "elixir",
+        "path": "packs/languages/elixir.md"
       },
       {
         "id": "fastapi",
@@ -69,12 +77,20 @@
         "path": "packs/languages/react.md"
       },
       {
+        "id": "ruby",
+        "path": "packs/languages/ruby.md"
+      },
+      {
         "id": "rust",
         "path": "packs/languages/rust.md"
       },
       {
         "id": "sql",
         "path": "packs/languages/sql.md"
+      },
+      {
+        "id": "svelte",
+        "path": "packs/languages/svelte.md"
       },
       {
         "id": "swift",

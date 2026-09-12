@@ -226,6 +226,31 @@ def main():
                 err("intent '" + s + "' has no announce_as text for gate zero")
             print("  intent announcements " + ("ok" if not silent else "FAIL"))
 
+    # 12 - onestop must ship the tooling its own content depends on. The
+    # web-automation-agent tells the model to derive selectors from the live page; with
+    # no browser MCP server declared it cannot, and a real run silently borrowed another
+    # installed plugin's server instead. Anything onestop asks for, onestop provides -
+    # or documents as opt-in.
+    if plugin is not None:
+        mcp = plugin.get("mcpServers", {})
+        missing_mcp = [s for s in ("chrome-devtools", "playwright", "context7") if s not in mcp]
+        for s in missing_mcp:
+            err("plugin.json declares no `" + s + "` MCP server - onestop's own agents depend on it")
+        print("  mcp servers         " + ("ok (" + str(len(mcp)) + ")" if not missing_mcp else "FAIL"))
+
+    # 13 - every stack must name packs that exist, and every pack should be reachable
+    # from at least one stack, or it is knowledge nothing can ever bind.
+    if stacks:
+        declared = set()
+        for st in stacks["stacks"]:
+            declared.update(st.get("packs", []))
+        orphan_packs = sorted(p_ for p_ in have_packs
+                              if p_ not in declared
+                              and os.path.isfile(os.path.join(ROOT, "packs", "languages", p_ + ".md")))
+        for p_ in orphan_packs:
+            warn("language pack '" + p_ + "' is not reachable from any stack - nothing can bind it")
+        print("  pack reachability   " + ("ok" if not orphan_packs else str(len(orphan_packs)) + " orphaned"))
+
     return report()
 
 

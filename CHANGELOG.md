@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.6.0
+
+### Fixed - onestop shipped no MCP servers, so a real run borrowed another plugin's
+
+Running onestop against a live Angular app exposed that `plugin.json` declared
+`mcpServers: {}`. `web-automation-agent` instructs the model to derive selectors from the
+**real page** rather than guess them - which is the single thing that made that run's
+output trustworthy - and onestop provided no browser tooling to do it with. The run
+silently used a browser server from another installed plugin. On a machine without that
+plugin, the same run would have had to guess selectors.
+
+Now declared, all three zero-config (no API key, `npx` fetches on first use):
+
+- **`chrome-devtools`** - live page inspection for the automation agents
+- **`playwright`** - driving the browser during the automation phase
+- **`context7`** - vendor documentation for `phase-research`
+
+Ticket-ingestion servers (`github`, `atlassian`, `linear`) are **documented as opt-in
+rather than declared**, in `docs/mcp-servers.md`: each needs credentials, and a declared
+server that cannot authenticate produces connection noise every session. `orchestrate`
+already falls back to asking for a paste when a probe fails.
+
+`scripts/validate.py` now fails if onestop stops declaring a server its own agents depend
+on.
+
+### Added - four stacks onestop could not detect
+
+The same run was an **Angular 21** app, and onestop had no Angular pack and no Angular
+stack detection - it would have bound the generic TypeScript pack and missed every
+framework-specific rule.
+
+- **`angular`** - including the trap that run had to discover by hand: Angular emits
+  build-generated `ng-tns-c*` scope classes that are regenerated on essentially every
+  build, so a selector using one passes locally and breaks silently on the next deploy.
+  Also `ng-dirty`/`ng-valid` state classes, which browser autofill sets - actively
+  misleading in a fresh-page test. Plus signals-vs-zone.js, subscription leaks, RxJS
+  flattening-operator choice, standalone-vs-NgModule.
+- **`svelte`** - runes vs stores, the server/client import boundary, form-action CSRF.
+- **`ruby`** - N+1, strong parameters, callback chains, migration reversibility.
+- **`elixir`** - supervision, GenServer blocking, Ecto changesets, LiveView assigns.
+
+24 language packs, 24 detectable stacks. A new check warns about any pack no stack can
+reach, since unreachable knowledge is knowledge nothing will ever bind.
+
+### Not done, deliberately
+
+**ECC's 292 skills were not copied.** onestop deliberately replaced one-skill-per-topic
+with role agents plus knowledge packs, and vendoring that catalogue would undo the
+standalone, original-work decision this plugin was rebuilt around in 1.1.0. The correct
+analogue of a missing ECC skill is a missing pack - which is what the four above are.
+
 ## 1.5.0
 
 ### Changed - one gate per phase, every gate shows the whole journey, and the intent is announced before anything runs
