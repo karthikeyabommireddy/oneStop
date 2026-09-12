@@ -33,6 +33,40 @@ playful accent loses the user at the moment they are deciding to trust it.
 
 Bind the profile, and state it in one line: the domain, the seed hue, and the density.
 
+## Bind the Style
+
+The domain tells you the palette. It also tells you the **style** - what the interface
+feels like and how it is built. Fifteen are available in
+`${CLAUDE_PLUGIN_ROOT}/registry/ui-styles.json`; bind exactly one skin, optionally with
+one layout system (`bento` or `editorial`) alongside it.
+
+Derive, never ask. Score on domain, audience, session length and the stakes of a
+mistake. Three rules are absolute:
+
+1. **`domain_fit.never` is a hard exclusion.** Cyberpunk does not get bound for a
+   healthcare product because it would look good. It would not look good - it would look
+   untrustworthy to someone reading a diagnosis.
+2. **An existing design system wins.** Extend it. The bound style then describes new
+   surfaces only, and you say so rather than quietly restyling what exists.
+3. **The accessibility mitigation ships with the style, or the style does not ship.**
+   Glass text gets a semi-opaque plate. Neumorphic controls get a real border and a
+   high-contrast focus ring. Neo-brutalist focus gets an offset outline in a different
+   colour, because the heavy border is already taken. If the mitigation destroys the
+   look, that is the style telling you it was wrong for this product.
+
+Never combine a pair from `combination_rules.never_combine` - minimalism with
+maximalism, neumorphism with glassmorphism. Each pair makes contradictory claims about
+depth and restraint, and an interface making both reads as unfinished rather than blended.
+
+State it in the same line as the palette, with the reason:
+
+```
+Style: editorial grid, minimalist skin (long-form education content, reading is the job)
+```
+
+Worked CSS per style:
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-ui-design/references/styles.md`.
+
 ## Build the Palette
 
 Work in **OKLCH**. It is perceptually uniform, so holding chroma and stepping lightness

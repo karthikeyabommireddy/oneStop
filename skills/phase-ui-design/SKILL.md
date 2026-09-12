@@ -25,6 +25,50 @@ Runs **light** when a design system already exists and the change adds no new pa
 confirm the tokens cover the new work, add any that are missing, and move on. A full
 pass is for a new product, a new surface, or a deliberate redesign.
 
+## Bind the Visual Style
+
+Before the palette, decide what the interface *feels* like. Fifteen styles are available
+in `${CLAUDE_PLUGIN_ROOT}/registry/ui-styles.json`; exactly one skin is bound, optionally
+with one layout system alongside it.
+
+**Derive it - never ask which one.** The inputs are the detected domain, the audience,
+the session length, and the stakes of a mistake:
+
+| Signal | Pulls toward |
+|---|---|
+| all-day professional tool | minimalism, flat, material, editorial |
+| high stakes - money, health, irreversible | minimalism, material - never a style that weakens affordance |
+| brand *is* the product | maximalism, neo-brutalism, y2k, retro |
+| developer audience | neo-brutalism, cyberpunk, bento, brutalism |
+| reading is the job | editorial |
+| summary that must scan at a glance | bento (a layout - pair it with a skin) |
+| children or onboarding | claymorphism |
+| rich imagery already present | glassmorphism |
+
+Two hard rules from the registry: a style whose `domain_fit.never` contains the detected
+domain is **excluded outright**, whatever it looks like; and **an existing design system
+always wins** - the bound style then describes new surfaces only, and you say so.
+
+Ask only when two styles score within one point *and* would produce materially different
+interfaces. That is a real two-option choice; anything else is a decision you owe the user.
+
+State it in one line with the reason:
+
+```
+Style: bento tiles in a minimalist skin (devtools dashboard, metrics of unequal
+       importance, all-day use rules out high-stimulus styles)
+```
+
+**Every style carries an accessibility cost, and it ships with its mitigation or it does
+not ship.** Glass text needs a semi-opaque plate, because contrast otherwise depends on
+what happens to scroll underneath. Neumorphism's defining feature - a control the same
+colour as its surface - is its failure: no contrast at the boundary, so every control
+needs a real border and a high-contrast focus ring, and if that removes the look, the
+style was wrong for this product.
+
+Worked recipes per style:
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-ui-design/references/styles.md`.
+
 ## Execution
 
 Delegate to the `ui-designer` agent with the detected domain and the existing system, if

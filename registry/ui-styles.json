@@ -1,0 +1,435 @@
+{
+  "version": "1.8.0",
+  "description": "Fifteen visual styles the ui-designer chooses between. The style is DERIVED from the product's domain, audience and job - never asked, never picked by taste. design.json answers what the palette is; this answers what the interface feels like and how it is built. Every entry carries the recipe that makes it convincing, the accessibility cost it imposes, and - the part usually missing - the conditions under which it is the wrong answer.",
+
+  "selection": {
+    "instruction": "Run this before any component is written, in the ui-design phase. Announce the bound style and the one-line reason in the same line as the palette. Never present all fifteen to the user.",
+    "inputs": [
+      "Domain, from design.json signals found in the repo and the request.",
+      "Audience: consumer / professional-daily-driver / developer / child / mixed-public.",
+      "Session length: glanceable, task-length, or all-day. All-day use rules out every high-stimulus style.",
+      "Task stakes: is a mistake expensive (money, health, irreversible) or cheap?",
+      "An existing design system or brand. If one exists it WINS - extend it, do not restyle.",
+      "Explicit user direction. If the user names a style, that is the binding, and you note any accessibility cost rather than refusing."
+    ],
+    "scoring": [
+      "+3 the style's domain_fit.strong contains the detected domain",
+      "+1 domain_fit.possible contains it",
+      "-99 domain_fit.never contains it - a hard exclusion, not a penalty",
+      "-3 the product is an all-day professional tool and the style is high-stimulus",
+      "-3 the task stakes are high and the style weakens affordance or contrast",
+      "+2 the audience is consumer or brand-led and the style carries personality",
+      "+1 the repo already leans this way (rounded tokens, dark-first palette, mono type)"
+    ],
+    "rule": "Bind the highest scorer. If two are within 1 point AND would produce materially different interfaces, ask the user once, showing both with their trade-offs - that is a genuine two-option choice, which the Asking Contract permits. Otherwise decide and state the reason.",
+    "default": "When signals are weak or the domain is generic, bind `minimalism`. It is the style that costs the least when it is wrong.",
+    "announce": "Style: neo-brutalism (developer tool, brand-led, signals not-enterprise). Palette: devtools, OKLCH, contrast verified."
+  },
+
+  "styles": [
+    {
+      "id": "minimalism",
+      "label": "Minimalism",
+      "one_line": "Space, scale and type carry the hierarchy; nothing decorative survives.",
+      "signature": [
+        "Whitespace as a structural tool, not leftover margin - it separates content, lowers cognitive load and walks the eye to the action",
+        "Hierarchy from scale and weight rather than colour or imagery",
+        "Bold expressive typography doing the work heavy imagery used to",
+        "A small palette: one neutral ramp, one accent, nothing else",
+        "Flat colour and clean geometry - restraint, not absence of depth"
+      ],
+      "recipe": {
+        "spacing": "One scale, used consistently. Section rhythm at the top of the scale; component rhythm at the bottom.",
+        "type": "A large step between heading and body - 48-64px next to 16px does the work a divider would.",
+        "colour": "Neutral surfaces, a single accent reserved for the primary action on each screen.",
+        "depth": "Borders and spacing before shadows. A shadow is a last resort, not a default."
+      },
+      "use_when": ["Content or data is the product", "All-day professional use", "The brand has no strong visual language and should not invent one"],
+      "avoid_when": ["The product's job is to be memorable", "A crowded market where undifferentiated means invisible"],
+      "accessibility": [
+        "The usual failure is low-contrast grey-on-grey passed off as restraint. Verify every pair: 4.5:1 body, 3:1 interactive boundaries.",
+        "Removing borders from inputs removes their affordance. Keep a visible boundary on every control."
+      ],
+      "domain_fit": {"strong": ["enterprise", "healthcare", "fintech", "education", "generic"], "possible": ["devtools", "ecommerce", "logistics", "media"], "never": []},
+      "token_bias": {"radius": "small", "elevation": "minimal", "motion": "short and functional"},
+      "sources": ["https://www.designrush.com/agency/website-design-development/trends/minimal-website-ui-design", "https://inkbotdesign.com/minimalist-web-design/"]
+    },
+    {
+      "id": "maximalism",
+      "label": "Maximalism",
+      "one_line": "Deliberate abundance - layered colour, texture, type and imagery, curated rather than chaotic.",
+      "signature": [
+        "Layered colour, texture, typography and imagery building one immersive composition",
+        "Exaggerated hierarchy: dramatically oversized type beside very small text, the big type anchoring and the small type rewarding",
+        "Oversized sans-serifs, 3D letterforms, wavy or distorted characters",
+        "Unusual colour blends and unexpected placement"
+      ],
+      "recipe": {
+        "structure": "A strict underlying grid is what stops abundance becoming noise. The grid is invisible; without it the page is illegible.",
+        "type": "Two extremes and nothing between - a display face at 96px+ and body at 16-18px.",
+        "colour": "Three to five saturated hues plus a neutral the eye can rest on. Every screen needs one quiet region.",
+        "restraint": "One area of the page stays deliberately empty. That emptiness is what makes the rest read as intentional."
+      },
+      "use_when": ["The brand is the product", "Campaign, launch and landing pages", "Fashion, music, events, creative agencies"],
+      "avoid_when": ["Any all-day tool", "High-stakes or high-anxiety tasks", "Dense data or long forms"],
+      "accessibility": [
+        "Text over imagery or gradient needs a scrim or a solid plate - never rely on the image staying dark.",
+        "Motion-heavy layering must honour prefers-reduced-motion by reducing movement, not by removing feedback.",
+        "Keep one uncluttered reading column; abundance around it is fine, inside it is not."
+      ],
+      "domain_fit": {"strong": ["creative", "media", "social"], "possible": ["ecommerce", "education"], "never": ["healthcare", "fintech", "enterprise", "logistics"]},
+      "token_bias": {"radius": "mixed deliberately", "elevation": "layered", "motion": "expressive, reduced-motion aware"},
+      "sources": ["https://blog.logrocket.com/ux-design/maximalism-ui-design-alternative-minimalism/", "https://www.davidcarondesign.com/maximalist-graphic-design-trends-2026-a-complete-guide"]
+    },
+    {
+      "id": "glassmorphism",
+      "label": "Glassmorphism",
+      "one_line": "Frosted translucent surfaces floating over a coloured or image background.",
+      "signature": [
+        "backdrop-filter blur with a semi-transparent fill and a light 1px border",
+        "A background with enough colour variation that the blur has something to do",
+        "Layered panels reading as depth without heavy shadow"
+      ],
+      "recipe": {
+        "css": "background: rgba(255,255,255,0.12); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.18); border-radius: 16px;",
+        "blur": "8-15px. Cost rises sharply above that and the effect does not improve.",
+        "fallback": "Always wrap in @supports (backdrop-filter: blur(1px)); the fallback is a solid, readable surface - not a transparent one.",
+        "performance": "At most 2-3 glass elements per viewport, 6-8px blur on mobile. Never animate a backdrop-filtered element; promote with transform: translateZ(0) where it helps."
+      },
+      "use_when": ["A rich background image or gradient is already part of the design", "Overlays, modals, navigation bars, media players", "Spatial or depth-carrying interfaces"],
+      "avoid_when": ["Dense data tables and long forms", "Low-end device targets", "Any screen where the background is plain - the effect has nothing to blur and reads as a mistake"],
+      "accessibility": [
+        "This is the style's real cost: text over translucency can fail contrast depending on what scrolls underneath. Put a semi-opaque plate behind text so contrast is guaranteed regardless of background.",
+        "Verify text contrast against the WORST background the panel can sit over, not the screenshot you designed with. Aim high - 7:1 where the content matters.",
+        "Keep borders visible; a glass panel with no border loses its edge on light backgrounds."
+      ],
+      "domain_fit": {"strong": ["media", "creative"], "possible": ["fintech", "social", "generic", "education"], "never": ["healthcare", "logistics"]},
+      "token_bias": {"radius": "large", "elevation": "blur-based", "palette": "needs a vivid or photographic ground"},
+      "sources": ["https://playground.halfaccessible.com/blog/glassmorphism-design-trend-implementation-guide", "https://www.neelnetworks.com/blog/glassmorphism-web-design-guide-2026/"]
+    },
+    {
+      "id": "neumorphism",
+      "label": "Neumorphism (soft UI)",
+      "one_line": "Controls extruded from or pressed into a single-colour surface by paired light and dark shadows.",
+      "signature": [
+        "Two box-shadows - one light, one dark - on an element whose background matches its parent",
+        "Inset shadow for the pressed state, mimicking a carved surface",
+        "A single monochrome base with almost no colour"
+      ],
+      "recipe": {
+        "css": "background: #e0e5ec; box-shadow: 9px 9px 18px #bec3c9, -9px -9px 18px #ffffff; border-radius: 16px;",
+        "pressed": "Swap both shadows to inset. The transition should be fast - this is a physical metaphor and lag breaks it.",
+        "light_source": "One direction for the whole interface. Two light sources is the tell of a cargo-culted implementation."
+      },
+      "use_when": ["Toggles, sliders and dials - where the carved-out metaphor genuinely helps", "Music players, smart-home and simple finance dashboards", "Small, sparse control surfaces"],
+      "avoid_when": ["Dense SaaS interfaces", "E-commerce grids", "Anything with many controls per screen", "Any product with a broad public audience"],
+      "accessibility": [
+        "The defining feature IS the accessibility failure: an element the same colour as its background has no contrast at its boundary. The control's edge is invisible to low-vision users and to everyone in bright sunlight.",
+        "Mitigate or do not ship it: add a real border or a contrasting label to every control, plus a high-contrast focus outline. If the mitigation removes the look, the style was wrong for this product.",
+        "Text on a shadowed gradient surface is hard to read - keep type off the extruded surface where possible.",
+        "Low-relief targets demand precision, which penalises users with motor impairments. Keep hit areas at least 44x44px regardless of the visual size."
+      ],
+      "domain_fit": {"strong": [], "possible": ["media", "fintech", "generic"], "never": ["healthcare", "enterprise", "logistics", "ecommerce", "education"]},
+      "token_bias": {"radius": "large", "elevation": "paired shadow", "palette": "single desaturated base"},
+      "caution": "Never bind this by default. It requires a deliberate reason and an accessibility mitigation plan stated up front.",
+      "sources": ["https://css-tricks.com/neumorphism-and-css/", "https://blog.logrocket.com/understanding-neumorphism-css/"]
+    },
+    {
+      "id": "claymorphism",
+      "label": "Claymorphism",
+      "one_line": "Soft inflated shapes that look like rounded blobs of modelling clay.",
+      "signature": [
+        "Very large border radius, roughly 20-40px",
+        "One box-shadow carrying three layers: a big soft outer shadow that lifts the element, an inset shadow away from the light for volume, an inset highlight on the lit side",
+        "Pastel and vivid hues together, with soft gradients"
+      ],
+      "recipe": {
+        "css": "border-radius: 32px; background: #f0a6ca; box-shadow: 0 16px 32px rgba(0,0,0,0.12), inset -8px -8px 16px rgba(0,0,0,0.10), inset 8px 8px 16px rgba(255,255,255,0.55);",
+        "note": "Unlike neumorphism the element is a different colour from its background - which is exactly why it keeps its contrast and its affordance."
+      },
+      "use_when": ["Onboarding and empty states", "Children's and education apps", "Friendly consumer fintech", "3D landing pages"],
+      "avoid_when": ["Dense professional tools", "Serious or high-stakes contexts where playful reads as unsafe"],
+      "accessibility": [
+        "Safer than neumorphism because the surface differs from the background - but still verify text on pastel fills, which fail contrast easily.",
+        "Large radii shrink the usable corner area; keep hit targets generous."
+      ],
+      "domain_fit": {"strong": ["education", "social"], "possible": ["fintech", "ecommerce", "creative", "media"], "never": ["healthcare", "enterprise", "logistics"]},
+      "token_bias": {"radius": "extra-large", "elevation": "soft and lifted", "palette": "pastel with vivid accents"},
+      "sources": ["https://blog.logrocket.com/implementing-claymorphism-css/", "https://superdesign.dev/styles/claymorphism"]
+    },
+    {
+      "id": "brutalism",
+      "label": "Brutalism",
+      "one_line": "Raw HTML honesty - default elements, system type, almost no styling.",
+      "signature": [
+        "Honesty of materials: the page shows what the web is - HTML, a little CSS, basic controls",
+        "Monospace or system fonts, unstyled or barely styled buttons and inputs",
+        "Black, white and greys; colour used sparingly if at all",
+        "Structure visible rather than hidden under framework chrome"
+      ],
+      "recipe": {
+        "approach": "Start from the browser default stylesheet and resist overriding it. Set a readable measure and line height, and stop.",
+        "performance": "Few assets, few computed styles, a short critical rendering path. The speed is not incidental - it is most of the argument."
+      },
+      "use_when": ["Independent, experimental or artist-led projects", "Documentation and text-first sites", "An audience that reads authenticity as a value", "Where maintenance cost and speed matter more than polish"],
+      "avoid_when": ["Conversion-critical funnels - excellent for recall, poor for task completion", "Any audience expecting conventional affordances", "Products where trust is signalled visually, such as payments or healthcare"],
+      "accessibility": [
+        "Often accidentally strong: native elements carry correct semantics and keyboard behaviour for free.",
+        "The risks are a measure that runs the full window width, and removed focus styles. Cap the measure at 60-75 characters and keep :focus-visible."
+      ],
+      "domain_fit": {"strong": ["creative", "devtools"], "possible": ["media", "education", "generic"], "never": ["healthcare", "fintech", "ecommerce", "logistics", "enterprise"]},
+      "token_bias": {"radius": "none", "elevation": "none", "type": "monospace or system"},
+      "sources": ["https://nat.io/blog/brutalist-design-principles", "https://www.todaymade.com/blog/brutalist-web-design"]
+    },
+    {
+      "id": "neo-brutalism",
+      "label": "Neo-brutalism",
+      "one_line": "Thick black borders, hard zero-blur offset shadows, flat saturated fills.",
+      "signature": [
+        "Borders of roughly 2-5px, usually near-black",
+        "Hard offset shadows with zero blur and zero spread - a solid block of colour behind the element",
+        "Flat single-colour fills: yellow, lime, cyan, hot pink",
+        "Black and white base with one or two extremely saturated accents"
+      ],
+      "recipe": {
+        "css": "border: 3px solid #0f172a; box-shadow: 6px 6px 0 0 #0f172a; border-radius: 4px; background: #facc15;",
+        "press": "On active, translate the element by exactly the shadow offset and remove the shadow - translate(6px, 6px). A mismatch between the two is the most common tell of a cargo-culted implementation.",
+        "three_rules": "Zero blur on every shadow. Press distance equal to the shadow offset. An explicit :focus-visible style, since the border alone will not read as focus."
+      },
+      "use_when": ["Creator tools and consumer brands aimed at a younger audience", "Launch and campaign pages, portfolios", "Developer tooling that wants to signal it is not enterprise software"],
+      "avoid_when": ["Enterprise administration", "Long-session data work - the high contrast tires at length", "Conservative or regulated audiences"],
+      "accessibility": [
+        "Usually strong on contrast, which is a real advantage over the soft styles.",
+        "The saturated fills must still be checked against their text - yellow with white text fails badly.",
+        "Because everything already has a heavy border, focus needs a distinct treatment: an offset outline in a different colour, never a thicker border."
+      ],
+      "domain_fit": {"strong": ["devtools", "creative", "social"], "possible": ["education", "ecommerce", "media"], "never": ["healthcare", "logistics"]},
+      "token_bias": {"radius": "none to small", "elevation": "hard offset", "palette": "black/white plus 1-2 saturated accents"},
+      "sources": ["https://neubrutalism.com/", "https://alexmayhew.dev/blog/neo-brutalism-developer-guide"]
+    },
+    {
+      "id": "skeuomorphism",
+      "label": "Skeuomorphism",
+      "one_line": "Real-world material and control metaphors, used where the metaphor teaches something.",
+      "signature": [
+        "Material texture - wood, metal, paper, glass - and physical control shapes",
+        "Depth and lighting that communicate dimensionality rather than decorate",
+        "Controls that look like the thing they emulate: knobs, faders, switches"
+      ],
+      "recipe": {
+        "principle": "The 2026 form is selective, not the 2010 form. Reintroduce depth, texture and metaphor ONLY where they communicate something a flat control could not - never as decoration.",
+        "technique": "Layered gradients for curvature, a consistent single light source, texture at low opacity, and a real pressed state with both a visual and a motion response."
+      },
+      "use_when": ["VR, AR and spatial interfaces, where flat surfaces are genuinely confusing", "Children's educational apps, where a familiar object lowers cognitive load", "Creative tools emulating hardware - audio production, cameras, instruments"],
+      "avoid_when": ["General-purpose applications - heavy, slow and dated outside its niches", "Anything needing dense information display"],
+      "accessibility": [
+        "Textured backgrounds under text are the main hazard; put type on a flat plate.",
+        "A realistic knob is often not keyboard-operable. Every emulated control needs a real input underneath it, with arrow-key support and an accessible name."
+      ],
+      "domain_fit": {"strong": [], "possible": ["education", "media", "creative"], "never": ["enterprise", "logistics", "fintech", "healthcare"]},
+      "token_bias": {"radius": "medium", "elevation": "material and layered", "palette": "material-derived"},
+      "sources": ["https://superdesign.dev/styles/skeuomorphism", "https://www.userology.co/blogs/neo-skeuomorphism-ui-trends-2026-spatial"]
+    },
+    {
+      "id": "flat",
+      "label": "Flat design 2.0",
+      "one_line": "Flat colour and clean geometry, with just enough shadow and state change to keep affordance.",
+      "signature": [
+        "Solid fills, no gradients or texture for their own sake",
+        "Subtle shadows, highlights and layering added back specifically so controls read as controls",
+        "Colour shifts on interactive states rather than skeuomorphic feedback"
+      ],
+      "recipe": {
+        "history": "Pure flat design removed the cues that told users what was clickable. Flat 2.0 exists because of that usability failure - it keeps the aesthetic and returns the affordance.",
+        "css": "A one- or two-step elevation scale, a clear hover and active colour shift, and a visible border on every input."
+      },
+      "use_when": ["Content-forward interfaces - editorial sites, portfolios, dashboards, landing pages - where the visual system should recede", "Broad device and performance range", "A brand with its own strong colour that the UI should not compete with"],
+      "avoid_when": ["Interaction-heavy applications needing constant feedback - Material is the better answer there"],
+      "accessibility": [
+        "The classic flat failure is a button indistinguishable from text. Every actionable element needs at least two of: contrasting fill, border, elevation.",
+        "Never signal state with colour alone."
+      ],
+      "domain_fit": {"strong": ["ecommerce", "media", "education", "generic"], "possible": ["fintech", "social", "enterprise", "logistics"], "never": []},
+      "token_bias": {"radius": "small to medium", "elevation": "one or two steps", "motion": "short"},
+      "sources": ["https://www.nngroup.com/articles/flat-design/", "https://www.justinmind.com/blog/flat-design-vs-material-design-differences/"]
+    },
+    {
+      "id": "material",
+      "label": "Material Design 3 (Expressive)",
+      "one_line": "A complete token-driven system where shadow, shape and motion are the feedback language.",
+      "signature": [
+        "Design tokens named by purpose rather than appearance - colour, type, spacing, shape",
+        "Shape tokens as a named scale (none, extra-small, small, medium, large, extra-large, full) rather than hard-coded radii",
+        "Deep tonal palettes generated from a source colour; dynamic theming",
+        "Motion as feedback: elevation change, shape morphing, and variable-font axes carrying expression"
+      ],
+      "recipe": {
+        "approach": "Adopt the system, do not imitate its look. The value is the token layer and the component contracts; a hand-rolled Material lookalike takes the visual cost with none of the consistency benefit.",
+        "tooling": "Generate the theme from a brand colour with the Material Theme Builder and export tokens; wire components to tokens, never to literals."
+      },
+      "use_when": ["Android, or a cross-platform product that should feel native on Android", "Interaction-heavy applications where users need continuous feedback about what is draggable, dismissible or clickable", "Large teams needing an off-the-shelf system with documented component behaviour"],
+      "avoid_when": ["A brand with a strong visual identity of its own - Material will dominate it", "iOS-only products, where it reads as foreign", "Small static or content sites, where the system is far more machinery than the job needs"],
+      "accessibility": [
+        "Strong by default: the tonal palette is generated to hit contrast targets, and components ship with correct roles and states.",
+        "The failure mode is overriding tokens with literals, which quietly breaks the guarantees. Hard-coded hex values inside Material components mean the system is no longer doing its job."
+      ],
+      "domain_fit": {"strong": ["enterprise", "logistics", "healthcare", "education"], "possible": ["fintech", "ecommerce", "social", "media"], "never": []},
+      "token_bias": {"radius": "token scale", "elevation": "token scale", "motion": "system-defined"},
+      "sources": ["https://euleinstitute.com/en/blog/material-design-3/", "https://supercharge.design/blog/material-3-expressive"]
+    },
+    {
+      "id": "bento",
+      "label": "Bento UI",
+      "one_line": "A modular grid of tiles of deliberately unequal size, where size encodes priority.",
+      "signature": [
+        "Tiles of different spans in one grid, breaking the monotony of an equal-cell layout",
+        "Larger tiles for priority content creating natural focal points; smaller tiles supporting them",
+        "Each tile a self-contained unit that can stand alone or combine",
+        "Generous, consistent gutters - crowding is what makes a bento layout fail"
+      ],
+      "recipe": {
+        "css": "display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; with tiles spanning 4/6/8 columns and 1-2 rows.",
+        "hierarchy": "Decide what matters most FIRST, then assign spans. A bento grid whose tile sizes do not encode importance is just an uneven layout.",
+        "content": "One idea per tile. Overstuffing a tile removes the clarity the format exists to provide.",
+        "responsive": "Collapse to a single column on mobile in priority order - largest tile first. The layout must not depend on a two-dimensional reading order."
+      },
+      "use_when": ["Feature overviews and product landing pages", "Dashboards with metrics of genuinely different importance", "Portfolio and showcase pages", "Anywhere a summary must be scannable at a glance"],
+      "avoid_when": ["Uniform lists - a catalogue of equal items should be an equal grid", "Long-form reading", "Dense tabular data"],
+      "accessibility": [
+        "DOM order must match visual priority, or keyboard and screen-reader users get the layout in a meaningless sequence. Never reorder with grid placement alone.",
+        "Each tile needs a real heading so the page outline is navigable.",
+        "A tile that is entirely clickable still needs one focusable element with an accessible name - not a click handler on a div."
+      ],
+      "domain_fit": {"strong": ["devtools", "enterprise", "creative", "fintech"], "possible": ["ecommerce", "media", "logistics", "education", "social", "generic"], "never": []},
+      "token_bias": {"radius": "medium to large", "elevation": "flat tiles with borders", "spacing": "generous consistent gutters"},
+      "note": "Bento is a LAYOUT, not a skin. It composes with almost any other style - minimalism, glass, neo-brutalism - and is usually bound alongside one rather than instead of one.",
+      "sources": ["https://www.saasframe.io/blog/the-bento-layout-trend", "https://www.galaxyux.studio/blog/bento-grids-the-new-standard-for-modular-ui-design/"]
+    },
+    {
+      "id": "y2k",
+      "label": "Y2K",
+      "one_line": "Late-90s digital optimism: chrome, iridescence, bubble letterforms and cyber grids.",
+      "signature": [
+        "Chrome and liquid-metal type - the single most recognisable element",
+        "Inflated bubble letterforms",
+        "Cyber grids and wireframe perspective",
+        "Neon-to-pastel gradient blobs, pixel and bitmap texture, glitch and scan-line distortion"
+      ],
+      "recipe": {
+        "chrome": "Dark or neutral ground, then a gradient moving between two or three iridescent colours, then a soft highlight on top to mimic light hitting the surface. Apply to bold rounded letterforms with background-clip: text.",
+        "surfaces": "Rounded cards with subtle glossy inner shadows.",
+        "palette": "Chrome silver as the structural surface; bubblegum pink and lime green as emotional accents; frosted aqua and cyber navy for depth; a holographic gradient for the signature pearl reflectance."
+      },
+      "use_when": ["Fashion, music, gaming and youth-culture brands", "Campaign and event microsites", "Products whose audience has genuine nostalgia for the era"],
+      "avoid_when": ["Any professional tool", "Audiences outside the nostalgia window, to whom it reads as unserious rather than knowing"],
+      "accessibility": [
+        "Chrome gradient text is often unreadable at body size - use it for display only, and keep body copy in a flat, high-contrast colour.",
+        "Glitch and scan-line animation must be gated behind prefers-reduced-motion; these effects can trigger discomfort.",
+        "Never put essential information in a gradient-filled or distorted element."
+      ],
+      "domain_fit": {"strong": ["creative", "media"], "possible": ["social", "ecommerce"], "never": ["healthcare", "fintech", "enterprise", "logistics", "devtools"]},
+      "token_bias": {"radius": "large", "elevation": "glossy inner shadow", "palette": "iridescent"},
+      "sources": ["https://webflow.com/blog/y2k-aesthetic", "https://digitalheroesco.com/styles/y2k-nostalgia/"]
+    },
+    {
+      "id": "retro",
+      "label": "Retro / vintage",
+      "one_line": "One specific decade, committed to consistently across colour, type and ornament.",
+      "signature": [
+        "A chosen era, followed properly - 1970s earth tones (mustard, burnt orange, avocado, chocolate), 1980s neon (hot pink, teal, purple, lime), 1990s softs (lavender, sage, dusty rose, cream)",
+        "Period-appropriate display type - bold decorative for the 70s, pixel faces for the 80s",
+        "Muted, less saturated colour for authenticity - period printing could not produce today's gamut",
+        "Grain, halftone and print texture"
+      ],
+      "recipe": {
+        "rule": "Pick one decade and hold to it. Mixing eras is what makes retro read as generic rather than deliberate.",
+        "type": "Decorative faces for headlines only; clean, readable body type underneath. Period charm must not reach the paragraph.",
+        "texture": "A low-opacity grain overlay does most of the work of making flat colour feel printed."
+      },
+      "use_when": ["Food, drink and hospitality brands", "Music, film and event products", "Heritage brands with a real history to reference"],
+      "avoid_when": ["Products whose value proposition is being current", "Complex applications - the ornament competes with the interface"],
+      "accessibility": [
+        "Muted period palettes fail contrast easily. Keep the period hues for surfaces and ornament, and darken text beyond what the era used.",
+        "Decorative and pixel faces are poor at small sizes - never below 18px, and never for body copy.",
+        "Grain overlays must sit behind text, never over it."
+      ],
+      "domain_fit": {"strong": ["creative", "ecommerce", "media"], "possible": ["social", "education"], "never": ["healthcare", "fintech", "enterprise", "logistics", "devtools"]},
+      "token_bias": {"radius": "era-dependent", "elevation": "print-flat with texture", "palette": "muted period"},
+      "sources": ["https://eknojistudio.com/retro-website-design/", "https://www.designer-daily.com/designing-with-retro-colors-showcase-and-tips-62507"]
+    },
+    {
+      "id": "cyberpunk",
+      "label": "Cyberpunk",
+      "one_line": "Near-black ground, restrained neon accents, terminal typography and HUD framing.",
+      "signature": [
+        "Absolute black or deep charcoal ground with neon accents covering no more than 10-15% of the surface",
+        "Acid yellow, cyan and hot pink as the accent set",
+        "Monospace code faces - JetBrains Mono, Fira Code, IBM Plex Mono - with all-caps labels and fixed-width layout",
+        "Scan lines, chromatic aberration and glitch animation suggesting lived-in, imperfect technology"
+      ],
+      "recipe": {
+        "restraint": "One loud focal element per page - a cyan border with glow. Everything else uses quiet borders. Neon everywhere is neon nowhere, and it becomes unreadable.",
+        "glow": "A layered box-shadow in the accent hue at low alpha, not a filter - filters are far more expensive and blur the edge you want crisp.",
+        "text": "Body text around rgba(255,255,255,0.55) on a #05050a ground passes AA. Do not drop text opacity below 0.45."
+      },
+      "use_when": ["Developer tools, security and infrastructure products", "Gaming and esports", "Crypto and trading interfaces where a dark room is the real usage context"],
+      "avoid_when": ["All-day productivity tools - neon-on-dark causes eye strain over long sessions", "Audiences with mixed or unknown accessibility needs", "Bright-environment usage, where a pure-black UI is hard to read"],
+      "accessibility": [
+        "Pure black with pure neon is the maximum-eye-strain combination. Use a near-black ground (#05050a) rather than #000, and cap accent coverage.",
+        "Glitch and scan-line effects must be gated behind prefers-reduced-motion - show the static version.",
+        "Monospace all-caps hurts scanning at length; use it for labels and data, not for prose.",
+        "Offer a light theme unless the product is genuinely dark-only."
+      ],
+      "domain_fit": {"strong": ["devtools"], "possible": ["media", "social", "fintech", "creative"], "never": ["healthcare", "education", "logistics", "enterprise", "ecommerce"]},
+      "token_bias": {"radius": "none to small", "elevation": "glow", "palette": "near-black with 2-3 neons", "type": "monospace"},
+      "sources": ["https://www.stellae.design/en/learn/cyberpunk-ui-design", "https://designmd.app/library/cyberpunk-ui"]
+    },
+    {
+      "id": "editorial",
+      "label": "Editorial",
+      "one_line": "Magazine discipline: a real grid, typographic hierarchy, and white space doing structural work.",
+      "signature": [
+        "A column grid as the primary tool - six to eight columns at desktop, collapsing cleanly",
+        "Hierarchy from type scale rather than colour: a 64px headline beside 16px body creates its own structure",
+        "Generous margins and white space that moves the reader and slows the eye",
+        "Consistency of fonts, colours and spacing across every article template"
+      ],
+      "recipe": {
+        "measure": "50-75 characters per line. The single highest-impact readability decision on a text-led site.",
+        "type": "Body at 16px minimum on web; leading at 120-150% of the font size.",
+        "grid": "Define the grid first and place images to it - a full-bleed image and a three-column pull quote both read as intentional only if the grid exists beneath them.",
+        "scale": "One strong display face and one highly readable text face is enough. A third font is almost always decoration."
+      },
+      "use_when": ["Publications, long-form content, documentation and research", "Marketing sites where the argument is the product", "Any product where reading time is the core metric"],
+      "avoid_when": ["Application interfaces with dense controls", "Short transactional flows"],
+      "accessibility": [
+        "Usually strong, because the discipline is readability. Keep the measure capped and honour user font-size settings by sizing in rem.",
+        "Do not let a decorative drop cap break the reading order for screen readers.",
+        "Pull quotes and captions still need to meet contrast - they are the usual offenders, set too light on purpose."
+      ],
+      "domain_fit": {"strong": ["media", "education", "creative"], "possible": ["enterprise", "healthcare", "fintech", "generic", "devtools"], "never": []},
+      "token_bias": {"radius": "none to small", "elevation": "none", "type": "display plus text pairing"},
+      "sources": ["https://www.toastdesign.co.uk/design-resources/editorial-design-principles-2026/", "https://designmd.app/library/editorial-grid-magazine/"]
+    }
+  ],
+
+  "combination_rules": {
+    "layout_plus_skin": "`bento` and `editorial` are layout systems; the other thirteen are skins. One layout plus one skin is a normal, good binding - bento tiles in a minimalist skin, or an editorial grid with neo-brutalist accents.",
+    "never_combine": [
+      ["neumorphism", "glassmorphism"],
+      ["brutalism", "skeuomorphism"],
+      ["minimalism", "maximalism"],
+      ["neumorphism", "claymorphism"]
+    ],
+    "reason": "Each of those pairs makes contradictory claims about depth, ornament or restraint. An interface making both claims reads as unfinished rather than as a blend.",
+    "one_skin": "Exactly one skin per product. A second skin for one screen is how a design system starts dying."
+  },
+
+  "never": [
+    "Never present the full list of fifteen to the user. Deriving the style from the domain is the job; a menu is the abdication of it.",
+    "Never bind a style whose domain_fit marks the detected domain `never`, whatever it looks like.",
+    "Never restyle an existing design system. If the repo has one, extend it - the bound style then describes new surfaces only, and that limitation is stated.",
+    "Never let a style's accessibility cost go unstated. If a style needs mitigation to be usable, the mitigation ships with it or the style does not.",
+    "Never choose by taste or by what is currently fashionable. The reason must be stated in terms of domain, audience, session length or stakes."
+  ]
+}

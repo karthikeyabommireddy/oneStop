@@ -1,5 +1,74 @@
 # Changelog
 
+## 1.8.0
+
+### Added - fifteen visual styles, derived not asked
+
+`registry/ui-styles.json` gives the `ui-designer` a real choice about what an interface
+*feels* like, where `design.json` only decided the palette. Each style was researched
+against current practice and carries four things: the signature that makes it
+recognisable, the CSS recipe that makes it convincing, the accessibility cost it imposes,
+and - the part usually missing - the conditions under which it is the wrong answer.
+
+minimalism · maximalism · glassmorphism · neumorphism · claymorphism · brutalism ·
+neo-brutalism · skeuomorphism · flat 2.0 · Material 3 · bento · Y2K · retro · cyberpunk ·
+editorial.
+
+**The style is derived, never offered as a menu.** Selection scores the detected domain
+against each style's `domain_fit`, then adjusts for audience, session length and the
+stakes of a mistake - an all-day professional tool and a launch campaign want opposite
+answers. `domain_fit.never` is a hard exclusion: cyberpunk is not bound for a healthcare
+product because it looks good, because it would not look good - it would look
+untrustworthy to someone reading a diagnosis. The user is asked only when two styles
+score within a point *and* would produce materially different interfaces.
+
+What the research actually changed:
+
+- **Neumorphism's defining feature is its accessibility failure.** An element the same
+  colour as its background has no contrast at its boundary, so the control's edge is
+  invisible to low-vision users and to everyone in bright sunlight. It now ships with a
+  mandatory mitigation - a real border, a high-contrast focus ring, 44px targets - and
+  the note that if the mitigation destroys the look, the style was wrong for that product.
+- **Glassmorphism's contrast depends on what scrolls underneath it**, which is why text
+  gets a semi-opaque plate and is verified against the worst background the panel can sit
+  over, not the screenshot it was designed with. Blur stays at 8-15px, 2-3 elements per
+  viewport, never animated.
+- **Neo-brutalism has three tells** separating a convincing implementation from a
+  cargo-culted one: zero blur on every shadow, a press distance exactly equal to the
+  shadow offset, and an explicit `:focus-visible` - since the heavy border is already
+  taken and cannot double as focus.
+- **Cyberpunk on pure black is the maximum-eye-strain combination.** Near-black `#05050a`,
+  accents capped at 10-15% of the surface, one loud focal element per page.
+- **Bento is a layout, not a skin** - it composes with a skin rather than replacing one,
+  and its tile spans must encode priority or it is just an uneven grid. DOM order must
+  match visual priority or keyboard users get the page in a meaningless sequence.
+- **Flat 2.0 exists because pure flat broke affordance.** Every actionable element needs
+  at least two of: contrasting fill, border, elevation.
+
+`skills/phase-ui-design/references/styles.md` carries copy-ready CSS for all fifteen.
+
+### Fixed - Releases was empty while nine commits had landed
+
+GitHub builds the Releases page from tags, and nothing in this repo ever created one - so
+pushing published code and left Releases blank. All seven shipped versions are now tagged
+and released from their real commits, and `.github/workflows/release.yml` publishes a
+release automatically whenever `VERSION` changes on main, using the hand-written
+`CHANGELOG.md` section as the notes. It verifies before publishing, so a release cannot
+ship code that fails its own gate.
+
+### Fixed - four stale counts in the README
+
+It claimed 20 stacks (24), 18 phase skills (19), 18 role agents (23) and 24 packs (29).
+The agent table also listed only 7 of the 10 staffed phases, omitting requirements,
+ui-design and qa-plan entirely.
+
+### Added - a validator check for the style registry
+
+Every `domain_fit` id must be a real domain, no style may be both `strong` and `never`
+for one domain, every style must state an accessibility cost and a recipe, and every
+domain must have at least one strong fit - otherwise selection falls through to the
+default there forever, invisibly.
+
 ## 1.7.0
 
 ### Added - the pattern inside the framework

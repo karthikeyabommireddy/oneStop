@@ -75,8 +75,8 @@ Everything between the two gates flows without stopping.
 Most agent catalogues ship one reviewer per language - sixteen near-identical files that
 drift apart as they are maintained. onestop separates **role** from **knowledge**:
 
-- **18 role agents** define *how* to review, plan, test, refactor, or resolve a build.
-- **24 packs** define *what* is true about a language or a concern.
+- **23 role agents** define *how* to review, plan, test, refactor, or resolve a build.
+- **29 packs** define *what* is true about a language or a concern.
 
 A role agent loads the packs the detected stack names and applies them on top of its own
 contract. One `code-reviewer` knows every language onestop has a pack for, and a diff
@@ -97,13 +97,18 @@ stack is never a blocker.
 
 | Phase | Agents |
 |---|---|
+| requirements | `ba-analyst` |
 | discovery | `discovery-scout`, `code-explorer`, `option-broker` |
-| plan | `planner` |
 | design | `architect`, `contract-agent`, `a11y-agent` |
-| implement | `test-author`, `build-resolver`, `refactor-agent`, `performance-agent` |
+| ui-design | `ui-designer`, `a11y-agent` |
+| plan | `planner`, `work-partitioner` |
+| implement | `test-author`, `build-resolver`, `refactor-agent`, `performance-agent`, `merge-coordinator` |
+| test, qa-plan | `test-author`, `qa-planner` |
 | automation | `web-automation-agent`, `app-automation-agent` |
 | review | `code-reviewer`, `security-reviewer`, `data-reviewer`, `validator` |
 | ship | `docs-agent` |
+
+Full map, with what each phase hands on: `skills/shared/agent-flow.md`.
 
 ## Parallel execution
 
@@ -259,7 +264,7 @@ triggers and public contract changes escalate the tier automatically.
 
 ## Automatic stack binding
 
-20 stacks are detected from marker files and lockfiles. Each binds its packs, test
+24 stacks are detected from marker files and lockfiles. Each binds its packs, test
 runner, coverage command and automation frameworks with no input from you:
 
 | Detected | Packs | Web automation | App automation |
@@ -368,6 +373,7 @@ onestop/
     patterns.json   architecture + automation patterns, SOLID checks, file roles
     artifacts.json  where every phase writes what it produces
     design.json     11 domain design profiles, OKLCH system, scales
+    ui-styles.json  15 visual styles, derived from domain and audience
     gates.json      gate protocol - shape, no-batching, gate zero
     parallel.json   wave scheduling, write-surface and failure rules
     agents.json     derived role-agent catalogue  (generated)
@@ -380,7 +386,7 @@ onestop/
   skills/
     orchestrate/          the engine
     parallel-execution/   the wave scheduler
-    phase-*/              18 phase skills, each with its own references/
+    phase-*/              19 phase skills, each with its own references/
     shared/               protocols every phase reads
       architecture.md     pattern binding, smart/dumb roles, SOLID, system design
       artifacts.md        artifact placement and the RTM relay

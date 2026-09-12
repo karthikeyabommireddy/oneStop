@@ -1,0 +1,68 @@
+# GitHub builds the Releases page from tags. Pushing to main updates the code and creates
+# no tag, which is why Releases stayed empty while nine commits landed. This publishes a
+# release whenever VERSION changes on main, using the hand-written CHANGELOG section as
+# the notes - so there is one account of each release, not two that drift apart.
+name: release
+
+on:
+  push:
+    branches: [main]
+    paths: ["VERSION"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0        # tags are needed to tell a re-run from a new version
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Read the version
+        id: v
+        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Has this version already been released?
+        id: tag
+        run: |
+          if git rev-parse "v${{ steps.v.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "v${{ steps.v.outputs.version }} is already tagged - nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A release must not ship code that fails its own gate.
+      - name: Verify before publishing
+        if: steps.tag.outputs.exists == 'false'
+        run: |
+          python scripts/verify_install.py
+          python scripts/validate.py
+          python scripts/test_routing.py
+          python scripts/test_parallel.py
+
+      - name: Build the notes from CHANGELOG.md
+        if: steps.tag.outputs.exists == 'false'
+        run: python scripts/changelog_section.py "${{ steps.v.outputs.version }}" > RELEASE_NOTES.md
+
+      - name: Tag and publish
+        if: steps.tag.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "onestop v$VERSION"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" \
+            --title "onestop v$VERSION" \
+            --notes-file RELEASE_NOTES.md \
+            --verify-tag

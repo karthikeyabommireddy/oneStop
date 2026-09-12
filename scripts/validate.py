@@ -309,6 +309,39 @@ def main():
         print("  artifact map        " + ("ok (" + str(len(mapped)) + " phases)"
                                           if not stray else "FAIL"))
 
+    # 18 - the visual style registry must be usable by the selection algorithm: every
+    # domain_fit id must be a real design.json domain (a typo silently excludes nothing
+    # and matches nothing), no style may be both strong and never for one domain, every
+    # style must state its accessibility cost, and every domain must have at least one
+    # style that fits it - otherwise the selector falls through to the default forever.
+    ui = load_json("registry/ui-styles.json")
+    design = load_json("registry/design.json")
+    if ui and design:
+        domains = {d["id"] for d in design["domains"]}
+        problems, covered = [], set()
+        for st in ui["styles"]:
+            fit = st.get("domain_fit", {})
+            for bucket in ("strong", "possible", "never"):
+                for dom in fit.get(bucket, []):
+                    if dom not in domains:
+                        problems.append(st["id"] + " domain_fit." + bucket +
+                                        " names unknown domain: " + dom)
+            both = set(fit.get("strong", [])) & set(fit.get("never", []))
+            for dom in sorted(both):
+                problems.append(st["id"] + " lists '" + dom + "' as both strong and never")
+            if not st.get("accessibility"):
+                problems.append(st["id"] + " states no accessibility cost - every style has one")
+            if not st.get("recipe"):
+                problems.append(st["id"] + " has no recipe, so nothing can implement it")
+            covered.update(fit.get("strong", []))
+        for dom in sorted(domains - covered):
+            warn("no UI style lists domain '" + dom + "' as a strong fit - selection "
+                 "will always fall through to the default there")
+        for p_ in problems:
+            err("registry/ui-styles.json: " + p_)
+        print("  ui styles           " + ("ok (" + str(len(ui["styles"])) + ")"
+                                          if not problems else "FAIL"))
+
     # 17 - every plugin-internal file referenced with ${CLAUDE_PLUGIN_ROOT} must exist.
     # A broken reference is silent at runtime: the model simply does not load the
     # protocol it was told to follow, and the run degrades with no error anywhere.
