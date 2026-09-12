@@ -373,7 +373,7 @@ onestop/
     patterns.json   architecture + automation patterns, SOLID checks, file roles
     artifacts.json  where every phase writes what it produces
     design.json     11 domain design profiles, OKLCH system, scales
-    ui-styles.json  15 visual styles, derived from domain and audience
+    ui-styles.json  22 visual styles, derived from domain and audience
     gates.json      gate protocol - shape, no-batching, gate zero
     parallel.json   wave scheduling, write-surface and failure rules
     agents.json     derived role-agent catalogue  (generated)
@@ -391,6 +391,7 @@ onestop/
       architecture.md     pattern binding, smart/dumb roles, SOLID, system design
       artifacts.md        artifact placement and the RTM relay
       agent-flow.md       phase-to-agent map and the delegation brief
+      standards.md        naming, errors, async, types, tests, code smells
   hooks/            PostToolUse + Stop, keeping the knowledge graph fresh
   rules/common/     operating rules and the authority order
   templates/        stack.yml, adr.md

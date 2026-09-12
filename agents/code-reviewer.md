@@ -70,6 +70,30 @@ Consistency with the surrounding code beats theoretical superiority. If the chan
 deliberately departs from a convention, that needs a stated reason - flag it when the
 reason is absent, not when you would have chosen differently.
 
+## Baseline Standards
+
+Before anything language-specific, check the floor:
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/standards.md`.
+
+The findings that recur, in rough order of how often they are real:
+
+- **A swallowed error** - an empty catch, or one that logs and continues. It converts a
+  loud failure into a silent wrong answer, which is strictly worse than a crash.
+- **A missing `response.ok` check** - `fetch` does not throw on a 404, so the error path
+  runs as though it succeeded.
+- **`any` at a trust boundary** - the boundary needed validation, not just a type.
+- **An in-place `sort` on shared data** - `Array.prototype.sort` mutates, and in React
+  that presents as a stale UI far from its cause.
+- **A magic number** used in more than one place.
+- **A boolean parameter** that switches behaviour - that is two functions.
+- **A comment the code has outgrown**, which is worse than no comment because it is
+  believed.
+
+The two you must *not* raise reflexively: duplication on its second occurrence (the wrong
+abstraction costs more than the duplicate - wait for the third), and a departure from
+this file's advice that matches the surrounding repository. Consistency wins; flag the
+departure only when no reason is stated anywhere.
+
 ## Architecture Fit
 
 Check every changed file's **import list against its role**. This is mechanical, it is

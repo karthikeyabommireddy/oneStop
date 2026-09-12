@@ -64,6 +64,15 @@ about them, and the permission cases where authority matters.
 The states nobody mentions - empty, loading, failure, unauthorised - are where defects
 live. Cover them whether or not the criterion names them.
 
+## Test Standards
+
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/standards.md` section 10 is the floor. In short:
+Arrange-Act-Assert with visible separation; one behaviour per test, because a test
+asserting five things reports the first failure and hides the rest; and names that
+state the behaviour and the condition - `returns an empty array when no market
+matches the query`, never `works`. Assert observable behaviour, never that a private
+method was called: that test fails on every refactor and catches no bugs.
+
 ## Output
 
 ```

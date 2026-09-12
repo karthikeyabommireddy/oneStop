@@ -334,6 +334,24 @@ def main():
             if not st.get("recipe"):
                 problems.append(st["id"] + " has no recipe, so nothing can implement it")
             covered.update(fit.get("strong", []))
+
+        # There must be exactly one declared default, and it must be bindable for every
+        # domain - a default with a `never` entry leaves some domain with no fallback at
+        # all, which is the one situation selection cannot recover from.
+        defaults = [s["id"] for s in ui["styles"] if s.get("is_default")]
+        named = ui.get("default_style", {}).get("id")
+        if len(defaults) != 1:
+            problems.append("expected exactly one style flagged is_default, found " +
+                            str(len(defaults)) + ": " + ", ".join(defaults))
+        elif defaults[0] != named:
+            problems.append("default_style.id is '" + str(named) + "' but '" +
+                            defaults[0] + "' carries is_default")
+        else:
+            blocked = [s for s in ui["styles"] if s["id"] == named][0]["domain_fit"]["never"]
+            if blocked:
+                problems.append("default style '" + named + "' excludes " +
+                                ", ".join(blocked) + " - a default must be bindable everywhere")
+
         for dom in sorted(domains - covered):
             warn("no UI style lists domain '" + dom + "' as a strong fit - selection "
                  "will always fall through to the default there")

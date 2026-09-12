@@ -114,7 +114,9 @@ database. Apply a principle when its signal is actually present, and name the si
 
 ## Code Standards
 
-Enforced on every file written, and checked in review:
+Full protocol: `${CLAUDE_PLUGIN_ROOT}/skills/shared/standards.md` - naming, immutability,
+error handling, async, types, comments, tests and the smell table. It travels with every
+delegation. The points below are the ones this phase enforces directly:
 
 - **File size.** Target 300 lines, hard fail at 400. One responsibility per file.
   Decompose in the planned structure, before writing - never emit a monolith intending

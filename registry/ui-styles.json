@@ -30,6 +30,7 @@
     {
       "id": "minimalism",
       "label": "Minimalism",
+      "is_default": true,
       "one_line": "Space, scale and type carry the hierarchy; nothing decorative survives.",
       "signature": [
         "Whitespace as a structural tool, not leftover margin - it separates content, lowers cognitive load and walks the eye to the action",
@@ -410,8 +411,204 @@
       "domain_fit": {"strong": ["media", "education", "creative"], "possible": ["enterprise", "healthcare", "fintech", "generic", "devtools"], "never": []},
       "token_bias": {"radius": "none to small", "elevation": "none", "type": "display plus text pairing"},
       "sources": ["https://www.toastdesign.co.uk/design-resources/editorial-design-principles-2026/", "https://designmd.app/library/editorial-grid-magazine/"]
+    },
+    {
+      "id": "liquid-glass",
+      "label": "Liquid Glass (Apple)",
+      "one_line": "Apple's system material - translucency that refracts, reacts and adapts to what is behind it.",
+      "signature": [
+        "A rendering model that happens to look glassy, not a glassy look - that distinction is the whole style",
+        "Real optical behaviour: reflection, refraction and light interaction, with a sense of fluidity",
+        "Adapts in real time to surrounding content, shifting to keep focus on the content rather than the chrome",
+        "Applied to controls, navigation bars, tab bars, widgets and icons - the system surfaces, not the content"
+      ],
+      "recipe": {
+        "native": "On Apple platforms use the system material APIs. Do not hand-roll it - the OS version reacts to content, scroll and ambient light in ways CSS cannot reproduce, and a hand-rolled copy will drift from the system every release.",
+        "web": "CSS can approximate but not match: layered backdrop-filter with a slight saturate(), a specular highlight along the top edge, and a border that brightens where light would catch. Accept that it is an approximation and say so.",
+        "restraint": "Glass is for chrome. Content sits on opaque surfaces - Apple's own apps do this, and skipping it is what makes third-party imitations feel unreadable."
+      },
+      "use_when": ["iOS 26, iPadOS 26, macOS Tahoe, watchOS, tvOS or visionOS products", "A cross-platform product that should feel native on Apple hardware", "Spatial interfaces where translucency communicates depth"],
+      "avoid_when": ["Android-only or web-only products, where it reads as a foreign system's furniture", "Any interface whose content is dense text or tabular data"],
+      "accessibility": [
+        "Same core hazard as glassmorphism, one layer deeper: contrast depends on what is behind the surface, and here that changes dynamically.",
+        "Honour Reduce Transparency and Increase Contrast - on Apple platforms these are system settings the material already responds to, which is another reason to use the system API rather than imitate it.",
+        "Never place body text directly on the material."
+      ],
+      "domain_fit": {"strong": ["media", "creative", "social"], "possible": ["fintech", "ecommerce", "education", "generic"], "never": ["healthcare", "logistics"]},
+      "token_bias": {"radius": "large", "elevation": "material", "palette": "content-derived"},
+      "sources": ["https://www.theusefulapps.com/news/exploring-apple-liquid-glass-ui-ios26", "https://theplusaddons.com/blog/liquid-glass-ui/"]
+    },
+    {
+      "id": "swiss",
+      "label": "Swiss / International Typographic Style",
+      "one_line": "The mathematical grid, sans-serif type and objectivity - the movement every 12-column layout descends from.",
+      "signature": [
+        "A modular grid, used strictly, with asymmetric composition inside it",
+        "One sans-serif family, left-aligned, ranged left and ragged right",
+        "White space as an active element rather than leftover",
+        "Objective photography and geometric form; no ornament, no illustration flourish"
+      ],
+      "recipe": {
+        "grid": "Establish the modular grid first and place everything to it, including the exceptions. Asymmetry inside a strict grid is the signature - centring everything is the most common misreading of the style.",
+        "type": "One family, two or three sizes, differentiated by weight and position rather than by adding faces. Helvetica, Univers or a modern equivalent.",
+        "hierarchy": "Position and scale, never colour. If removing all colour destroys the hierarchy, the layout is not Swiss."
+      },
+      "use_when": ["Institutional, governmental and academic products", "Design-literate audiences where restraint reads as competence", "Data and wayfinding, which is what the style was invented for"],
+      "avoid_when": ["Brands that need warmth or personality", "Consumer products competing on emotional appeal"],
+      "accessibility": [
+        "Structurally excellent - the grid produces a sane DOM order and the hierarchy survives colour blindness entirely.",
+        "The one risk is the authentic ragged-right at very narrow widths; set a sensible minimum column width so lines do not fragment."
+      ],
+      "domain_fit": {"strong": ["enterprise", "education", "logistics"], "possible": ["healthcare", "fintech", "devtools", "media", "creative", "generic"], "never": []},
+      "token_bias": {"radius": "none", "elevation": "none", "type": "one sans-serif family"},
+      "sources": ["https://swissthemes.design/insights/swiss-design-for-web-designers", "https://www.printmag.com/featured/swiss-style-principles-typefaces-designers/"]
+    },
+    {
+      "id": "spatial",
+      "label": "Spatial / depth-first",
+      "one_line": "Layering, perspective and real 3D used to solve comprehension - never for the wow.",
+      "signature": [
+        "Depth and layered motion creating hierarchy, so the interface behaves like an environment rather than a flat page",
+        "Components with weight: cards that feel stackable, controls that respond with intention",
+        "Genuine 3D where two dimensions cannot carry the information - configurators, spatial navigation, dimensional data"
+      ],
+      "recipe": {
+        "test": "The binding question: does the third dimension carry information a 2D version could not? If the answer is no, this is decoration with a loading cost, and the style is wrong.",
+        "tech": "WebGPU where supported with a 2D fallback; Spline or Three.js for authored scenes. Budget the payload - a 3D hero that delays first paint has already lost.",
+        "motion": "Depth is communicated by parallax and shadow softness, not by spinning things."
+      },
+      "use_when": ["Product configurators and 3D data visualisation", "visionOS and spatial-computing targets, where flat surfaces are genuinely confusing", "Physical products whose shape is the selling point"],
+      "avoid_when": ["Text-led or form-led products", "Low-end device targets and constrained bandwidth", "Anything where a flat diagram explains it better"],
+      "accessibility": [
+        "A 3D canvas is opaque to screen readers. Every spatial view needs an equivalent non-visual path to the same information - not a caption saying a model exists.",
+        "Parallax and depth motion are a common vestibular trigger. Gate on prefers-reduced-motion and flatten, do not merely slow.",
+        "Keyboard and gaze are different input models - do not assume a pointer."
+      ],
+      "domain_fit": {"strong": ["ecommerce", "creative"], "possible": ["media", "education", "devtools", "logistics"], "never": ["healthcare", "enterprise"]},
+      "token_bias": {"radius": "medium", "elevation": "true depth", "motion": "parallax, reduced-motion aware"},
+      "sources": ["https://medium.com/design-bootcamp/ux-trend-2026-6-spatial-3d-immersive-ui-beyond-vr-b640180113a3", "https://coalitiontechnologies.com/blog/2026-web-design-trends"]
+    },
+    {
+      "id": "generative-ui",
+      "label": "Generative / agentic UI",
+      "one_line": "The interface is assembled at runtime by an agent from a catalogue of pre-approved components.",
+      "signature": [
+        "A conversational layer OVER a conventional UI - users can click the normal flow or just ask",
+        "Structured UI cards: the agent returns real production components with typed arguments, not free-form markup",
+        "Visible agent state: what it is doing, why, and an override at every step",
+        "Graceful, legible error recovery rather than a failed turn"
+      ],
+      "recipe": {
+        "spectrum": "Three patterns, from tightest to loosest: structured cards (predictable, bounded), component selection from a catalogue, and open-ended surfaces. Most products should mix them by surface area - tight where actions are irreversible, loose where exploration is the point.",
+        "critical_rule": "The agent selects from pre-approved components and passes structured arguments. It does NOT emit markup. That boundary is what separates generative UI from a chatbot rendering HTML, and it is the whole safety story.",
+        "conventional_first": "Build the conventional UI first. The conversational layer sits on top of it. A product that is only a chat box has removed every affordance the user had."
+      },
+      "use_when": ["AI-assisted products where user intent is too varied for fixed screens", "Agentic workflows that take actions on a user's behalf", "Data exploration where the useful view differs per question"],
+      "avoid_when": ["Irreversible or high-stakes actions without an explicit confirmation step outside the generated surface", "Regulated flows that must be identical every time and auditable"],
+      "accessibility": [
+        "A runtime-composed surface must still announce itself. Manage focus deliberately on each new surface and use a live region for agent progress, or screen-reader users are told nothing happened.",
+        "Never let the agent produce an interactive element that has not been through the component catalogue - accessibility is a property of the catalogue, not of the generation.",
+        "Every agent action needs an override and an undo. Autonomy without a stop control is not a design, it is a liability."
+      ],
+      "domain_fit": {"strong": ["devtools", "enterprise"], "possible": ["fintech", "education", "media", "ecommerce", "healthcare", "logistics", "generic"], "never": []},
+      "token_bias": {"radius": "inherits the host skin", "elevation": "card-based", "motion": "progress-bearing"},
+      "note": "This is an interaction architecture, not a skin - bind it alongside one, the way bento is bound alongside one.",
+      "sources": ["https://www.copilotkit.ai/blog/the-developer-s-guide-to-generative-ui-in-2026", "https://fuselabcreative.com/ui-design-for-ai-agents/"]
+    },
+    {
+      "id": "aurora",
+      "label": "Aurora / mesh gradient",
+      "one_line": "Blurred radial colour blobs layered over a deep ground, glowing slowly.",
+      "signature": [
+        "Heavily blurred overlapping radial shapes producing organic depth - not a linear gradient",
+        "Soft colour blobs over a deep, usually dark background",
+        "Glass or solid panels floating above the glow like objects suspended in light",
+        "Slow movement: 8-12 second cycles, never frantic colour shifting"
+      ],
+      "recipe": {
+        "css": "Two or three absolutely-positioned radial-gradient layers, each with filter: blur(80px) or more, animated on background-position or transform over 8-12s. Pure CSS - resolution-independent and far lighter than an image.",
+        "restraint": "It reads as premium when contextual - a hero breathing slowly, a card edge catching light on hover. Applied to every surface it reads as a template.",
+        "performance": "Blur at this radius is expensive. One aurora region per page, and never animate it alongside a backdrop-filtered panel."
+      },
+      "use_when": ["SaaS and AI product landing pages", "Creative tools that need to feel alive", "Brands positioning against visually conservative competitors"],
+      "avoid_when": ["Application interiors - it competes with every piece of data", "Low-end devices, where the blur radius is a real cost"],
+      "accessibility": [
+        "Text never sits directly on the gradient - it moves, so its contrast against any given word moves with it. Put text on a panel.",
+        "Honour prefers-reduced-motion by freezing the animation, keeping the gradient."
+      ],
+      "domain_fit": {"strong": ["devtools", "creative"], "possible": ["fintech", "media", "social", "education", "generic"], "never": ["healthcare", "logistics"]},
+      "token_bias": {"radius": "large", "elevation": "glow", "palette": "2-4 hues over a deep ground"},
+      "note": "A background treatment rather than a full skin - it pairs with minimalism, glass or bento.",
+      "sources": ["https://designmd.app/library/gradient-mesh-aurora-evolved/", "https://effect-labs.com/en/pages/blog/backgrounds-animes-css.html"]
+    },
+    {
+      "id": "kinetic-type",
+      "label": "Kinetic typography",
+      "one_line": "Text that moves to introduce meaning, then settles so it can be read.",
+      "signature": [
+        "Type animated on scroll, timing or interaction - scaling, morphing, revealing",
+        "Motion capturing the eye before colour or shape does, pulling attention to the most important words",
+        "Variable-font axes animated rather than swapped, which is what made this practical",
+        "A stable end state - the animation resolves and stops"
+      ],
+      "recipe": {
+        "rule": "Motion introduces meaning, then settles. If a reader must wait for an animation to finish before they can read, the animation has become a paywall on the content.",
+        "tech": "Variable fonts plus a scroll-linked animation; Motion (Framer Motion) in React for scroll reveals; GSAP for sequenced timelines; Lottie only when the effect genuinely cannot be done in CSS.",
+        "scope": "Display type only. Body copy never moves."
+      },
+      "use_when": ["Landing and campaign pages where a headline must land", "Brand and portfolio sites", "Storytelling and scrollytelling formats"],
+      "avoid_when": ["Application interfaces", "Anything a user reads repeatedly - the animation that delighted once is friction on the fourth visit"],
+      "accessibility": [
+        "prefers-reduced-motion must show the final state immediately, not a slower animation.",
+        "Text mid-animation can be unreadable and can confuse screen readers if it is split into per-character spans - keep the accessible name intact with aria-label on the whole phrase.",
+        "Never animate anything a user must read to complete a task."
+      ],
+      "domain_fit": {"strong": ["creative", "media"], "possible": ["education", "social", "ecommerce", "devtools"], "never": ["healthcare", "logistics", "enterprise"]},
+      "token_bias": {"radius": "inherits", "motion": "the defining axis - reduced-motion aware"},
+      "note": "A motion layer rather than a skin; bind it alongside one.",
+      "sources": ["https://www.digitalsilk.com/web-design/web-trends/kinetic-typography/", "https://studiomeyer.io/en/blog/kinetische-typografie"]
+    },
+    {
+      "id": "dark-dense",
+      "label": "Dark-first data interface",
+      "one_line": "Near-monochrome dark surfaces where the data is the loudest thing on screen.",
+      "signature": [
+        "Dark by default, light as the second theme - the pattern Linear, Supabase and Vercel established for all-day tools",
+        "Radical restraint: near-monochrome panels, one or two accents, everything non-essential absent",
+        "Low-contrast panel borders, crisp typography, high information density that does not feel crowded",
+        "Keyboard-first interaction - command palette, shortcuts, focus order that makes sense"
+      ],
+      "recipe": {
+        "type": "Slightly bolder and larger than on light: semi-bold or medium, never ultra-thin, which disappears against dark surfaces.",
+        "colour": "Two or three accents maximum. In financial contexts tune green and red for dark surfaces, and add a second cue - an arrow or a sign - so the meaning survives colour blindness.",
+        "surfaces": "Elevation lightens the surface rather than adding a shadow; a shadow on a dark ground is invisible."
+      },
+      "use_when": ["Monitoring, observability and operations consoles", "Overnight shifts and low-light environments", "Dense real-time data where extended viewing causes eye strain", "Developer tools used all day"],
+      "avoid_when": ["Bright-environment or outdoor usage", "Long-form reading", "Products whose audience has not opted into a dark aesthetic - ship light as a real theme, not an afterthought"],
+      "accessibility": [
+        "Dark mode is not inverted light mode. Regenerate the palette: elevation lightens, accents lose chroma, and pure white text on pure black is too harsh - back both off.",
+        "Verify contrast on the dark theme independently. A pair that passes on light frequently fails inverted.",
+        "Never rely on a status colour alone - dark surfaces compress perceived colour difference further."
+      ],
+      "domain_fit": {"strong": ["devtools", "logistics", "fintech"], "possible": ["enterprise", "media", "generic"], "never": ["education", "healthcare"]},
+      "token_bias": {"radius": "small", "elevation": "lighter surface, no shadow", "palette": "near-monochrome with 1-2 accents"},
+      "sources": ["https://brenthaskins.com/blog/dark-mode-first-saas-dashboard", "https://www.qodequay.com/dark-mode-dashboards"]
     }
   ],
+
+  "default_style": {
+    "id": "minimalism",
+    "rule": "When the domain is generic, the signals are weak, or nothing scores above the others, bind minimalism. It is the declared default and it must remain bindable for EVERY domain - its domain_fit.never is empty by design, and the validator enforces that.",
+    "why": "It is the style that costs the least when it is wrong. A minimal interface applied to a product that wanted personality is merely plain; a cyberpunk or maximalist interface applied to a product that wanted calm is actively harmful. When uncertain, the asymmetry of the downside decides.",
+    "not_an_excuse": "Defaulting is a real decision and is stated as one - 'minimalism (default: no strong domain signal in this repo)'. Never present it as though the domain demanded it."
+  },
+
+  "anti_patterns": {
+    "note": "Styles that appear in trend lists but should not be bound. Named here so the reasoning is on record rather than rediscovered.",
+    "corporate-memphis": "Flat geometric illustration with bendy disproportionate figures in non-representational colours. Widely declared exhausted, and criticised on substance: it strips human individuality into a uniform visual language, and its frictionless-joy imagery reads as evasive on products whose reality is anything but. Do not reach for it as the default illustration style; commission or select imagery that says something specific about this product instead.",
+    "anti-design": "Deliberate ugliness - broken grids, clashing colour, mismatched type. Its rebellious edge is real but it is almost never what a client's users need, and neo-brutalism already delivers the personality with the affordances intact. Bind it only when the user explicitly asks for it.",
+    "trend_chasing": "A style bound because it is current, with no argument from domain, audience, session length or stakes, is a style that will need replacing when the trend moves. The reason is the deliverable, not the look."
+  },
 
   "combination_rules": {
     "layout_plus_skin": "`bento` and `editorial` are layout systems; the other thirteen are skins. One layout plus one skin is a normal, good binding - bento tiles in a minimalist skin, or an editorial grid with neo-brutalist accents.",

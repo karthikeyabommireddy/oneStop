@@ -1,5 +1,72 @@
 # Changelog
 
+## 1.9.0
+
+### Added - a coding-standards floor, separate from architecture
+
+`skills/shared/standards.md` is the line-level layer that sat between two things onestop
+already had. Three layers now, and they do not overlap: **architecture** decides how the
+system is shaped, **standards** decides how a line is written, **language packs** decide
+what is idiomatic. Where a pack disagrees with the floor the pack wins - it knows the
+idiom. Where the repository disagrees with the pack the repository wins, because a change
+that is correct but foreign is still a change the team has to live with.
+
+It covers naming, immutability, error handling, async, types, constants, comments,
+function shape, tests, queries and a smell table - each with the failure it actually
+prevents rather than the rule alone. Two entries are deliberately against the grain:
+
+- **DRY has a caveat, and it matters.** The wrong abstraction costs more than
+  duplication: two functions that look alike today and diverge tomorrow become one
+  function with a boolean parameter, then two. The rule is three strikes - deduplicating
+  on the second occurrence is a coin flip. `code-reviewer` is now explicitly told *not*
+  to raise duplication on its second occurrence.
+- **`fetch` does not throw on a 404.** A missing `response.ok` check is the most common
+  real instance of a swallowed error in JavaScript, and it is now a named review finding.
+
+Wired into `phase-implement`, `phase-review`, `code-reviewer` and `test-author`, so one
+floor applies everywhere rather than each phase carrying its own copy.
+
+### Added - seven more visual styles, and an explicit default
+
+The fifteen were not the whole field. Researched against what is actually shipping and
+added:
+
+- **Liquid Glass** - Apple's iOS 26 / macOS Tahoe material. It is a *rendering model that
+  happens to look glassy*, not a glassy look, which is why the entry says to use the
+  system API rather than hand-roll it: the OS version reacts to content and ambient light
+  in ways CSS cannot, and a copy drifts from the system every release.
+- **Swiss / International Typographic Style** - the modular grid, one sans-serif,
+  asymmetry inside strict structure. Every 12-column layout descends from it. Centring
+  everything is the most common misreading.
+- **Spatial / depth-first** - 3D that solves comprehension, never the wow. The binding
+  question: does the third dimension carry information a 2D version could not?
+- **Generative / agentic UI** - a conversational layer *over* a conventional UI. The
+  safety boundary is that the agent selects from pre-approved components and passes
+  structured arguments; it never emits markup.
+- **Aurora / mesh gradient** - blurred radial blobs over a deep ground, 8-12 second
+  cycles.
+- **Kinetic typography** - motion introduces meaning, then settles. If a reader must wait
+  for an animation to finish, the animation has become a paywall on the content.
+- **Dark-first data interface** - the Linear/Supabase/Vercel pattern for all-day tools.
+  Dark mode is not inverted light mode: elevation lightens, accents lose chroma.
+
+**An explicit default.** `default_style` is now a first-class field, and the validator
+enforces that exactly one style carries `is_default` and that it is bindable for *every*
+domain - a default with a `never` entry would leave some domain with no fallback at all,
+the one case selection cannot recover from. Minimalism holds it, because it is the style
+that costs least when it is wrong: minimal applied to a product that wanted personality
+is merely plain, while maximalist applied to a product that wanted calm is harmful.
+Defaulting is still stated as a decision - "minimalism (default: no strong domain signal
+in this repo)" - never dressed up as though the domain demanded it.
+
+**Anti-patterns are now recorded too**, so the reasoning is not rediscovered: Corporate
+Memphis (exhausted, and criticised on substance for flattening human individuality into a
+uniform language), anti-design (neo-brutalism already delivers the personality with the
+affordances intact), and trend-chasing generally - a style bound with no argument from
+domain, audience, session length or stakes will need replacing when the trend moves.
+
+22 styles, 11 domains, every domain with at least one strong fit.
+
 ## 1.8.0
 
 ### Added - fifteen visual styles, derived not asked

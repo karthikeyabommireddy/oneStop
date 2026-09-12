@@ -45,6 +45,13 @@ others claims.
 
 State the bound set in one line. Do not ask which reviewers to run.
 
+## Standards Floor
+
+Every reviewer applies `${CLAUDE_PLUGIN_ROOT}/skills/shared/standards.md` on top of
+its own contract, and the bound language packs on top of that. Where a pack and the
+floor disagree the pack wins - it knows the idiom. Where the repository and the pack
+disagree the repository wins.
+
 ## Severity
 
 Normalise every finding to one scale, because reviewers disagree on wording:
