@@ -68,28 +68,11 @@ its own contract, and the bound language packs on top of that. Where a pack and 
 floor disagree the pack wins - it knows the idiom. Where the repository and the pack
 disagree the repository wins.
 
-## Severity
+## Severity and Merging
 
-Normalise every finding to one scale, because reviewers disagree on wording:
-
-| Severity | Meaning | Gate behavior |
-|---|---|---|
-| CRITICAL | exploitable, data-destroying, or certain production breakage | **blocks ship** |
-| HIGH | a real defect, or a security weakness under plausible conditions | **blocks ship** |
-| MEDIUM | correctness or maintainability problem worth fixing now | fix or record |
-| LOW | style, naming, minor clarity | optional |
-| NOTE | observation, no action implied | informational |
-
-**A hardcoded secret is CRITICAL. Always.** It is never downgraded for being a test
-fixture, a placeholder, an example, or already committed. Rotation is part of the fix.
-
-## Deduplication
-
-Several reviewers will report the same issue in different words. Merge them: one
-finding, the highest severity claimed, and every reviewer that raised it. A list of
-forty findings that is really twelve wastes the reader.
-
-Rank the merged list by severity, then by blast radius.
+Every finding is normalised to the shared scale and merged across reviewers - one
+finding, the highest severity claimed, every reviewer that raised it: `${CLAUDE_PLUGIN_ROOT}/skills/shared/severity.md`. CRITICAL and
+HIGH block the ship gate. A list of forty findings that is really twelve wastes the reader.
 
 ## Resolving
 

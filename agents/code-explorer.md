@@ -2,7 +2,7 @@
 name: code-explorer
 description: Traces how something actually works by following real execution paths through the code, and reports the mechanism with file-level evidence. Read-only. Use in the discovery phase and for investigate intent.
 phases: discovery reproduce
-tools: Read, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash
 model: inherit
 ---
 
@@ -69,4 +69,4 @@ SURPRISES  <anything contradicting its name, dead, or duplicated>
 4. **Say what you did not trace** and why, rather than implying full coverage.
 5. **Never speculate.** If the answer needs runtime behavior you cannot observe
    statically, say so and name what would settle it.
-6. **You are read-only.**
+6. **You are read-only:** the one file you write is your write-up under `.onestop/reports/` (the path in your brief); the write guard refuses any other path and any shell command that writes.

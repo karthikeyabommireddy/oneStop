@@ -100,6 +100,79 @@ export function checkCommand(command, run, root) {
   return { allow: true };
 }
 
+// ---------------------------------------------------------------- specialist write scopes
+//
+// Hooks name the calling specialist (`plugin:onestop:code-reviewer`), so a reviewer that
+// must not edit is held to that by code, not by its instructions. The main thread and
+// other plugins' agents carry no onestop name and are never scoped.
+
+export function onestopAgent(agentType) {
+  const m = String(agentType || '').match(/^(?:plugin:)?onestop:([\w-]+)$/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+export function writeScope(agent) {
+  const wg = registry('policies').write_guard;
+  const name = String(agent || '').replace(/^(?:plugin:)?onestop:/i, '');
+  if (wg.report_only.includes(name)) return 'report-only';
+  if (wg.docs_only.includes(name)) return 'docs-only';
+  return 'free';
+}
+
+const under = (rel, prefix) => (prefix.endsWith('/') ? `${rel}/`.startsWith(prefix) : rel === prefix);
+
+export function isLedgerFile(rel) {
+  return registry('policies').write_guard.ledger_files.some((p) => under(rel, p));
+}
+
+function scopeWords(scope) {
+  const wg = registry('policies').write_guard;
+  return scope === 'report-only'
+    ? { role: 'a read-only role', may: 'only its write-up under .onestop/reports/' }
+    : { role: 'a documentation role', may: `documentation under ${wg.docs_roots.join(', ')} and its write-up under .onestop/reports/` };
+}
+
+// rel is relative to the project root with forward slashes; it starts with '..' (or is
+// absolute) when the target lies outside the project.
+export function checkWrite(rel, agent) {
+  const wg = registry('policies').write_guard;
+  if (isLedgerFile(rel)) {
+    return { allow: false, rule: 'ledger', reason: 'onestop guard: only the onestop engine writes the run ledger. Change it through the engine - run_note, gate_record, phase_finish.' };
+  }
+  const scope = writeScope(agent);
+  if (scope === 'free') return { allow: true };
+  const outside = !rel || rel === '..' || rel.startsWith('../') || path.isAbsolute(rel);
+  if (!outside && rel.startsWith('.onestop/')) return { allow: true };
+  if (!outside && scope === 'docs-only' && wg.docs_roots.some((d) => under(rel, d))) return { allow: true };
+  const w = scopeWords(scope);
+  return {
+    allow: false,
+    rule: `write-${scope}`,
+    reason: `onestop guard: ${agent} is ${w.role} - it may write ${w.may}, not ${rel || 'that path'}. Do not work around this. Return the change you need in your report under open:, and the orchestrator will dispatch a specialist that may make it.`,
+  };
+}
+
+// Quoted text is data, not syntax: "a > b" in a grep pattern is not a redirect. Quotes are
+// stripped before splitting, so a `;` inside a quoted script does not split it either.
+const stripQuotes = (s) => String(s).replace(/'[^']*'|"(?:\\.|[^"\\])*"/g, "''");
+
+export function checkScopedCommand(command, agent) {
+  const scope = writeScope(agent);
+  if (scope === 'free') return { allow: true };
+  const rules = registry('policies').write_guard.scoped_bash;
+  for (const seg of segments(stripQuotes(command))) {
+    for (const rule of rules) {
+      if (!new RegExp(rule.pattern, rule.flags ?? 'i').test(seg)) continue;
+      return {
+        allow: false,
+        rule: `scoped-${rule.id}`,
+        reason: `onestop guard: blocked \`${seg}\` - it ${rule.reason}, and ${agent} is ${scopeWords(scope).role}. Write your findings with the Write tool to the path in your brief, and return any change you need under open:.`,
+      };
+    }
+  }
+  return { allow: true };
+}
+
 // ---------------------------------------------------------------- security surfaces
 
 const SURFACES = [

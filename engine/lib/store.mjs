@@ -1,7 +1,8 @@
 // Files under .onestop/: atomic JSON writes, append-only logs, and schema validation.
 //
-// The ledger is written by exactly one process (the engine) and only ever by replacing
-// the whole file. A model writing JSON by hand produced half-written ledgers and three
+// The ledger is written only by engine code - the MCP server, and the hooks that store
+// specialist reports - under withLock, and only ever by replacing the whole file. The
+// model never writes it: a model writing JSON by hand produced half-written ledgers and three
 // incompatible shapes across releases; a temp-file-then-rename write cannot leave a
 // half-written file behind, and validation on every read and write means a bad ledger
 // is reported instead of trusted.
@@ -68,6 +69,38 @@ export function writeJsonAtomic(file, value) {
   } catch (e) {
     try { fs.unlinkSync(tmp); } catch { /* the rename error below is the one that matters */ }
     throw e;
+  }
+}
+
+// Hooks run as separate processes: two specialists finishing together are two hooks
+// storing two reports at once, while the engine may be recording a gate. Every
+// read-modify-write of the ledger runs under this lock, or one writer silently drops
+// the other's change. A lock older than staleMs belongs to a process that died.
+export function withLock(root, name, fn, { timeoutMs = 20000, staleMs = 60000 } = {}) {
+  ensureStateDir(root);
+  const dir = statePath(root, `${name}.lock`);
+  const started = Date.now();
+  const nap = new Int32Array(new SharedArrayBuffer(4));
+  for (;;) {
+    try {
+      fs.mkdirSync(dir);
+      break;
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      let age;
+      try { age = Date.now() - fs.statSync(dir).mtimeMs; } catch { continue; }
+      if (age > staleMs) {
+        try { fs.rmdirSync(dir); } catch { /* another process cleared it first */ }
+        continue;
+      }
+      if (Date.now() - started > timeoutMs) throw new Error(`${name} is locked by another onestop process - try again`);
+      Atomics.wait(nap, 0, 0, 25);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    try { fs.rmdirSync(dir); } catch { /* already released */ }
   }
 }
 

@@ -195,9 +195,11 @@ export function openRun(root, { request = '', on_conflict: onConflict } = {}) {
     ship: null,
     checkpoints: [],
   };
-  // Flags from an earlier run must not bleed into this one.
+  // Flags and owners from an earlier run must not bleed into this one. The session that
+  // called run_open claims the new run right after this returns (PostToolUse hook).
   rmQuiet(statePath(root, 'security-flags.jsonl'));
   rmQuiet(statePath(root, 'requested'));
+  rmQuiet(statePath(root, 'sessions'));
   save(root, run);
   event(root, 'run_open', { run_id: run.run_id });
   return {
@@ -255,6 +257,7 @@ export function closeRun(root, { status: final = 'complete', note } = {}) {
   writeJsonAtomic(archived, run);
   rmQuiet(statePath(root, 'security-flags.jsonl'));
   rmQuiet(statePath(root, 'requested'));
+  rmQuiet(statePath(root, 'sessions'));
   event(root, 'run_close', { status: final });
   return { ok: true, run_id: run.run_id, status: final, archived: slash(archived), progress: progressLine(run) };
 }
@@ -305,6 +308,15 @@ export function finishPhase(root, { phase, summary: text = '', artifacts = [] } 
   const ph = run.phases[phase];
   if (!ph) return fail(`"${phase}" is not in this run`);
   if (ph.status !== 'active') return fail(`${phase} is ${ph.status}, not active`, ph.status === 'pending' ? 'Call phase_start first.' : undefined);
+  // A phase that dispatches specialists is finished by their reports, not by a summary
+  // the orchestrator writes in their place.
+  const shape = registry('phases').phases[phase]?.dispatch;
+  if (shape && shape !== 'engine' && !(ph.reports || []).length) {
+    return fail(
+      `no specialist report is stored for ${phase}`,
+      'Reports are stored automatically when a specialist finishes (SubagentStop hook). None arrived - hooks may be off. Call report_store with each specialist\'s REPORT text, then phase_finish again. If the phase genuinely needed no specialist, store a one-line report as agent "orchestrator" saying why.',
+    );
+  }
   ph.summary = trim(text, 400);
   if (artifacts.length) ph.artifacts = artifacts.map(String);
   ph.finished = nowIso();
@@ -585,6 +597,14 @@ function openItems(value) {
     });
 }
 
+// Whether a specialist's final message carries the report contract - used by the
+// SubagentStop hook to send a specialist back before its output is lost.
+export function reportCheck(text) {
+  const policy = registry('policies').report;
+  const parsed = parseReport(text, policy.max_lines);
+  return { found: parsed.found, missing: policy.required_fields.filter((f) => !(f in parsed.fields)) };
+}
+
 export function storeReport(root, { phase, agent, report } = {}) {
   const loaded = loadRun(root);
   if (!loaded.ok) return fail(loaded.error || 'no active run');
@@ -592,11 +612,23 @@ export function storeReport(root, { phase, agent, report } = {}) {
   const ph = run.phases[phase];
   if (!ph) return fail(`"${phase}" is not in this run`);
   if (!agent || !report) return fail('report_store needs agent and the report text the agent returned');
+  const name = String(agent).replace(/^(?:plugin:)?onestop:/i, '');
   const policy = registry('policies').report;
   const dir = statePath(root, 'reports', phase);
   fs.mkdirSync(dir, { recursive: true });
+  // The hook stores every report as the specialist finishes; an orchestrator re-sending
+  // the same text must not count it twice or add its open questions twice.
+  const suffix = `-${slugify(name, 30)}.md`;
+  for (const rel of ph.reports || []) {
+    if (!rel.endsWith(suffix)) continue;
+    let prior = null;
+    try { prior = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { /* moved or removed */ }
+    if (prior === String(report)) {
+      return { ok: true, duplicate: true, path: slash(path.join(root, rel)), digest: parseReport(prior, policy.max_lines).digest, open_added: 0 };
+    }
+  }
   const n = (ph.reports?.length || 0) + 1;
-  const file = path.join(dir, `${String(n).padStart(2, '0')}-${slugify(agent, 30)}.md`);
+  const file = path.join(dir, `${String(n).padStart(2, '0')}${suffix}`);
   fs.writeFileSync(file, String(report));
   ph.reports = [...(ph.reports || []), slash(path.relative(root, file))];
   const parsed = parseReport(report, policy.max_lines);
@@ -604,7 +636,7 @@ export function storeReport(root, { phase, agent, report } = {}) {
   const opens = openItems(parsed.fields.open);
   for (const o of opens) run.open.push({ ...o, phase });
   save(root, run);
-  event(root, 'report_store', { phase, agent, open: opens.length });
+  event(root, 'report_store', { phase, agent: name, open: opens.length });
   return {
     ok: true,
     path: slash(file),

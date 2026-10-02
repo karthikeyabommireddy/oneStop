@@ -10,7 +10,10 @@ Three layers, and they do not overlap:
 | **Standards** (this file) | how a line of code is written | here |
 | **Language packs** | what is idiomatic in this language | `${CLAUDE_PLUGIN_ROOT}/packs/languages/` |
 
-When a language pack disagrees with this file, **the pack wins** - it knows the idiom.
+The examples below are written in TypeScript for brevity; the principle is the point. The
+bound language pack shows the idiom for its language, and if no pack is bound, follow the
+nearest sibling file. When a language pack disagrees with this file, **the pack wins** - it
+knows the idiom.
 When the repository disagrees with the pack, **the repository wins**. Consistency with
 the surrounding code beats theoretical superiority every time, and a change that is
 correct but foreign is still a change the team has to live with.

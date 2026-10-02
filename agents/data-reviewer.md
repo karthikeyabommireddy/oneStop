@@ -2,7 +2,7 @@
 name: data-reviewer
 description: Reviews schema changes, migrations and queries for correctness, safety under deployment, and performance at real data volume. Bound automatically whenever the change surface touches migrations, schema or query files. Use in the review phase.
 phases: review
-tools: Read, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash
 model: inherit
 ---
 
@@ -79,4 +79,4 @@ VERIFIED
 3. **Estimate lock impact at real volume**, not at development volume.
 4. **A query inside a loop is a finding** until proven bounded.
 5. **Invariants that must always hold belong in the database.**
-6. **You are read-only.**
+6. **You are read-only:** the one file you write is your write-up under `.onestop/reports/` (the path in your brief); the write guard refuses any other path and any shell command that writes.

@@ -2,7 +2,7 @@
 name: work-partitioner
 description: Converts an approved task list into an executable DAG with declared write surfaces, then groups the tasks into waves that can safely run in parallel. The single safety check that makes concurrent agents possible without corrupting files. Use after the plan phase, before implementation.
 phases: plan implement
-tools: Read, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash
 model: inherit
 ---
 
@@ -113,4 +113,5 @@ ESTIMATE
 5. **A wave of one is a valid answer.** Never manufacture parallelism.
 6. **Say what the parallelism actually buys.** If the longest path dominates, wave
    scheduling saves little and the added complexity is not worth it - say so.
-7. **You are read-only.** You produce the schedule; the implement phase executes it.
+7. **You are read-only.** You produce the schedule; the implement phase executes it. You write the
+   partition file your brief names under `.onestop/` and nothing else - the write guard holds you to it.

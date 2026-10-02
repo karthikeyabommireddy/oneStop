@@ -61,10 +61,11 @@ fail" is not an instruction.
 
 ## Artifacts
 
-`docs/test/TEST_PLAN-<feature>.md` - overview, environment, test data creation, cases,
-regression checklist, sign-off table.
+`docs/qa/<slug>/test-plan.md` - overview, environment, test data creation, cases,
+regression checklist, sign-off table. If the repository already keeps test plans elsewhere
+(`docs/test/`, a wiki export), follow it - `${CLAUDE_PLUGIN_ROOT}/skills/shared/artifacts.md`.
 
-`docs/test/TEST_PLAN-<feature>.csv` - the same cases, flat and importable. RFC 4180,
+`docs/qa/<slug>/test-cases.csv` - the same cases, flat and importable. RFC 4180,
 header exactly:
 `Case-ID,Title,Priority,Req-ID,Preconditions,Steps,Expected,Status`
 

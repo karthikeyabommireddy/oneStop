@@ -10,6 +10,7 @@ import { schedule } from './schedule.mjs';
 import { buildBrief } from './brief.mjs';
 import { kgEnsure, kgStatus } from './kg.mjs';
 import { effectiveSettings } from './config.mjs';
+import { withLock } from './store.mjs';
 
 const PROJECT = { project_dir: { type: 'string', description: 'Absolute project root. Omit to use the session project.' } };
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
@@ -102,7 +103,7 @@ export const TOOLS = [
   },
   {
     name: 'report_store',
-    description: 'Store a specialist\'s returned report on disk and get back its digest. Keep only the digest in the conversation; later specialists read the stored file. Open questions in the report are added to the run.',
+    description: 'Fallback only. Reports are stored automatically when a specialist finishes (the SubagentStop hook). Call this only when phase_finish says no report is stored - hooks may be off - passing the REPORT text verbatim. Identical re-sends are ignored. Open questions in the report are added to the run.',
     inputSchema: obj({ phase: str('The phase.'), agent: str('The specialist that produced it.'), report: str('The report text, verbatim.') }, ['phase', 'agent', 'report']),
     handler: (a, root) => ledger.storeReport(root, a),
   },
@@ -152,11 +153,16 @@ export const TOOLS = [
   },
 ];
 
+// Tools that read, change and write the ledger. They run under the ledger lock because
+// the SubagentStop hook stores reports from its own process at the same time.
+const MUTATES = new Set(['run_open', 'run_close', 'run_note', 'phase_start', 'phase_finish', 'gate_record', 'report_store', 'loop_attempt', 'checkpoint', 'checkpoint_revert']);
+
 export function callTool(name, args = {}) {
   const tool = TOOLS.find((t) => t.name === name);
   if (!tool) return { ok: false, error: `unknown tool "${name}" - one of: ${TOOLS.map((t) => t.name).join(', ')}` };
   try {
-    return tool.handler(args, projectRoot(args.project_dir));
+    const root = projectRoot(args.project_dir);
+    return MUTATES.has(name) ? withLock(root, 'ledger', () => tool.handler(args, root)) : tool.handler(args, root);
   } catch (e) {
     return { ok: false, error: `engine error in ${name}: ${e.message}`, engine_error: true };
   }

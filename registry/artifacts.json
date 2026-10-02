@@ -1,5 +1,5 @@
 {
-  "version": "1.9.1",
+  "version": "2.0.0",
   "description": "Where every phase puts what it produces. Before this existed each phase invented a path - the analyst wrote docs/ba/<feature>/RTM.md, the UI phase named a contrast report with no path at all - so the matrix written by one phase was not always the one the next phase looked for. That is how a traceability matrix silently stops being maintained. One map, one owner per artifact, and a resolution rule that defers to whatever the repository already does.",
   "resolution": {
     "order": [
@@ -40,17 +40,17 @@
   "by_phase": [
     {
       "phase": "context",
-      "owner": "orchestrate",
+      "owner": "engine (ledger) and stack-adapter (stack facts)",
       "artifacts": [
         {
           "path": ".onestop/run.json",
           "format": "json",
-          "what": "Run state and the run ledger in one file: intent, tier, slug, gate mode, and per phase a status plus the gate decision the user gave. This is what 'the ledger' means throughout onestop, what the Stop hook reads, and the resume point."
+          "what": "The run ledger: intent, tier, slug, gate mode, the phase plan, and per phase its status, gate decision, reports and summary. Written only by the engine - never by a model, never by hand."
         },
         {
-          "path": ".onestop/stack.yml",
-          "format": "yaml",
-          "what": "Detected stack, bound language and concern packs, bound architecture pattern, bound automation frameworks and their patterns, bound runners. Written once, read by every later phase instead of re-detecting."
+          "path": ".onestop/reports/context/",
+          "format": "markdown",
+          "what": "The stack facts every later brief points to: resolved commands with their source and whether they were confirmed, toolchain versions in use, conventions, test layout, CI system, the architecture already in place, and the graph status. Written by stack-adapter; its REPORT is stored beside it by the engine."
         }
       ]
     },
@@ -71,12 +71,12 @@
         {
           "path": "docs/requirements/<slug>/RTM.md",
           "format": "markdown",
-          "what": "Requirements traceability matrix. Columns: Req-Id, Requirement, Source, Story, Impl-Ref, Test-Ref, Status."
+          "what": "Requirements traceability matrix. Columns, exactly: Req-ID,Type,Source,Story,Acceptance-Criteria,Design-Ref,Impl-Ref,Test-Ref,Status. Status moves specified -> implemented (implement) -> tested (test) -> verified (validator, in review, after seeing the test pass)."
         },
         {
           "path": "docs/requirements/<slug>/RTM.csv",
           "format": "csv",
-          "what": "The same matrix, importable into a tracker. Kept in step with the markdown - if they disagree, both are wrong."
+          "what": "The same matrix with the same columns (Req-ID,Type,Source,Story,Acceptance-Criteria,Design-Ref,Impl-Ref,Test-Ref,Status), importable into a tracker. Kept in step with RTM.md - if they disagree, both are wrong."
         }
       ],
       "filled_later": [
@@ -99,7 +99,7 @@
     },
     {
       "phase": "research",
-      "owner": "orchestrate",
+      "owner": "researcher",
       "artifacts": [
         {
           "path": "docs/research/<slug>/findings.md",
@@ -109,13 +109,24 @@
       ]
     },
     {
-      "phase": "discovery",
-      "owner": "discovery-scout",
+      "phase": "upgrade-plan",
+      "owner": "researcher",
       "artifacts": [
         {
-          "path": ".onestop/discovery/<slug>.md",
+          "path": "docs/research/<slug>/upgrade-plan.md",
           "format": "markdown",
-          "what": "Found / gaps / options with file-level evidence, per flow step. Run state rather than product documentation - it describes the repo at one moment and goes stale immediately."
+          "what": "Installed version from the lockfile, candidate versions verified on the registry that day, breaking changes mapped to call sites, and the recommendation. The user picks the target version at its gate."
+        }
+      ]
+    },
+    {
+      "phase": "discovery",
+      "owner": "discovery-scout (one per unit), stored by the engine",
+      "artifacts": [
+        {
+          "path": ".onestop/reports/discovery/",
+          "format": "markdown",
+          "what": "Each scout's REPORT and its write-up (<agent>-<unit>.full.md): found, gaps and options with file-level evidence, per unit. Run evidence, not documentation - it describes the repository at one moment."
         }
       ]
     },
@@ -164,7 +175,7 @@
     },
     {
       "phase": "plan",
-      "owner": "planner",
+      "owner": "planner (plan) and work-partitioner (partition)",
       "artifacts": [
         {
           "path": "docs/design/<slug>/plan.md",
@@ -201,13 +212,19 @@
     },
     {
       "phase": "verify-green",
-      "owner": "build-resolver",
-      "artifacts": [],
+      "owner": "build-resolver and test-author",
+      "artifacts": [
+        {
+          "path": "<repo test convention>",
+          "format": "source",
+          "what": "Characterization tests for any behaviour the target code provides that no test protects. They capture what the code does today, including behaviour that looks wrong."
+        }
+      ],
       "note": "Produces no durable artifact by design - its output is a green suite, reported in the phase output block with the exact command and result. If it cannot get green, the blocker is named there rather than written to a file nobody will read."
     },
     {
       "phase": "implement",
-      "owner": "test-author and the bound implementers",
+      "owner": "implementer (or the intent's code role) and test-author",
       "artifacts": [
         {
           "path": "<repo source convention>",
@@ -281,12 +298,17 @@
     },
     {
       "phase": "review",
-      "owner": "code-reviewer, security-reviewer, data-reviewer, a11y-agent, validator",
+      "owner": "the reviewer panel (stored by the engine) and validator (consolidated findings)",
       "artifacts": [
+        {
+          "path": ".onestop/reports/review/",
+          "format": "markdown",
+          "what": "Each reviewer's REPORT and write-up, stored as it finished."
+        },
         {
           "path": ".onestop/review/<slug>.md",
           "format": "markdown",
-          "what": "Findings by severity with file:line, which reviewer raised each, and the disposition - fixed, accepted with reason, or deferred with an owner. Run evidence, not product documentation."
+          "what": "Merged findings by severity with path:line, which reviewer raised each, and the disposition - fixed, accepted by the user at a gate, or outstanding. Written by validator. Run evidence, not product documentation."
         }
       ]
     },
@@ -314,7 +336,7 @@
     },
     {
       "phase": "reproduce",
-      "owner": "orchestrate",
+      "owner": "test-author",
       "artifacts": [
         {
           "path": "<repo test convention>",

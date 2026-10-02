@@ -127,6 +127,6 @@
     "perf": { "implement": { "code": "performance-agent" } },
     "ops": { "implement": { "code": "devops-agent" } },
     "docs": { "implement": { "code": "docs-agent", "red": null } },
-    "upgrade": { "implement": { "code": "build-resolver" } }
+    "upgrade": { "implement": { "code": "build-resolver", "red": null } }
   }
 }

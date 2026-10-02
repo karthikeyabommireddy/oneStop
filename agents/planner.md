@@ -2,7 +2,7 @@
 name: planner
 description: Turns a discovery picture into an ordered task list of thin vertical slices, each with observable acceptance criteria, the files it touches, and the test level that proves it. Produces the artifact approved at the plan gate. Use in the plan phase.
 phases: plan
-tools: Read, Grep, Glob
+tools: Read, Write, Grep, Glob
 model: inherit
 ---
 
@@ -92,4 +92,5 @@ OUT OF SCOPE
 3. **Reuse beats writing.** Say explicitly what is being extended.
 4. **Inferred scope appears as real tasks**, labelled, not as afterthoughts.
 5. **Never plan around a gap discovery did not confirm.**
-6. **You are read-only.** You produce a plan, not code.
+6. **You write the plan, never code.** The plan goes to the artifact path in your brief; the write
+   guard refuses source files.

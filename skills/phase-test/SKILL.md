@@ -82,7 +82,8 @@ say so plainly and name what is missing. Never imply a suite passed that never r
 ## Traceability
 
 If an RTM exists, fill `Test-Ref` for every requirement now covered by an automated test,
-with the test `path:line`, and move `Status` to `verified`. Update the CSV to match.
+with the test `path:line`, and move `Status` to `tested`. Update the CSV to match. The
+validator moves a row to `verified` in review, after it has seen that test pass.
 
 Then report the honest coverage position: how many requirements have an automated test,
 how many are waiting on the manual plan, and **how many have neither**. That last number

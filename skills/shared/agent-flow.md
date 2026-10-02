@@ -1,128 +1,188 @@
-# Shared - Agent flow
+# Shared - Agent Flow
 
-Which agent runs in which phase, what it receives, and what it hands on. The source of
-truth is the `phases:` frontmatter on each file in `${CLAUDE_PLUGIN_ROOT}/agents/`;
-this is the consolidated view, and `${CLAUDE_PLUGIN_ROOT}/scripts/validate.py` checks
-the two agree.
-
-onestop's agents are **role agents**, not one agent per language. A `code-reviewer` that
-loads the TypeScript and SQL packs is one review over a diff that spans both - not two
-reviews that each see half of it. Adding a language is a pack, never a new agent.
+How a run moves: one orchestrator at the hub, specialists at the spokes, an engine that
+holds the state and enforces the rules. The sources of truth are data, not this page:
+`registry/intents.json` (which phases run, in what order), `registry/phases.json` (who
+leads each phase and how it is dispatched) and `registry/policies.json` (budgets, the
+report contract, the guards). `scripts/validate.py` checks that every agent named there
+exists and that each agent's `phases:` frontmatter agrees.
 
 ---
 
-## The flow
-
-The order below is the `feature` mask from `${CLAUDE_PLUGIN_ROOT}/registry/intents.json`.
-**The registry is the source of truth for ordering** - if this diagram and a `phase_mask`
-ever disagree, the mask is right.
+## The Shape
 
 ```
-intake -> context -> requirements -> discovery -> research -> plan -> design -> ui-design
-   |                                                           ^
-[gate zero]                                          the plan gate
-                                                               |
-   +-----------------------------------------------------------+
-   v
-implement -> test -> automation -> qa-plan -> review -> ship
-                                                         ^
-                                                 the ship gate
+                                 you
+             approve gates · choose technologies and versions · own git
+                                  │
+                                  ▼
+  ┌──────────────────────┐   tool calls   ┌──────────────────────────────────────┐
+  │     orchestrator     │ ─────────────► │   pipeline engine (MCP server)        │
+  │ plans · delegates ·  │ ◄───────────── │   ledger · gates · budgets · briefs   │
+  │ explains · asks      │   recipes,     │   commands · checkpoints · scans      │
+  └──────────┬───────────┘   briefs       └──────────────────▲───────────────────┘
+     brief   │   ▲  REPORT (≤ 25 lines)                       │ stores reports,
+             ▼   │                                            │ blocks what is not allowed
+  ┌─────────────────────────────────────┐        ┌───────────┴──────────────┐
+  │ specialists, each in its own context │ ─────► │ hooks: guard, write guard, │
+  │ one task · one brief · one report    │  tools │ report capture, reminders  │
+  └─────────────────────────────────────┘        └──────────────────────────┘
 ```
 
-**Every arrow is a gate.** Under the default `every-phase` mode the run stops at all of
-them; `milestone` stops at plan, design, implement and ship; `autonomous` stops only at
-ship. Two of those gates are named because they carry extra force, not because they are
-the only ones:
+- **The orchestrator never does phase work.** It asks the engine what a phase needs
+  (`phase_start` returns the recipe), gets each specialist's brief from the engine
+  (`brief`), dispatches, reads the reports, and presents the gate.
+- **A specialist starts with an empty context**, works on one task alone, writes its
+  long output to disk, and ends with a short REPORT. It cannot talk to the user and
+  cannot dispatch anyone; a decision it cannot make goes under `open:`.
+- **The orchestrator keeps only reports.** File bodies, logs and long findings never
+  enter its context. That is what keeps a fifteen-phase run inside one conversation, and
+  each specialist's context down to one task.
+- **The engine is the only writer of the ledger**, and the hooks enforce what prose
+  cannot: the guard refuses destructive and unapproved commands, the write guard holds
+  read-only roles to their reports, and SubagentStop stores every report as it arrives.
 
-- **The plan gate** - no implementation code exists before it is approved. Not a
-  scaffold, not a stub.
-- **The ship gate** - nothing is committed, pushed or published before it is approved.
-  It stops in **every mode and at every tier**, including `trivial`.
+## The Run
 
-Variations by intent: `flow` inserts `flow-decomposition` after `context`; `defect` drops
-straight from `context` to `discovery` then `reproduce`, and skips the design phases;
-`mvp` inserts `scaffold` before `implement`; performance runs insert `measure` either
-side of `implement`; `verify-green` appears wherever a suite must be proven clean before
-proceeding. `intake` and `flow-decomposition` are run inline by the orchestrator rather
-than delegated.
+```
+intake ─► context ─► … ─► design ─► ui-design ─► plan ─► implement ─► test ─► … ─► review ─► ship
+gate 0                                         authorises                                 ship gate
+```
 
-Which phases run at all is the intent's `phase_mask`, and **every phase that runs has its
-own gate** - never a batched one.
+Every phase boundary is a gate in the default `every-phase` mode, and never a batched
+one. `milestone` stops at gate zero, the authorising gate, design, implement and ship;
+`autonomous` at gate zero and ship. In every mode the engine also stops at a blocked
+phase and at any phase that left a decision only the user can make. Gate format:
+orchestrate Step 5; rationale: `${CLAUDE_PLUGIN_ROOT}/skills/phase-gate/SKILL.md`.
 
-## Phase to agent
+**Implementation is authorised by exactly one approved gate:** `plan` when the run has
+one, `upgrade-plan` for an upgrade, otherwise the closest of `reproduce`, `verify-green`
+and `review` before implement. The engine refuses `phase_start implement` until it is
+approved.
 
-| Phase | Primary agent | Also | Produces |
+| Intent | Phases |
+|---|---|
+| feature | intake, context, requirements, discovery, research, design, ui-design, plan, implement, test, automation, qa-plan, review, ship |
+| flow | feature, with flow-decomposition after context |
+| mvp | feature, with scaffold before implement |
+| change | intake, context, discovery, plan, ui-design, implement, test, qa-plan, review, ship |
+| defect | intake, context, discovery, reproduce, implement, test, review, ship |
+| refactor | intake, context, discovery, verify-green, implement, test, review, ship |
+| upgrade | intake, context, discovery, research, upgrade-plan, verify-green, implement, test, review, ship |
+| perf | intake, context, discovery, measure, plan, implement, test, review, ship |
+| security | intake, context, discovery, review, implement, test, compliance, ship |
+| ops | intake, context, discovery, plan, implement, test, review, ship |
+| docs | intake, context, discovery, implement, review, ship |
+| test | intake, context, discovery, test, automation, review, ship |
+| design | intake, context, discovery, research, design, ui-design, ship |
+| review | intake, context, discovery, review |
+| investigate | intake, context, discovery |
+
+The size tier then removes or lightens phases - never intake or ship.
+
+## Phase to Specialist
+
+| Phase | Dispatch | Lead | Also |
 |---|---|---|---|
-| context | *orchestrate, inline* | - | `.onestop/run.json` (the run ledger), `stack.yml` |
-| requirements | `ba-analyst` | - | BRD, user stories, RTM |
-| research | *orchestrate, inline* (context7) | - | `docs/research/<slug>/findings.md` |
-| discovery | `discovery-scout` | `code-explorer`, `option-broker` | `.onestop/discovery/<slug>.md` |
-| design | `architect` | `contract-agent`, `a11y-agent`, `option-broker` | system design, ADRs, contract |
-| ui-design | `ui-designer` | `a11y-agent` | palette, tokens, component inventory |
-| plan | `planner` | `architect`, `work-partitioner`, `option-broker` | plan.md, partition DAG |
-| scaffold | `architect` | - | project structure per bound pattern |
-| implement | `test-author` | `build-resolver`, `refactor-agent`, `performance-agent`, `ui-designer`, `merge-coordinator`, `docs-agent` | source + tests |
-| test | `test-author` | - | unit and integration coverage |
-| automation | `web-automation-agent` | `app-automation-agent` | e2e suites, CI wiring |
-| qa-plan | `qa-planner` | - | manual test plan + CSV |
-| review | `code-reviewer` | `security-reviewer`, `data-reviewer`, `a11y-agent`, `performance-agent`, `validator` | findings + verdict |
-| compliance | `security-reviewer` | - | `docs/compliance/<slug>.md` |
-| measure | `performance-agent` | - | baseline, profile, result |
-| reproduce | `test-author` | `code-explorer` | the failing regression test |
-| verify-green | `build-resolver` | `validator` | a green suite, or a named blocker |
-| ship | `docs-agent` | `validator` | README, CHANGELOG, `.env.example` |
+| intake | engine | - | - |
+| context | single | `stack-adapter` | - |
+| flow-decomposition | single | `ba-analyst` | - |
+| requirements | single | `ba-analyst` | - |
+| discovery | per-unit | `discovery-scout` | `code-explorer`; then `option-broker` |
+| research | single | `researcher` | - |
+| upgrade-plan | single | `researcher` (upgrade mode) | - |
+| measure | single | `performance-agent` | - |
+| reproduce | single | `test-author` | `code-explorer` |
+| verify-green | single | `build-resolver` | `test-author` |
+| design | single | `architect` | `contract-agent`, `a11y-agent`, `option-broker` |
+| ui-design | single | `ui-designer` | `a11y-agent` |
+| plan | single | `planner` | `work-partitioner` |
+| scaffold | single | `architect` (scaffold mode) | - |
+| implement | dev-loop | see below | - |
+| test | single | `test-author` | - |
+| automation | per-target | `web-automation-agent` | `app-automation-agent` |
+| qa-plan | single | `qa-planner` | - |
+| review | panel | `code-reviewer` | `security-reviewer`, `data-reviewer`, `a11y-agent`, `performance-agent`; then `validator` |
+| compliance | single | `security-reviewer` (compliance mode) | - |
+| ship | single | `docs-agent` | then `validator` |
 
-Reviewers are **bound by change surface, not chosen**: a diff touching migrations binds
-`data-reviewer`; a diff touching one of the nine security triggers binds
-`security-reviewer` at every size tier; a diff touching UI binds `a11y-agent`. Binding is
-automatic and stated in one line - the user is never asked which reviewer to run.
+**Reviewers are bound by evidence, never chosen.** `code-reviewer` always; the security
+reviewer when a security surface was flagged or the intent is security; the data reviewer
+when migrations, schema or query files changed; the accessibility reviewer when UI changed
+and the stack declares the concern. The recipe states who bound and why.
 
-## What every delegation carries
+| Shape | How |
+|---|---|
+| single | the lead, once |
+| per-unit | one lead per unit (flow step, or the whole request), **all in one message**; then each `then` agent once |
+| per-target | one lead per target (web, app), **in one message** |
+| panel | every bound member **in one message** - they read the same diff and write nothing to the project; then each `then` agent |
+| dev-loop | the per-module development loop below |
 
-A subagent starts with no context. Brief it with exactly this, and nothing else:
-
-1. **The task** and its acceptance criteria - one task, never the whole plan.
-2. **Its write surface** - the files it owns. In a parallel wave this is a boundary, not
-   a suggestion.
-3. **The bound framework and pattern**, verbatim from the architecture protocol.
-4. **The packs** it needs - language packs for the files in scope, concern packs for the
-   surfaces touched.
-5. **The contract**, if the design phase produced one.
-6. **The discovery extract** relevant to this task - never the whole record.
-7. **The edit-in-place rule, verbatim.**
-
-## What every delegation returns
-
-A summary, never file bodies:
+## The Development Loop
 
 ```
-<agent>
-  did:      <what was done>
-  files:    <written / modified - paths and counts, never contents>
-  decisions:<anything decided that the brief did not cover>
-  blocked:  <anything not completed, and exactly why>
+checkpoint "pre-implement"
+work-partitioner ─► schedule_waves ─► waves of lanes with disjoint write surfaces
+for each wave, every lane in ONE message per step:
+    red ──► code ──► review          (build and test run inside code)
+     │        │         │
+     └── failure: loop_attempt ─► fix ─► rework   (at most the dev_loop budget)
+merge-coordinator joins the wave ─► checkpoint "slice <n>"
+budget spent ─► the engine blocks the run ─► the user decides at a gate
 ```
 
-Bodies never enter the main context. That discipline is what keeps a fifteen-phase run
-inside one conversation.
+| Role | Default | By intent |
+|---|---|---|
+| red | `test-author` | none for docs and upgrade - the existing suite is the signal |
+| code | `implementer` | refactor `refactor-agent` · perf `performance-agent` · ops `devops-agent` · docs `docs-agent` · upgrade `build-resolver` |
+| build fix | `build-resolver` | - |
+| review | `code-reviewer` | - |
+| join | `merge-coordinator` | - |
 
-## Parallel dispatch
+Budgets (`policies.json`): build fixes 3 per root cause and 8 per phase, test fixes 2 per
+test, review fixes 2 per finding, 3 dev-loop iterations per module, 1 lane retry. The
+engine counts every attempt; it never lets a loop run past its budget without the user.
 
-When the partition produces a wave with two or more lanes, **dispatch every lane of that
-wave in one message**. Lanes dispatched one per message run serially no matter what the
-DAG said.
+## The Brief
 
-Join through `merge-coordinator` at every wave boundary - it verifies the combined state
-and catches the semantic conflicts that a disjoint write-surface partition cannot
-prevent, such as two lanes independently adding the same dependency at different
-versions.
+Built by the engine's `brief` tool and passed to the specialist unchanged. A specialist
+starts with nothing else, so the brief carries everything:
+
+1. the task and its acceptance criteria - one task, never the whole plan
+2. read-first: the phase playbook, the stack facts, the language and concern packs, the
+   standards and architecture protocols for code phases, and the earlier reports it needs
+3. the resolved commands - use exactly these
+4. the write surface - enforced for read-only and documentation roles
+5. the artifacts this phase writes, and the budget
+6. the safety invariants, verbatim from `${CLAUDE_PLUGIN_ROOT}/skills/shared/rules.md`
+7. the commands the guard refuses
+8. the exact write-up path and the exact REPORT block
+
+## The Report
+
+```
+REPORT <agent> - <phase>[ - <unit>]
+did:       <one or two lines>
+files:     <every path written or modified, or none>
+commands:  <each command run -> its result, or none>
+decisions: <choices made without asking, each with the rule that settled it, or none>
+open:      <decisions only the user can make, each with "recommended: <default>", or none>
+blocked:   <what could not be done and exactly why, or none>
+full:      <the write-up path, or none>
+```
+
+At most 25 lines; paths, never file bodies. The SubagentStop hook stores it in the ledger
+the moment the specialist finishes, sends the specialist back once if the block is
+missing, and adds every `open:` item to the run - which is what makes the engine stop for
+them at the gate.
 
 ## Rules
 
-1. **Never ask the user to pick an agent.** Binding is the orchestrator's job; that is
-   the reason this plugin exists.
-2. **Never run a phase without its gate**, and never batch two phases into one gate.
-3. **Never delegate without the write surface** when a wave has more than one lane.
-4. **Never let an agent return file bodies.**
-5. **An agent whose phase did not run did not run.** Say so in the ledger rather than
-   implying coverage that does not exist.
+1. **Never ask the user to pick a specialist.** Binding is the orchestrator's job.
+2. **The orchestrator never does phase work** - it dispatches, and keeps reports.
+3. **A wave is one message.** Lanes dispatched one per message run serially.
+4. **Never dispatch without the engine's brief**, and never edit it on the way through.
+5. **Never let a specialist return file bodies.** Paths and counts only.
+6. **A specialist whose phase did not run did not run.** The ledger says so; nobody
+   implies coverage that does not exist.

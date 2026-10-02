@@ -8,9 +8,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { pluginPath, registry, slash } from './env.mjs';
+import { pluginPath, registry, slash, slugify } from './env.mjs';
 import { loadRun } from './ledger.mjs';
 import { recipe } from './dispatch.mjs';
+import { writeScope } from './guard.mjs';
 
 const fail = (error, hint) => ({ ok: false, error, ...(hint ? { hint } : {}) });
 
@@ -71,15 +72,23 @@ export function buildBrief(root, args = {}) {
   if (prior.length) readFirst.push(`- Earlier reports you may need (read only what your task requires): ${prior.join(', ')}`);
 
   const commands = Object.entries(run.commands);
-  const surface = Array.isArray(writeSurface) && writeSurface.length
-    ? writeSurface.map((p) => `- ${p}`).join('\n')
-    : rec.read_only || writeSurface === 'read-only'
-      ? '- none - you are read-only for this task. Edit nothing.'
-      : '- not declared - write only the files your task names, and list every one in `files:`.';
+  const name = String(agent).replace(/^(?:plugin:)?onestop:/i, '');
+  const scope = writeScope(name);
+  const fullPath = slash(path.join('.onestop', 'reports', phase, `${slugify(name, 30)}${unit ? `-${slugify(String(unit), 30)}` : ''}.full.md`));
+  const docsRoots = policies.write_guard.docs_roots.join(', ');
+  const surface = scope === 'report-only'
+    ? `- none - you are a read-only role. The one file you may write is your write-up, \`${fullPath}\`; the write guard refuses any other path and any shell command that writes.`
+    : scope === 'docs-only'
+      ? `- documentation only: the artifacts below, under ${docsRoots}, and your write-up \`${fullPath}\`. The write guard refuses source files.`
+      : Array.isArray(writeSurface) && writeSurface.length
+        ? writeSurface.map((p) => `- ${p}`).join('\n')
+        : rec.read_only || writeSurface === 'read-only'
+          ? '- none - you are read-only for this task. Edit nothing.'
+          : '- not declared - write only the files your task names, and list every one in `files:`.';
 
   const blocked = policies.bash_guard.always_blocked.map((r) => r.reason);
   const sections = [
-    `# onestop brief - ${agent} - ${phase}${unit ? ` - unit ${unit}` : ''}`,
+    `# onestop brief - ${name} - ${phase}${unit ? ` - unit ${unit}` : ''}`,
     `Run ${run.run_id} · intent ${run.intent} · tier ${run.tier}${rec.light ? ' · LIGHT pass' : ''}${mode || rec.mode ? ` · mode ${mode || rec.mode}` : ''}`,
     '',
     'You are one specialist dispatched by the onestop orchestrator. You work alone in your own context, then hand back one short report. You cannot talk to the user and you cannot dispatch other agents: anything that needs a human decision goes in `open:` with your recommended default, and the orchestrator puts it to the user.',
@@ -105,16 +114,19 @@ export function buildBrief(root, args = {}) {
     '## Commands you must not run',
     `The guard hook blocks these during the run, so do not try: anything that ${blocked.join('; ')}. git commit, push and pull requests happen only after the user's ship-gate choice - never from a specialist. Adding a dependency or tool needs the user's approval first: return it in \`open:\` with the exact package and the version you verified on its registry today.`,
     '',
+    '## Your write-up',
+    `Anything longer than the report - the plan, findings with their evidence, stack facts - goes in \`${fullPath}\` (Write tool). Name it under \`full:\`. The orchestrator reads only your report; later specialists read the write-up.`,
+    '',
     '## Return exactly this block as your final message',
     '```',
-    `REPORT ${agent} - ${phase}`,
+    `REPORT ${name} - ${phase}${unit ? ` - ${unit}` : ''}`,
     'did:       <one or two lines>',
     'files:     <every path written or modified, or none>',
     'commands:  <each command you ran -> its result, or none>',
     'decisions: <choices you made without asking, each with the rule that settled it, or none>',
     'open:      <decisions only the user can make - each with "recommended: <default>" - or none>',
     'blocked:   <what you could not do and exactly why, or none>',
-    'full:      <path of a fuller write-up under .onestop/reports/, or none>',
+    `full:      <${fullPath} if you wrote it, or none>`,
     '```',
     `At most ${policies.report.max_lines} lines. Never paste file contents into the report - name the paths.`,
   ];

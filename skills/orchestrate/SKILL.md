@@ -101,9 +101,12 @@ whose report becomes the stack facts every later brief points to.
    - `panel` - every member with `bind: true`, **in one message** - name who bound and why;
      then `validator`.
    - `dev-loop` - see below.
-4. For every report: `report_store` - keep only the returned `digest`. Record each decision
-   a specialist made with `run_note` (`kind: "decision"`).
-5. `phase_finish` with a one-paragraph summary and the artifact paths.
+4. Each specialist's final message is its REPORT. The SubagentStop hook stores it in the
+   ledger as it arrives - do not re-send it. Record each decision a specialist made with
+   `run_note` (`kind: "decision"`). A specialist with no REPORT block is sent back once.
+5. `phase_finish` with a one-paragraph summary and the artifact paths. If it refuses with
+   "no specialist report is stored", hooks are off: call `report_store` with each REPORT
+   text, then finish again.
 6. If `needs_gate`, present the gate (Step 5). Otherwise narrate one line and continue.
    `open_questions` in the result are decisions only the user can make; the engine stops
    for them in every gate mode. Put them in DECIDE and record each answer with `run_note`
@@ -143,9 +146,10 @@ approach tried: try another approach (`adjusted`) · accept and move on (`approv
 
 1. Dispatch `work-partitioner` with the plan report; pass its tasks to `schedule_waves`.
 2. For each wave, one step at a time, **all lanes of the wave in one message per step**:
-   red (`test-author` writes the failing test) → code (`implementer` makes it pass inside
-   the write surface, running the resolved build and test) → review (`code-reviewer` on
-   that module's diff).
+   red (`roles.red` writes the failing test) → code (`roles.code` makes it pass inside the
+   write surface, running the resolved build and test) → review (`roles.review` on that
+   module's diff). When `roles.red` is null (docs, upgrade) the existing suite is the
+   signal: skip red, and the code step must return the suite to green.
 3. A failing build, test or review finding: call `loop_attempt` first. Allowed - dispatch
    the fix (`build-resolver` for a build, the coder for a test or finding) and repeat that
    step. Not allowed - stop and present the blocked gate.

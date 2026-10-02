@@ -51,14 +51,8 @@ Across every regime, these are the surfaces that actually fail audits:
 
 ## Severity
 
-| Severity | Meaning |
-|---|---|
-| CRITICAL | a live violation - regulated data exposed, unencrypted, or unlogged right now |
-| HIGH | a control absent where the regime requires one |
-| MEDIUM | a control present but incomplete or unverified |
-| LOW | documentation or process gap, no data exposure |
-
-CRITICAL and HIGH block the ship gate, exactly as in the review phase.
+The compliance column of the shared scale: `${CLAUDE_PLUGIN_ROOT}/skills/shared/severity.md`. CRITICAL and HIGH block the ship gate,
+exactly as in the review phase.
 
 ## Boundaries
 

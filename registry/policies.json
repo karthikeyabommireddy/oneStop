@@ -252,5 +252,79 @@
       "always",
       "ask-once-per-run"
     ]
+  },
+  "write_guard": {
+    "note": "Applied by the PreToolUse hook to Write, Edit, MultiEdit and NotebookEdit calls - and, for scoped roles, to their shell commands - made by onestop specialists during a run the session owns. Hooks name the calling specialist (plugin:onestop:<agent>), so a reviewer's independence is enforced by code, not by its instructions. Specialists not listed here are free to write; their briefs carry the write surface.",
+    "ledger_files": [
+      ".onestop/run.json",
+      ".onestop/runs/",
+      ".onestop/events.jsonl",
+      ".onestop/security-flags.jsonl",
+      ".onestop/sessions"
+    ],
+    "report_only": [
+      "discovery-scout",
+      "code-explorer",
+      "code-reviewer",
+      "data-reviewer",
+      "option-broker",
+      "a11y-agent",
+      "stack-adapter",
+      "work-partitioner"
+    ],
+    "docs_only": [
+      "planner",
+      "ba-analyst",
+      "qa-planner",
+      "researcher",
+      "security-reviewer",
+      "validator"
+    ],
+    "docs_roots": [
+      "docs/",
+      "doc/",
+      "documentation/",
+      "website/docs/",
+      "adr/",
+      "architecture/decisions/"
+    ],
+    "scoped_bash": [
+      {
+        "id": "redirect",
+        "pattern": "(?:^|[^-=>&\\d])\\d?>>?\\s*(?!&\\d|/dev/null\\b|NUL\\b|\\$null\\b|\\.onestop[\\\\/])\\S",
+        "reason": "writes a file through shell redirection"
+      },
+      {
+        "id": "in-place-edit",
+        "pattern": "\\bsed\\b[^|;&]*\\s-[a-zA-Z]*i|\\bperl\\b[^|;&]*\\s-[a-zA-Z]*i|\\btee\\b",
+        "reason": "edits files in place"
+      },
+      {
+        "id": "file-ops",
+        "pattern": "(?:^|[\\s;&|(])(rm|rmdir|mv|cp|touch|mkdir|ln|chmod|chown|truncate|dd)\\s",
+        "reason": "changes the file system"
+      },
+      {
+        "id": "ps-file-ops",
+        "pattern": "\\b(Set-Content|Add-Content|Out-File|New-Item|Remove-Item|Move-Item|Copy-Item|Rename-Item|Clear-Content)\\b",
+        "reason": "changes the file system"
+      },
+      {
+        "id": "git-write",
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+(add|apply|am|mv|rm|tag|notes|update-index|update-ref|config|init|worktree|submodule|pull|gc|prune)\\b",
+        "flags": "",
+        "reason": "changes the repository"
+      },
+      {
+        "id": "package-change",
+        "pattern": "\\b(npm|pnpm|yarn|bun)\\s+(install|i|add|ci|update|up|upgrade|remove|rm|uninstall)\\b|\\b(pip|pip3|uv|poetry)\\s+(install|add|remove|sync|lock)\\b|\\bcargo\\s+(add|install|update|remove)\\b|\\bdotnet\\s+(add|remove|restore|tool)\\b|\\bgo\\s+(get|install|mod\\s+tidy)\\b|\\bbundle\\s+(install|update|add)\\b|\\bcomposer\\s+(install|require|update|remove)\\b",
+        "reason": "changes installed packages"
+      },
+      {
+        "id": "formatter-write",
+        "pattern": "--write\\b|--fix\\b|\\bgofmt\\b[^|;&]*\\s-w\\b|\\bcargo\\s+fmt\\b(?![^|;&]*--check)|\\bdotnet\\s+format\\b(?![^|;&]*--verify-no-changes)",
+        "reason": "rewrites source files"
+      }
+    ]
   }
 }
