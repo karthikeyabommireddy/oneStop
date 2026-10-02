@@ -27,7 +27,10 @@ Stop at the first layer that settles the question. Each layer costs more than th
 
 1. **Installed dependencies.** Re-check what the project already has. A capability
    already in the lockfile beats anything found externally, every time.
-2. **Vendor documentation** for the frameworks in use. The canonical way to do this in
+2. **Vendor documentation** for the frameworks in use - context7
+   (`mcp__plugin_onestop_context7__resolve-library-id`, then
+   `mcp__plugin_onestop_context7__query-docs`), else WebFetch of the vendor's official docs.
+   Queries name libraries and APIs only - never source code, file contents or secrets. The canonical way to do this in
    *this* framework is almost always the right answer, and it is what the next
    maintainer will expect.
 3. **Package registries.** Is there a maintained library for this? Judge it on: last

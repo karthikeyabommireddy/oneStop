@@ -97,8 +97,9 @@ RISKS
 Approve to begin implementation, or tell me what to change.
 ```
 
-`trivial` and `small` tiers state the plan in a few lines and continue without
-stopping - there is nothing meaningful to approve.
+`trivial` and `small` tiers state the plan in two to five lines and still present the plan
+gate - the gate scales down to continue/stop, it never disappears, because this gate is
+what authorises implementation.
 
 ## Rules
 

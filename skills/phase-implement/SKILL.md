@@ -15,8 +15,26 @@ boundary.
 
 ## Preconditions
 
-The plan gate is approved. The contract exists if the design phase produced one. If either
-is missing, stop - implementing against an unapproved plan is how scope escapes.
+Implementation is authorised by exactly one approved gate, and the engine refuses
+`phase_start implement` until it is approved:
+
+| The run's phases contain | Authorising gate |
+|---|---|
+| `plan` | the plan gate |
+| `reproduce` (defect) | the reproduce gate - the failing test exists and fails for the stated reason |
+| `verify-green` (refactor, upgrade) | the verify-green gate - the suite is green at a recorded commit |
+| `review` before implement (security) | the review gate - the findings are the plan |
+| none of these (docs, small changes) | the gate of the phase just before implement |
+
+The contract exists if the design phase produced one.
+
+## Checkpoints
+
+The orchestrator calls the engine's `checkpoint` before the first slice (`pre-implement`)
+and after each slice (`slice <n>`). A checkpoint snapshots the working tree through a
+private index - your staging area and files are untouched. To undo your own last step
+inside a slice, reverse your own edit; never discard files with git, which destroys work
+you did not make. Undoing a whole slice is the user's call, through `/onestop-undo`.
 
 ## Partition First
 

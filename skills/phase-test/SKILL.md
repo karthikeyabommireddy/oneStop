@@ -51,9 +51,11 @@ failing a line here is rewritten, not kept:
 
 ## Coverage
 
-Run the bound `coverage_cmd` for the detected stack. The threshold is the plugin
-`coverage_threshold` setting, or the repo own configured threshold if it sets one -
-the repo wins.
+Run the **resolved** coverage command from your brief - the engine read it from
+onestop.yml, CI or the task runner, and used a registry default only if its tools are
+already installed. If no coverage command is resolved, say so; never install a coverage
+tool to make one work. The threshold is the plugin `coverage_threshold` setting, or the
+repo's own configured threshold if it sets one - the repo wins.
 
 Report **line and branch** coverage for the change surface, not just the repo average.
 A repo at 85 percent overall can have a new module at 20 percent; the average hides
@@ -61,7 +63,7 @@ exactly what matters.
 
 Where coverage falls short, add tests for the uncovered behavior. **Never** lower the
 threshold, exclude a file, or add an assertion-free test to move the number. If a
-branch is genuinely unreachable, remove the dead code instead.
+branch looks unreachable, do not delete it here - report it as a refactor candidate, with your evidence. Proving code dead is refactor work, with its own rules.
 
 ## Running
 

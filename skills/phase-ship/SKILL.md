@@ -46,7 +46,8 @@ PROPOSED COMMITS
 THEN
   branch: <name>   push: yes/no   PR: <title, or none>
 
-Approve to ship, or tell me what to change.
+Choose: commit locally (recommended) | commit and push | commit, push and open a PR |
+leave uncommitted.
 ```
 
 The ship gate always stops - in every gate mode and at every tier, including `trivial`.
@@ -65,12 +66,12 @@ The ship gate always stops - in every gate mode and at every tier, including `tr
 
 ## Pull Request
 
-Only when the user asked for one, or the repo workflow clearly expects one.
+Only when the user chose "commit, push and open a PR" at the ship gate - never inferred.
 
 1. Discover the template: `.github/pull_request_template.md`, then
    `.github/PULL_REQUEST_TEMPLATE/`, then `docs/`. **Fill the repo template** rather
    than imposing a different structure.
-2. Push the branch, then open the PR with `gh pr create`.
+2. Push the branch, then open the PR with the host's CLI: `gh pr create` (GitHub), `glab mr create` (GitLab), `az repos pr create` (Azure DevOps). For any other host, print the compare URL and stop.
 3. The body states what changed, why, how it was verified, and anything a reviewer
    should look at closely. Link the ticket when the run came from one.
 4. Never auto-merge. Never request review from people the user did not name.
@@ -109,7 +110,7 @@ Mark the run `status: complete` in `.onestop/run.json`.
 3. **Never commit a secret.** Scan the staged diff before committing; a hit stops the
    ship and the credential must be rotated, not just removed.
 4. **Never use `--no-verify` or bypass signing.**
-5. **Never force-push a shared branch.**
+5. **Never force a push, and never rewrite a commit that exists on a remote.** Never push to the default branch.
 6. **Never auto-merge.**
 7. **Report the real state.** If the push failed, say so - never imply delivery that
    did not happen.
