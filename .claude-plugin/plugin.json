@@ -1,7 +1,7 @@
 {
   "name": "onestop",
   "version": "1.9.1",
-  "description": "One-stop SDLC orchestration. Describe what you want in plain language - onestop classifies the intent, searches the codebase, binds the right specialists automatically, and drives plan, design, code, test, web and app automation, review and ship. You never pick an agent or a skill; it asks only when information is genuinely missing or discovery surfaced several real options.",
+  "description": "One-stop SDLC orchestration. Describe what you want in plain language - onestop classifies it, searches the codebase, and drives requirements, design, plan, code, test, web and app automation, review and ship. The orchestrator decides and asks you; specialists each work in their own context and report back; a pipeline engine enforces the gates, budgets and safety rules in code.",
   "author": {
     "name": "karthikeya"
   },
@@ -22,7 +22,7 @@
     "gate_mode": {
       "type": "string",
       "title": "Gate mode",
-      "description": "every-phase (default) stops at every phase boundary - you see what ran, what is next and which agents will do it, and can approve, skip, adjust or stop. milestone gates only at plan, design, implement and ship. autonomous gates only before ship. No mode disables the narration between phases, and the ship gate is never skippable in any mode.",
+      "description": "every-phase (default) stops at every phase boundary. milestone stops at gate zero, the gate that authorises implementation, design, implement and ship. autonomous stops only at gate zero and ship. The ship gate stops in every mode; onestop.yml at the repo root overrides this per project.",
       "default": "every-phase"
     },
     "coverage_threshold": {
@@ -51,27 +51,41 @@
     }
   },
   "mcpServers": {
+    "engine": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/engine/server.mjs"
+      ],
+      "env": {
+        "ONESTOP_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}",
+        "ONESTOP_GATE_MODE": "${user_config.gate_mode}",
+        "ONESTOP_COVERAGE_THRESHOLD": "${user_config.coverage_threshold}",
+        "ONESTOP_AUTO_AUTOMATION": "${user_config.auto_automation}",
+        "ONESTOP_RESEARCH_DEPTH": "${user_config.research_depth}",
+        "ONESTOP_KNOWLEDGE_GRAPH": "${user_config.knowledge_graph}"
+      }
+    },
     "chrome-devtools": {
       "command": "npx",
       "args": [
         "-y",
-        "chrome-devtools-mcp@latest"
+        "chrome-devtools-mcp@1.10.1",
+        "--isolated"
       ]
     },
     "playwright": {
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@latest",
-        "--browser",
-        "chrome"
+        "@playwright/mcp@0.0.83",
+        "--isolated"
       ]
     },
     "context7": {
       "command": "npx",
       "args": [
         "-y",
-        "@upstash/context7-mcp@latest"
+        "@upstash/context7-mcp@4.1.1"
       ]
     }
   },
