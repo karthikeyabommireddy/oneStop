@@ -1,0 +1,240 @@
+{
+  "description": "Pipeline policies the engine enforces in code. Every value here used to live as a sentence in some skill or agent file, where the model could skip it under context pressure. Here it is data: engine/lib reads it, the engine refuses moves that break it, and onestop.yml can tighten or relax the values marked overridable.",
+  "retry_budget": {
+    "note": "A loop with no budget burns tokens on a problem it cannot solve. When a budget runs out the engine stamps the phase blocked and the orchestrator must present a gate showing the last real error and every approach tried - it may not loop again on its own.",
+    "build_fix": {
+      "per_root_cause": 3,
+      "per_phase": 8
+    },
+    "test_fix": {
+      "per_test": 2
+    },
+    "review_fix": {
+      "per_finding": 2
+    },
+    "lane_retry": {
+      "per_lane": 1,
+      "only_for": "transient causes - a flaky network, a lock. Never a logic failure."
+    },
+    "overridable": [
+      "build_fix.per_root_cause",
+      "build_fix.per_phase",
+      "test_fix.per_test",
+      "review_fix.per_finding"
+    ]
+  },
+  "dev_loop": {
+    "note": "The per-module development loop: red test, code, build, review, test, and on failure fix and rework - up to max_iterations, then the user reviews and approves. Test-first is not relaxed by the loop; the red test is the loop's entry condition.",
+    "steps": [
+      "red",
+      "code",
+      "build",
+      "review",
+      "test"
+    ],
+    "on_failure": "fix",
+    "max_iterations": 3,
+    "overridable": [
+      "max_iterations"
+    ]
+  },
+  "report": {
+    "note": "Each specialist works in its own context and hands back a short report. The orchestrator keeps only the short form; the full report lives on disk where any later specialist can read it. This is what keeps the orchestrator's memory small across a long run.",
+    "max_lines": 25,
+    "required_fields": [
+      "did",
+      "files",
+      "decisions",
+      "open",
+      "blocked"
+    ],
+    "full_report_dir": ".onestop/reports"
+  },
+  "ship": {
+    "choices": {
+      "local-commit": "Commit on the current branch. Nothing leaves the machine.",
+      "commit-push": "Commit, then push the current branch.",
+      "commit-push-pr": "Commit, push, and open a pull request with the host's CLI.",
+      "leave-uncommitted": "Change nothing in git. The work stays in the working tree for you."
+    },
+    "recommended": "local-commit",
+    "never": [
+      "Never push to the repository's default branch.",
+      "Never force-push.",
+      "Never amend, rebase or otherwise rewrite a commit that exists on a remote."
+    ],
+    "pr_hosts": {
+      "github": "gh pr create",
+      "gitlab": "glab mr create",
+      "azure": "az repos pr create"
+    }
+  },
+  "bash_guard": {
+    "note": "Applied by the PreToolUse hook to every Bash and PowerShell call, but only while an onestop run is active - your own sessions are never touched. A blocked command is returned to the model with the reason, so it can return the need as OPEN for you to decide.",
+    "always_blocked": [
+      {
+        "id": "git-history",
+        "pattern": "\\bgit\\s+(reset|clean|rebase|merge|cherry-pick|revert|stash|restore|switch|checkout)\\b",
+        "reason": "rewrites history or discards uncommitted work"
+      },
+      {
+        "id": "git-branch-delete",
+        "pattern": "\\bgit\\s+branch\\s+(-D|-d|--delete)\\b",
+        "reason": "deletes a branch"
+      },
+      {
+        "id": "git-force",
+        "pattern": "\\bgit\\s+push\\b.*(--force|\\s-f\\b|--force-with-lease)",
+        "reason": "force-push"
+      },
+      {
+        "id": "recursive-delete",
+        "pattern": "\\brm\\s+(-[a-zA-Z]*[rR][a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*[rR]|-r\\s+-f|-f\\s+-r|--recursive)",
+        "reason": "recursive delete"
+      },
+      {
+        "id": "ps-recursive-delete",
+        "pattern": "\\b(Remove-Item|rmdir|rd)\\b.*(-Recurse|/s\\b)",
+        "reason": "recursive delete"
+      },
+      {
+        "id": "publish",
+        "pattern": "\\b(npm|pnpm|yarn|bun)\\s+publish\\b|\\bcargo\\s+publish\\b|\\btwine\\s+upload\\b|\\bgem\\s+push\\b|\\bdotnet\\s+nuget\\s+push\\b|\\bdocker\\s+push\\b|\\bhelm\\s+push\\b",
+        "reason": "publishes a package or image"
+      },
+      {
+        "id": "deploy",
+        "pattern": "\\b(kubectl\\s+(apply|delete|replace|rollout)|terraform\\s+(apply|destroy)|pulumi\\s+(up|destroy)|serverless\\s+deploy|vercel\\b.*--prod|netlify\\s+deploy\\b.*--prod|flyctl?\\s+deploy|gcloud\\b.*\\bdeploy\\b|az\\s+webapp\\s+deploy)\\b",
+        "reason": "deploys to a real environment"
+      },
+      {
+        "id": "pipe-to-shell",
+        "pattern": "(curl|wget|iwr|Invoke-WebRequest)\\b[^|]*\\|\\s*(ba|z|da)?sh\\b|\\|\\s*(iex|Invoke-Expression)\\b",
+        "reason": "pipes a download into a shell"
+      }
+    ],
+    "allowed_after_ship_gate": [
+      {
+        "id": "git-commit",
+        "pattern": "\\bgit\\s+commit\\b",
+        "requires_choice": [
+          "local-commit",
+          "commit-push",
+          "commit-push-pr"
+        ],
+        "reason": "commits before the ship gate is approved"
+      },
+      {
+        "id": "git-push",
+        "pattern": "\\bgit\\s+push\\b",
+        "requires_choice": [
+          "commit-push",
+          "commit-push-pr"
+        ],
+        "reason": "pushes without a ship-gate choice that includes push"
+      },
+      {
+        "id": "open-pr",
+        "pattern": "\\b(gh\\s+pr\\s+create|glab\\s+mr\\s+create|az\\s+repos\\s+pr\\s+create)\\b",
+        "requires_choice": [
+          "commit-push-pr"
+        ],
+        "reason": "opens a pull request the user did not choose"
+      }
+    ]
+  },
+  "dependency_guard": {
+    "note": "Adding a dependency, a runtime or a tool is the user's decision, with a version verified on the official registry that day - never the model's. The guard blocks an install whose package was not approved at a gate. Restoring from an existing lockfile is not an addition and is always allowed.",
+    "add_commands": [
+      {
+        "pattern": "\\b(?:npm|pnpm|bun)\\s+(?:install|i|add)\\b(.*)",
+        "ecosystem": "npm"
+      },
+      {
+        "pattern": "\\byarn\\s+(?:global\\s+)?add\\b(.*)",
+        "ecosystem": "npm"
+      },
+      {
+        "pattern": "\\b(?:pip|pip3)\\s+install\\b(.*)",
+        "ecosystem": "pypi"
+      },
+      {
+        "pattern": "\\b(?:uv\\s+(?:add|pip\\s+install)|poetry\\s+add)\\b(.*)",
+        "ecosystem": "pypi"
+      },
+      {
+        "pattern": "\\bcargo\\s+(?:add|install)\\b(.*)",
+        "ecosystem": "crates"
+      },
+      {
+        "pattern": "\\bdotnet\\s+(?:add\\b.*?\\bpackage|tool\\s+install)\\b(.*)",
+        "ecosystem": "nuget"
+      },
+      {
+        "pattern": "\\bgo\\s+(?:get|install)\\b(.*)",
+        "ecosystem": "go"
+      },
+      {
+        "pattern": "\\bgem\\s+install\\b(.*)",
+        "ecosystem": "rubygems"
+      },
+      {
+        "pattern": "\\bcomposer\\s+(?:require|global\\s+require)\\b(.*)",
+        "ecosystem": "packagist"
+      },
+      {
+        "pattern": "\\b(?:brew|choco|winget|scoop|apt|apt-get)\\s+install\\b(.*)",
+        "ecosystem": "system"
+      }
+    ],
+    "restore_markers": [
+      "-r",
+      "--requirement",
+      "-e",
+      "--editable",
+      ".",
+      "-c",
+      "--constraint"
+    ],
+    "value_flags": [
+      "-r",
+      "--requirement",
+      "-c",
+      "--constraint",
+      "-e",
+      "--editable",
+      "-i",
+      "--index-url",
+      "--extra-index-url",
+      "-w",
+      "--workspace",
+      "--filter",
+      "--registry",
+      "--target",
+      "-t",
+      "--prefix",
+      "--version",
+      "-v",
+      "--source",
+      "-s",
+      "--framework",
+      "-f",
+      "--project",
+      "-p"
+    ]
+  },
+  "approvals": {
+    "note": "Per-project approval policy, overridable in onestop.yml. 'always' asks every time; 'ask-once-per-run' asks once and then remembers for the rest of the run. Ship-gate items - commit, push, pull request - are not configurable and are always asked.",
+    "defaults": {
+      "add_dependency": "always",
+      "choose_version": "always",
+      "install_tool": "always",
+      "delete_file": "ask-once-per-run",
+      "edit_ci": "always"
+    },
+    "allowed_values": [
+      "always",
+      "ask-once-per-run"
+    ]
+  }
+}

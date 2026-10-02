@@ -1,0 +1,122 @@
+{
+  "$comment": "Schema for .onestop/run.json - the run ledger. Only the onestop engine writes this file, atomically, and it validates against this schema on every read and every write. engine/lib/schema.mjs implements the subset used here: type, required, properties, additionalProperties, enum, items, minimum.",
+  "type": "object",
+  "required": ["schema", "run_id", "status", "request", "slug", "phases", "created", "updated"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "type": "integer", "enum": [2] },
+    "run_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["active", "complete", "stopped", "blocked"] },
+    "request": { "type": "string" },
+    "slug": { "type": "string" },
+    "intent": { "type": ["string", "null"] },
+    "tier": { "type": ["string", "null"], "enum": ["trivial", "small", "standard", "large", null] },
+    "gate_mode": { "type": "string", "enum": ["every-phase", "milestone", "autonomous"] },
+    "settings": { "type": "object" },
+    "created": { "type": "string" },
+    "updated": { "type": "string" },
+    "base_commit": { "type": ["string", "null"] },
+    "git": { "type": "boolean" },
+    "stack": { "type": ["object", "null"] },
+    "commands": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["cmd", "source"],
+        "properties": {
+          "cmd": { "type": "string" },
+          "source": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["declared", "ci", "task-runner", "stack-default", "user"] }
+        }
+      }
+    },
+    "mask": { "type": "array", "items": { "type": "string" } },
+    "stops": { "type": "array", "items": { "type": "string" } },
+    "authorising_phase": { "type": ["string", "null"] },
+    "current": { "type": ["string", "null"] },
+    "blocked_reason": { "type": ["string", "null"] },
+    "phases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string", "enum": ["pending", "active", "awaiting_gate", "done", "skipped", "blocked"] },
+          "gate": { "type": "string", "enum": ["approved", "adjusted", "skipped-by-user", "stopped", "auto"] },
+          "mode": { "type": "string", "enum": ["delegated", "inline", "engine"] },
+          "light": { "type": "boolean" },
+          "note": { "type": "string" },
+          "summary": { "type": "string" },
+          "started": { "type": "string" },
+          "finished": { "type": "string" },
+          "reports": { "type": "array", "items": { "type": "string" } },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "units": { "type": "array", "items": { "type": "object" } },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["choice", "rule"],
+        "properties": {
+          "choice": { "type": "string" },
+          "rule": { "type": "string" },
+          "evidence": { "type": "string" },
+          "phase": { "type": "string" }
+        }
+      }
+    },
+    "open": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question"],
+        "properties": {
+          "question": { "type": "string" },
+          "recommended": { "type": "string" },
+          "phase": { "type": "string" },
+          "resolved": { "type": "boolean" },
+          "answer": { "type": "string" }
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "item"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["dependency", "version", "tool", "delete", "ci", "skip"] },
+          "item": { "type": "string" },
+          "phase": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "amendments": { "type": "array", "items": { "type": "object" } },
+    "loops": { "type": "object" },
+    "ship": {
+      "type": ["object", "null"],
+      "properties": {
+        "choice": { "type": "string", "enum": ["local-commit", "commit-push", "commit-push-pr", "leave-uncommitted"] },
+        "approved": { "type": "boolean" }
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["n", "label", "tree_commit"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 0 },
+          "label": { "type": "string" },
+          "tree_commit": { "type": "string" },
+          "at": { "type": "string" },
+          "phase": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "description": "Who runs each phase and how. The orchestrator never does phase work itself: it asks the engine for a phase's recipe, dispatches the named specialists with engine-built briefs, stores their reports, and gates. Specialists read the phase's playbook from their brief - the orchestrator never loads it, which is what keeps the orchestrator's context small.",
+
+  "dispatch_shapes": {
+    "engine": "The engine does the work deterministically; no specialist is dispatched.",
+    "single": "Dispatch the lead specialist once.",
+    "per-unit": "Dispatch one lead per unit of work (one per flow step, or one for the whole request) in ONE message, so they run in parallel. Then dispatch each 'then' agent once over the combined reports.",
+    "per-target": "Dispatch one lead per target (web, app) in ONE message.",
+    "panel": "Dispatch every applicable panel member in ONE message - they read the same input and write nothing. Then dispatch each 'then' agent once over the combined reports.",
+    "dev-loop": "Partition, schedule waves, and run the per-module development loop in each lane: red test, code, build, review, test, fix - within the dev_loop budget in registry/policies.json."
+  },
+
+  "phases": {
+    "intake": {
+      "playbook": null, "lead": null, "dispatch": "engine", "read_only": true,
+      "purpose": "Open the run, classify the request, and present gate zero."
+    },
+    "context": {
+      "playbook": "phase-context", "lead": "stack-adapter", "dispatch": "single", "read_only": true,
+      "purpose": "Engine detects the stack and resolves the project's own commands; stack-adapter reads conventions, CI and test layout and writes the stack facts every later brief points to."
+    },
+    "flow-decomposition": {
+      "playbook": "phase-requirements", "lead": "ba-analyst", "mode": "flow", "dispatch": "single", "read_only": true,
+      "purpose": "Split a narrated journey into ordered, independently verifiable steps, including the inferred ones."
+    },
+    "requirements": {
+      "playbook": "phase-requirements", "lead": "ba-analyst", "dispatch": "single", "read_only": false,
+      "purpose": "Requirements, stories with testable criteria, and the traceability matrix."
+    },
+    "discovery": {
+      "playbook": "phase-discovery", "lead": "discovery-scout", "also": ["code-explorer"], "then": ["option-broker"],
+      "dispatch": "per-unit", "read_only": true,
+      "purpose": "Find what already exists, per unit of work, before anything is asked."
+    },
+    "research": {
+      "playbook": "phase-research", "lead": "researcher", "dispatch": "single", "read_only": false,
+      "purpose": "Vendor documentation and package-registry facts, verified on the day."
+    },
+    "upgrade-plan": {
+      "playbook": "phase-upgrade-plan", "lead": "researcher", "mode": "upgrade", "dispatch": "single", "read_only": true,
+      "authorises_implement": true,
+      "purpose": "List current and available versions from the registry, summarise breaking changes, and put the target-version choice to the user."
+    },
+    "measure": {
+      "playbook": "phase-measure", "lead": "performance-agent", "dispatch": "single", "read_only": false,
+      "purpose": "A reproducible baseline and a profile before any performance change."
+    },
+    "reproduce": {
+      "playbook": "phase-reproduce", "lead": "test-author", "also": ["code-explorer"], "dispatch": "single", "read_only": false,
+      "authorises_implement": true,
+      "purpose": "A regression test that fails for the reported reason. Its gate authorises the fix."
+    },
+    "verify-green": {
+      "playbook": "phase-verify-green", "lead": "build-resolver", "also": ["test-author"], "dispatch": "single", "read_only": false,
+      "authorises_implement": true,
+      "purpose": "Prove the suite is green at a recorded commit, adding characterization tests where coverage is missing."
+    },
+    "design": {
+      "playbook": "phase-design", "lead": "architect", "mode": "design", "also": ["contract-agent", "a11y-agent", "option-broker"],
+      "dispatch": "single", "read_only": false,
+      "purpose": "Bound pattern, system design, interface contract and ADRs - before the plan, so the plan the user approves is the one that gets built."
+    },
+    "ui-design": {
+      "playbook": "phase-ui-design", "lead": "ui-designer", "also": ["a11y-agent"], "dispatch": "single", "read_only": false,
+      "purpose": "Visual style, domain palette with measured contrast, and design tokens."
+    },
+    "plan": {
+      "playbook": "phase-plan", "lead": "planner", "also": ["work-partitioner"], "dispatch": "single", "read_only": true,
+      "authorises_implement": true,
+      "purpose": "Thin vertical slices with acceptance criteria and write surfaces. Its gate authorises implementation."
+    },
+    "scaffold": {
+      "playbook": "phase-scaffold", "lead": "architect", "mode": "scaffold", "dispatch": "single", "read_only": false,
+      "purpose": "The project skeleton from the ecosystem's official generator, at the versions the user chose."
+    },
+    "implement": {
+      "playbook": "phase-implement", "lead": "implementer",
+      "roles": {
+        "partition": "work-partitioner",
+        "red": "test-author",
+        "code": "implementer",
+        "build_fix": "build-resolver",
+        "review": "code-reviewer",
+        "join": "merge-coordinator"
+      },
+      "dispatch": "dev-loop", "read_only": false,
+      "purpose": "The per-module development loop, test-first, inside declared write surfaces."
+    },
+    "test": {
+      "playbook": "phase-test", "lead": "test-author", "dispatch": "single", "read_only": false,
+      "purpose": "Unit and integration coverage of the change surface, run with the project's resolved test command."
+    },
+    "automation": {
+      "playbook": "phase-automation", "lead": "web-automation-agent", "also": ["app-automation-agent"], "dispatch": "per-target", "read_only": false,
+      "purpose": "End-to-end suites per target, structured by the bound pattern."
+    },
+    "qa-plan": {
+      "playbook": "phase-qa-plan", "lead": "qa-planner", "dispatch": "single", "read_only": false,
+      "purpose": "The manual test plan and an importable CSV."
+    },
+    "review": {
+      "playbook": "phase-review", "lead": "code-reviewer",
+      "panel": {
+        "code-reviewer": "always",
+        "security-reviewer": "when a security surface was flagged or the intent is security",
+        "data-reviewer": "when migrations, schema or query files are in the change surface",
+        "a11y-agent": "when the change touches UI and the stack declares the accessibility concern",
+        "performance-agent": "when the intent is perf"
+      },
+      "then": ["validator"], "dispatch": "panel", "read_only": true,
+      "authorises_implement_when_before_implement": true,
+      "purpose": "Deterministic scans first, then the reviewer panel, then the validator's verdict. Reviewers never edit."
+    },
+    "compliance": {
+      "playbook": "phase-compliance", "lead": "security-reviewer", "mode": "compliance", "dispatch": "single", "read_only": true,
+      "purpose": "Controls for the applicable regime, checked against the diff."
+    },
+    "ship": {
+      "playbook": "phase-ship", "lead": "docs-agent", "then": ["validator"], "dispatch": "single", "read_only": false,
+      "purpose": "Documentation sync, a final verdict, then the ship gate. Git runs only as the user chose at that gate."
+    }
+  },
+
+  "intent_overrides": {
+    "note": "Who writes production code depends on the kind of work. The dev loop keeps its shape; only the 'code' role changes.",
+    "refactor": { "implement": { "code": "refactor-agent" } },
+    "perf": { "implement": { "code": "performance-agent" } },
+    "ops": { "implement": { "code": "devops-agent" } },
+    "docs": { "implement": { "code": "docs-agent", "red": null } },
+    "upgrade": { "implement": { "code": "build-resolver" } }
+  }
+}
