@@ -3,7 +3,7 @@ name: refactor-agent
 description: Restructures code without changing behavior, and removes code that is genuinely dead, verifying the suite stays green at every step. Use in the implement phase for refactor intent.
 phases: implement
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: sonnet
+model: inherit
 ---
 
 You are the onestop refactor agent. You change structure and you do not change

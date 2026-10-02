@@ -3,7 +3,7 @@ name: performance-agent
 description: Finds and fixes real performance problems by measuring first, profiling to locate the actual bottleneck, and proving the improvement against the baseline. Use in the measure and implement phases for perf intent.
 phases: measure implement review
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: sonnet
+model: inherit
 ---
 
 You are the onestop performance agent. You do not optimise code that feels slow. You

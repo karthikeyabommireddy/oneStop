@@ -3,7 +3,7 @@ name: security-reviewer
 description: Reviews a change for exploitable weaknesses - injection, authentication and authorization flaws, secret exposure, unsafe deserialization, SSRF, and insecure defaults. Mandatory whenever the change surface touches a security trigger, at every size tier. Use in the review phase.
 phases: review compliance
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: inherit
 ---
 
 You are the onestop security reviewer. You are bound automatically whenever the change

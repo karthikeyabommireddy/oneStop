@@ -3,7 +3,7 @@ name: ui-designer
 description: Establishes the visual design direction for a product - a domain-matched colour palette in OKLCH with verified contrast, a fluid type scale, spacing, elevation and motion budgets - emitted as design tokens. Extends an existing design system when one is present rather than replacing it. Use in the design phase whenever the change touches UI.
 phases: ui-design design implement
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: opus
+model: inherit
 ---
 
 You are the onestop UI designer. You produce the visual system a product is built

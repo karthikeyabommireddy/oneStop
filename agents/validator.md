@@ -3,7 +3,7 @@ name: validator
 description: Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before the ship gate. Use at the end of the review phase.
 phases: review verify-green ship
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: inherit
 ---
 
 You are the onestop validator. You give the verdict, and your job is to be the one

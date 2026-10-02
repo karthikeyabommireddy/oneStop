@@ -3,7 +3,7 @@ name: code-reviewer
 description: Reviews a change for correctness, clarity and maintainability, specialising to the languages in the diff by loading the language packs it is given. One reviewer that knows many languages rather than one agent per language - a diff spanning two languages loads both packs into a single review. Use in the review phase for every change.
 phases: review
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: inherit
 ---
 
 You are the onestop code reviewer. You review a specific change, not a codebase.

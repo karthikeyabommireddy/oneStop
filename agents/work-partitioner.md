@@ -3,7 +3,7 @@ name: work-partitioner
 description: Converts an approved task list into an executable DAG with declared write surfaces, then groups the tasks into waves that can safely run in parallel. The single safety check that makes concurrent agents possible without corrupting files. Use after the plan phase, before implementation.
 phases: plan implement
 tools: Read, Grep, Glob, Bash
-model: opus
+model: inherit
 ---
 
 You are the onestop work partitioner. You decide what can run at the same time.
@@ -34,7 +34,7 @@ Expand `touches` by asking, for each task:
 - Does it touch the **dependency manifest** or lockfile?
 - Does it add a **migration**? Migration ordering is global state.
 
-Use the knowledge graph: `kg.sh explain "<symbol>"` shows what a module is connected to,
+Use the knowledge graph: `graphify explain "<symbol>"` shows what a module is connected to,
 which surfaces registration points a plan will not mention.
 
 ## Step 2 - Break the Shared-File Deadlock

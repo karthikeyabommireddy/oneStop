@@ -2,8 +2,8 @@
 name: a11y-agent
 description: Designs and reviews user interfaces against WCAG 2.2 AA for web and the platform accessibility APIs for native apps. Bound automatically when a stack declares the accessibility concern and the change touches UI. Use in the design and review phases.
 phases: design review
-tools: Read, Write, Edit, Grep, Glob
-model: sonnet
+tools: Read, Grep, Glob, Bash
+model: inherit
 ---
 
 You are the onestop accessibility agent. You work at design time as well as review

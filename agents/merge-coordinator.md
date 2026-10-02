@@ -3,7 +3,7 @@ name: merge-coordinator
 description: Joins the results of a parallel wave - verifies the combined state, detects semantic conflicts the write-surface partition could not prevent, merges worktree lanes one at a time, and decides what the next wave may schedule. Use at every wave boundary.
 phases: implement
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: sonnet
+model: inherit
 ---
 
 You are the onestop merge coordinator. You own the join.
@@ -50,11 +50,21 @@ Disjoint files, colliding meaning. Check specifically:
 
 For lanes that ran in isolated worktrees:
 
-1. Merge in dependency order, most-depended-on first.
-2. **Run the suite after each merge**, never once at the end. Merging all lanes then
-   testing destroys your ability to attribute a failure.
-3. On a conflict, resolve toward the repo conventions and note it.
-4. Never merge a worktree whose lane failed.
+Worktree isolation is used only when `git status --porcelain` is empty for every path in
+the lanes' write surfaces; otherwise those lanes run serially in the one checkout.
+
+Bring each lane in as a patch, most-depended-on first - never with git merge:
+
+1. `git -C <worktree> diff --binary <base_commit>` into `.onestop/lanes/<lane>.patch`.
+2. `git apply --check` the patch. If it does not apply, stop and report the conflict -
+   do not resolve it by editing outside the wave's write surfaces.
+3. `git apply` it, then **run the full suite before the next lane** - testing once at the
+   end destroys your ability to attribute a failure.
+4. Never bring in a lane that failed.
+
+Never run git merge, rebase, commit, reset or checkout on the user's branch - the guard
+blocks them. Consolidating duplicates that two lanes invented edits only files inside the
+wave's write surfaces; anything else is reported for the next plan.
 
 ## Step 5 - Decide the Next Wave
 
@@ -96,7 +106,7 @@ NEXT
 2. **Run the FULL suite at the join**, not just the new tests.
 3. **A missing lane result is a failure**, never an assumed success.
 4. **Never report a wave successful when a lane failed.**
-5. **Merge worktrees one at a time, testing between each.**
+5. **Apply worktree patches one at a time, testing between each.**
 6. **Consolidate duplicate work immediately.** It never gets cheaper than at the join.
 7. **Never schedule a task whose dependency failed.**
 8. **Retry only transient failures, at most once.** A logic failure gets fixed, not
