@@ -34,7 +34,7 @@ Expand `touches` by asking, for each task:
 - Does it touch the **dependency manifest** or lockfile?
 - Does it add a **migration**? Migration ordering is global state.
 
-Use the knowledge graph: `graphify explain "<symbol>"` shows what a module is connected to,
+Use the knowledge graph: `graphify explain "<symbol>" --graph graphify-out/graph.json` shows what a module is connected to,
 which surfaces registration points a plan will not mention.
 
 ## Step 2 - Break the Shared-File Deadlock

@@ -1,27 +1,85 @@
 ---
 name: phase-context
-description: Build, refresh and query the repository knowledge graph so later phases get targeted context instead of re-reading the codebase. Runs inside orchestrate Step 0 and is queried by discovery. Loaded by the orchestrate skill; not usually invoked directly.
-version: 1.0.0
+description: Establish what the repository is before any phase reasons about it - the detected stack, the project's own build, test and lint commands, the conventions, and the code knowledge graph - recorded once as stack facts every later specialist reads. Loaded by the orchestrate skill; not usually invoked directly.
+version: 2.0.0
 user-invocable: false
 metadata:
   origin: onestop
   phase: context
 ---
 
-# Phase - Context (knowledge graph)
+# Phase - Context
 
-Reading a codebase from scratch on every run is the largest avoidable cost in this
-pipeline. The knowledge graph replaces most of that reading with targeted queries.
+Every specialist after this phase starts with an empty context. What this phase records
+is what they know about the project. Get it right once, here, so nobody guesses it later.
 
-The graph is built by `graphify` and driven through `${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh`, which wraps the
-exact commands verified against graphify 0.9.16.
+## Who Does What
 
-## The Rule
+| Step | Done by | Result |
+|---|---|---|
+| Detect the stack | engine `detect_stack` | languages, frameworks, components, bound automation, ambiguities |
+| Resolve the commands | engine `resolve_commands` | build, test, lint, format, typecheck, coverage - each with its source and confidence, plus the unknowns |
+| Prepare the code graph | engine `kg` (`ensure`) | present, refreshed, building in the background, or skipped with the reason |
+| Confirm and add conventions | `stack-adapter` | the stack facts file under `.onestop/reports/context/` |
+| Settle unknown commands | orchestrator, once, at the context gate | the user's answer, recorded through `run_note` |
+
+The orchestrator does not read the repository itself. It calls the engine, dispatches
+the stack-adapter with the engine's brief, and stores the report.
+
+## Command Resolution
+
+The engine applies this order; the stack-adapter confirms the result:
+
+1. **`onestop.yml`** at the repository root, `commands:` - the user's word, always wins.
+2. **CI** - what the project's pipeline actually runs (`run:`, `script:`, `Jenkinsfile`).
+3. **The task runner** - `package.json` scripts run with the lockfile's package manager,
+   `Makefile`, `justfile`, `gradlew`/`mvnw`, `uv`/`poetry`, `tox`/`nox`.
+4. **A registry default** - only when the stack entry declares what the command
+   `requires` and every requirement is present.
+5. **Ask** - once, at the context gate, every unknown in one question. Never guess.
+
+A resolved command is not a confirmed one. The stack-adapter runs the test command once
+when it is cheap and read-only, and reports the real outcome. A command nobody could
+confirm is written down as unconfirmed, never as working.
+
+## The Knowledge Graph
+
+The graph is an accelerator, never a dependency. onestop is fully correct without it.
+
+| Engine call | When |
+|---|---|
+| `kg {"action":"status"}` | installed? present? stale? building? |
+| `kg {"action":"ensure"}` | every run: refresh if stale; start the first build in the background |
+| `kg {"action":"build"}` | only after the user said yes at gate zero to building a large repository |
+
+`ensure` does not build when the repository has more files than `ONESTOP_KG_MAX_FILES`
+(default 5000), or when the `knowledge_graph` setting is `manual` or `off`. It returns
+the reason instead, and the orchestrator offers the build at gate zero.
+
+**Code-only by default.** The engine builds with `--code-only`: AST extraction on this
+machine, nothing sent anywhere. graphify's semantic mode sends repository text to
+whichever LLM provider it finds a key for, so onestop uses it only when the user sets
+`ONESTOP_KG_SEMANTIC=1`.
+
+**The user's `.gitignore` is never edited.** `graphify-out/` carries its own
+`.gitignore` containing `*`.
+
+**Refreshed at turn boundaries, never mid-phase.** An edit marks the graph dirty
+(`.onestop/kg-dirty`); the Stop hook refreshes it in the background once per turn. A
+specialist that just wrote a file already knows what it wrote.
+
+### Querying
+
+Specialists query the graph directly - read-only, local, instant:
+
+```bash
+graphify explain "<symbol>" --graph graphify-out/graph.json   # source location, type, every edge
+graphify path "<a>" "<b>" --graph graphify-out/graph.json     # shortest dependency path
+```
+
+and read `graphify-out/GRAPH_REPORT.md` for the overview.
 
 **Query the graph first. Read a file only when the graph cannot answer.**
-
-The graph tells you what exists, what calls what, where a symbol is defined, and which
-modules cluster together. It does not tell you what a function body actually does. So:
 
 | Question | Answer from |
 |---|---|
@@ -34,87 +92,68 @@ modules cluster together. It does not tell you what a function body actually doe
 | Is this logic correct? | **read the file** |
 | What are the conventions in this code? | **read two or three sibling files** |
 
-Reading three files the graph pointed you at beats reading thirty to find them.
+Reading three files the graph pointed at beats reading thirty to find them.
 
-## Commands
+### Reading the Report
 
-```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh status              # present? stale?
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh build               # first build (slow, once per repo)
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh refresh             # incremental, no LLM, about a second
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh explain "login()"   # one node: source location, type, every edge
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh path "a()" "b()"    # shortest dependency path
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh report              # the full graph report
-${CLAUDE_PLUGIN_ROOT}/scripts/kg.sh ensure              # build if missing, refresh if dirty
-```
+`graphify-out/GRAPH_REPORT.md`, in order of usefulness:
 
-## When It Runs
-
-**First run in a repository** - `kg.sh build`. This is the only slow one. It writes
-`graphify-out/` and adds it to `.gitignore`.
-
-**After every turn that changed source** - handled automatically by the `Stop` hook. Each
-edit appends to `.onestop/kg-dirty`; the hook does one `graphify update` per turn rather
-than one per edit. No LLM call, roughly a second.
-
-**Never mid-phase.** The graph is refreshed at turn boundaries, not between agents. An
-agent that just wrote a file already knows what it wrote.
-
-## Reading the Report
-
-`graphify-out/GRAPH_REPORT.md` gives, in order of usefulness:
-
-- **God Nodes** - the most connected symbols. These are the real core abstractions,
-  regardless of what the directory names suggest. Start here on an unfamiliar codebase.
-- **Surprising Connections** - edges that cross module boundaries unexpectedly. These
-  are where a change will have consequences nobody predicted.
+- **God Nodes** - the most connected symbols: the real core abstractions, whatever the
+  directory names suggest. Start here on an unfamiliar codebase.
+- **Surprising Connections** - edges that cross module boundaries unexpectedly. A change
+  there has consequences nobody predicted.
 - **Import Cycles** - existing cycles constrain where new code can live.
 - **Communities** - clusters that change together. A community boundary is usually the
   right boundary for a new module.
-- **Knowledge Gaps** - what the extraction could not resolve. Treat these as unknown,
-  not as absent.
+- **Knowledge Gaps** - what extraction could not resolve. Unknown, not absent.
 
-## Degrading Gracefully
+### Degrading Gracefully
 
-The graph is an accelerator, never a dependency. onestop is fully correct without it.
-
-- **graphify not installed** - say so once, offer `pip install graphifyy==0.9.16`, and
-  proceed by reading files. Do not ask again in the same conversation.
+- **graphify not installed** - the engine says so. Mention it once at gate zero
+  (`pip install graphifyy==0.9.16`) and proceed by reading files. Never ask again in the
+  same run.
 - **Graph empty after a build** - on Windows a repository path beyond roughly 150
-  characters overflows the AST cache path and produces an empty graph. `kg.sh` warns
-  about this. Report it and fall back to reading files.
-- **Refresh failed** - fall back to reading files for the rest of the run, and say so.
-  A stale graph that is silently trusted is worse than no graph.
+  characters overflows graphify's AST cache path. Report it and read files.
+- **Refresh failed** - read files for the rest of the run, and say so. A stale graph that
+  is silently trusted is worse than no graph.
 
-## Trust Boundaries
+### Trust Boundaries
 
-The graph is **structural truth, not behavioural truth**. It is extracted from the AST,
-so an edge means a call exists in the source - not that it executes, not that it is
-correct, and not that it is the only path.
-
+The graph is **structural truth, not behavioural truth**. An edge means a call exists in
+the source - not that it executes, not that it is correct, not that it is the only path.
 Dynamic dispatch, reflection, string-based routing, dependency injection and runtime
 registration are invisible to it. **Never conclude that something is unused from graph
 degree alone** - that is exactly the mistake that deletes live code.
 
-## Output
+## The Stack Facts File
+
+The stack-adapter writes it; every later brief points to it.
 
 ```
-CONTEXT
-  graph:   <built | refreshed | absent, with the reason>
-  scale:   <nodes, edges, communities>
-  core:    <the God Nodes relevant to this request>
-  related: <existing symbols the graph links to this work, with source locations>
-  cycles:  <any that constrain the change>
-  gaps:    <what the extraction could not resolve>
-  read:    <files opened directly, and why the graph could not answer>
+STACK FACTS
+  stack:        <languages, frameworks, components - with the marker that proved each>
+  commands:     <name> = <command>   (<source>, confirmed | unconfirmed)
+  toolchain:    <package manager, pinned runtime and framework versions>
+  conventions:  <layout, naming, error handling, configuration and secrets loading>
+  tests:        <unit / integration / end-to-end locations and frameworks>
+  ci:           <system, and the jobs that run on pull requests>
+  architecture: <the pattern the repository already demonstrates>
+  graph:        <present | refreshed | building | absent - with the reason>
 ```
+
+## Gate
+
+The context gate shows the stack in one line, the resolved commands with their sources,
+and every unknown command as one question. Nothing later may run a command the user has
+not seen here or declared in `onestop.yml`.
 
 ## Rules
 
-1. **Query before reading.** Every file opened that the graph could have located is
-   waste.
-2. **Never treat the graph as behavioural truth.** Structure only.
-3. **Never conclude code is dead from the graph alone.**
-4. **Refresh at turn boundaries**, never mid-phase.
-5. **Never block on a missing or broken graph.** Say so and read files.
-6. **State what you read directly and why**, so the cost is visible.
+1. **The engine detects, the stack-adapter confirms, nobody guesses.**
+2. **Never invent a command.** Unknown commands go to the user once, together.
+3. **Report what the project pins.** Never recommend a different version here.
+4. **Query before reading.**
+5. **Never treat the graph as behavioural truth**, and never call code dead from it.
+6. **Never block on a missing or broken graph.** Say so and read files.
+7. **Edit no project file.** The only write is the stack facts file under
+   `.onestop/reports/context/`.

@@ -74,18 +74,21 @@
     "always_blocked": [
       {
         "id": "git-history",
-        "pattern": "\\bgit\\s+(reset|clean|rebase|merge|cherry-pick|revert|stash|restore|switch|checkout)\\b",
-        "reason": "rewrites history or discards uncommitted work"
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+(reset|clean|rebase|merge|cherry-pick|revert|stash|restore|switch(?!\\s+(-c|--create)\\s)|checkout(?!\\s+-b\\s))\\b",
+        "reason": "rewrites history or discards uncommitted work",
+        "flags": ""
       },
       {
         "id": "git-branch-delete",
-        "pattern": "\\bgit\\s+branch\\s+(-D|-d|--delete)\\b",
-        "reason": "deletes a branch"
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+branch\\s+(-D|-d|--delete)\\b",
+        "reason": "deletes a branch",
+        "flags": ""
       },
       {
         "id": "git-force",
-        "pattern": "\\bgit\\s+push\\b.*(--force|\\s-f\\b|--force-with-lease)",
-        "reason": "force-push"
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+push\\b.*(--force|\\s-f\\b|--force-with-lease|\\s\\+\\S)",
+        "reason": "force-push",
+        "flags": ""
       },
       {
         "id": "recursive-delete",
@@ -115,23 +118,36 @@
     ],
     "allowed_after_ship_gate": [
       {
-        "id": "git-commit",
-        "pattern": "\\bgit\\s+commit\\b",
+        "id": "git-branch-create",
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+(switch\\s+(-c|--create)|checkout\\s+-b)\\s",
         "requires_choice": [
           "local-commit",
           "commit-push",
           "commit-push-pr"
         ],
-        "reason": "commits before the ship gate is approved"
+        "reason": "creates a working branch before the ship gate is approved",
+        "flags": ""
+      },
+      {
+        "id": "git-commit",
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+commit\\b",
+        "requires_choice": [
+          "local-commit",
+          "commit-push",
+          "commit-push-pr"
+        ],
+        "reason": "commits before the ship gate is approved",
+        "flags": ""
       },
       {
         "id": "git-push",
-        "pattern": "\\bgit\\s+push\\b",
+        "pattern": "\\b[Gg][Ii][Tt](?:\\s+(?:-[Cc]\\s+\\S+|--[A-Za-z][\\w-]*(?:=\\S+)?))*\\s+push\\b",
         "requires_choice": [
           "commit-push",
           "commit-push-pr"
         ],
-        "reason": "pushes without a ship-gate choice that includes push"
+        "reason": "pushes without a ship-gate choice that includes push",
+        "flags": ""
       },
       {
         "id": "open-pr",

@@ -105,6 +105,9 @@ whose report becomes the stack facts every later brief points to.
    a specialist made with `run_note` (`kind: "decision"`).
 5. `phase_finish` with a one-paragraph summary and the artifact paths.
 6. If `needs_gate`, present the gate (Step 5). Otherwise narrate one line and continue.
+   `open_questions` in the result are decisions only the user can make; the engine stops
+   for them in every gate mode. Put them in DECIDE and record each answer with `run_note`
+   (`resolve`) before `gate_record`.
 
 Calls in separate messages run one after another; a wave is one message or it is not a wave.
 
@@ -127,7 +130,8 @@ Expand every phase's outcome only at the plan gate and the ship gate.
 Then `gate_record`. If it returns `needs_confirmation`, show the warning and ask again;
 pass `confirmed: true` only if the user still chooses to skip. When the user approves a
 dependency, a version or a tool, record it with `run_note` (`kind: "approval"`,
-`item: "npm:zod@3.23.8"`) - the guard lets only approved installs run.
+`approval_kind: "dependency"` or `"tool"`, `item: "npm:zod@3.23.8"`) - the guard lets only
+approved installs run.
 
 A blocked phase (a budget ran out) gets a gate showing the last real error and every
 approach tried: try another approach (`adjusted`) · accept and move on (`approved`) · stop.

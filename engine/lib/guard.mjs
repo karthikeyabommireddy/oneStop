@@ -73,10 +73,10 @@ export function checkCommand(command, run, root) {
   const pol = registry('policies');
   for (const seg of segments(command)) {
     for (const rule of pol.bash_guard.always_blocked) {
-      if (new RegExp(rule.pattern, 'i').test(seg)) return deny(rule.reason, seg, rule.id);
+      if (new RegExp(rule.pattern, rule.flags ?? 'i').test(seg)) return deny(rule.reason, seg, rule.id);
     }
     for (const rule of pol.bash_guard.allowed_after_ship_gate) {
-      if (!new RegExp(rule.pattern, 'i').test(seg)) continue;
+      if (!new RegExp(rule.pattern, rule.flags ?? 'i').test(seg)) continue;
       const choice = run?.ship?.approved ? run.ship.choice : null;
       if (!choice || !rule.requires_choice.includes(choice)) {
         return deny(`${rule.reason} (ship gate: ${choice ? `"${choice}" was chosen` : 'not approved yet'})`, seg, rule.id);

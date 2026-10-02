@@ -308,7 +308,10 @@ export function finishPhase(root, { phase, summary: text = '', artifacts = [] } 
   ph.summary = trim(text, 400);
   if (artifacts.length) ph.artifacts = artifacts.map(String);
   ph.finished = nowIso();
-  const stops = run.stops.includes(phase);
+  // A decision only the user can make stops the run in every gate mode: autonomous
+  // means "do not stop to approve", never "decide for the user".
+  const asks = run.open.filter((o) => !o.resolved && o.phase === phase);
+  const stops = run.stops.includes(phase) || asks.length > 0;
   if (stops) {
     ph.status = 'awaiting_gate';
   } else {
@@ -317,13 +320,14 @@ export function finishPhase(root, { phase, summary: text = '', artifacts = [] } 
     run.current = nextPending(run);
   }
   save(root, run);
-  event(root, 'phase_finish', { phase, gated: stops });
+  event(root, 'phase_finish', { phase, gated: stops, asks: asks.length });
   const next = stops ? nextAfter(run, phase) : run.current;
   const ship = registry('policies').ship;
   return {
     ok: true,
     phase,
     needs_gate: stops,
+    ...(asks.length ? { open_questions: asks.map(({ question, recommended }) => ({ question, ...(recommended ? { recommended } : {}) })) } : {}),
     next,
     progress: progressLine(run),
     gate: stops

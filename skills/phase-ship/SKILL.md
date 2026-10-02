@@ -61,7 +61,9 @@ The ship gate always stops - in every gate mode and at every tier, including `tr
 - The subject says what changed and why in under about 72 characters. The body carries
   the reasoning when it is not obvious - never a restatement of the diff.
 - **Never** `--no-verify`, and never bypass signing. If a hook fails, fix the cause.
-- If the current branch is the default branch, create a working branch first.
+- If the choice includes a push and the current branch is the default branch, create a
+  working branch first: `git switch -c <type>/<slug>`. The guard allows branch creation
+  only after the ship choice, and refuses any push to the default branch.
 - Append the repo required trailers if it configures any.
 
 ## Pull Request

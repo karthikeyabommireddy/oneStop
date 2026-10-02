@@ -21,8 +21,8 @@ express preferences beyond ranking evidence.
 Run these layers in order. Stop early only when a layer fully answers the question.
 
 **0. Ask the graph first.** If `graphify-out/graph.json` exists, start here - it is far
-cheaper than grepping. `graphify explain "<symbol>"` gives a node source location
-and every edge into and out of it; `graphify path "<a>" "<b>"` shows how two things
+cheaper than grepping. `graphify explain "<symbol>" --graph graphify-out/graph.json` gives a node source location
+and every edge into and out of it; `graphify path "<a>" "<b>" --graph graphify-out/graph.json` shows how two things
 connect; the God Nodes section of `graphify-out/GRAPH_REPORT.md` names the real core
 abstractions. Use the graph to LOCATE, then open only the files it pointed at.
 

@@ -82,7 +82,7 @@ export const TOOLS = [
   },
   {
     name: 'phase_finish',
-    description: 'Finish the active phase with a one-paragraph summary and the artifact paths. Returns whether its boundary stops for a gate in this mode, the gate options, and the progress line.',
+    description: 'Finish the active phase with a one-paragraph summary and the artifact paths. Returns whether its boundary stops for a gate, the gate options, and the progress line. An unresolved open question from this phase stops it in every gate mode - put the open_questions to the user at that gate.',
     inputSchema: obj({ phase: str('The phase id.'), summary: str('What the phase produced, in at most 400 characters.'), artifacts: { type: 'array', items: { type: 'string' } } }, ['phase']),
     handler: (a, root) => ledger.finishPhase(root, a),
   },

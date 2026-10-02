@@ -17,10 +17,10 @@ data the code touches, not asked.
 
 | Signal in the change surface | Regime | Reference |
 |---|---|---|
-| Patient, clinical, diagnosis, medical record, FHIR, HL7 | HIPAA | `references/hipaa.md` |
-| EU users, personal data, consent, right to erasure, data subject | GDPR | `references/gdpr.md` |
-| Card number, PAN, CVV, cardholder, payment processing | PCI-DSS | `references/pci-dss.md` |
-| Access control, audit logging, change management on a SaaS product | SOC 2 | `references/soc2.md` |
+| Patient, clinical, diagnosis, medical record, FHIR, HL7 | HIPAA | `${CLAUDE_PLUGIN_ROOT}/skills/phase-compliance/references/hipaa.md` |
+| EU users, personal data, consent, right to erasure, data subject | GDPR | `${CLAUDE_PLUGIN_ROOT}/skills/phase-compliance/references/gdpr.md` |
+| Card number, PAN, CVV, cardholder, payment processing | PCI-DSS | `${CLAUDE_PLUGIN_ROOT}/skills/phase-compliance/references/pci-dss.md` |
+| Access control, audit logging, change management on a SaaS product | SOC 2 | `${CLAUDE_PLUGIN_ROOT}/skills/phase-compliance/references/soc2.md` |
 
 More than one regime can apply at once - card data belonging to EU users is both PCI
 and GDPR. Apply every regime that matches; do not pick one.

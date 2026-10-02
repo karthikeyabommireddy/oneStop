@@ -21,8 +21,9 @@ Implementation is authorised by exactly one approved gate, and the engine refuse
 | The run's phases contain | Authorising gate |
 |---|---|
 | `plan` | the plan gate |
+| `upgrade-plan` (upgrade) | the upgrade-plan gate - the user chose the target version |
 | `reproduce` (defect) | the reproduce gate - the failing test exists and fails for the stated reason |
-| `verify-green` (refactor, upgrade) | the verify-green gate - the suite is green at a recorded commit |
+| `verify-green` (refactor) | the verify-green gate - the suite is green at a recorded commit |
 | `review` before implement (security) | the review gate - the findings are the plan |
 | none of these (docs, small changes) | the gate of the phase just before implement |
 
@@ -102,6 +103,11 @@ The intent decides how the loop starts. This is not optional:
 - **refactor** - the suite must be green and must actually cover the code being moved
   before anything is touched. Untested code gets characterization tests first. No
   behavior change is permitted, and no test assertion may be weakened.
+- **upgrade** - change the manifest and the lockfile to the version the user chose, with
+  the project's package manager, then apply the breaking-change edits the upgrade plan
+  listed, one call site group per slice. The suite must return to the verify-green
+  baseline; a test that now fails is a breaking change the plan missed - report it,
+  never edit the test to match.
 - **feature, flow, mvp** - straight red-green-refactor per slice.
 
 ## Architecture

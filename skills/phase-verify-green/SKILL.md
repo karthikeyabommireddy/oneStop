@@ -1,6 +1,6 @@
 ---
 name: phase-verify-green
-description: Prove the existing suite is green and actually covers the code about to be restructured, before a refactor begins. Adds characterization tests where coverage is missing. Loaded by the orchestrate skill for refactor intent.
+description: Prove the existing suite is green and actually covers the code about to be restructured, before a refactor begins. Adds characterization tests where coverage is missing. Loaded by the orchestrate skill for refactor and upgrade intent.
 version: 1.0.0
 user-invocable: false
 metadata:
@@ -12,6 +12,9 @@ metadata:
 
 A refactor is only safe if something proves behavior did not change. This phase
 establishes that proof before a single line moves.
+
+An upgrade needs the same proof. There, the code under protection is every call site the
+upgrade plan listed as applicable, and the baseline is what the upgraded build is held to.
 
 ## Procedure
 

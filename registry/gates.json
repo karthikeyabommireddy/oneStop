@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Per-phase gate protocol. Every phase boundary stops, reports what happened, states what comes next, and asks the user to approve, skip, adjust or stop. The user is never surprised by what onestop did, and can redirect at any boundary.",
   "why": "onestop's first real end-to-end run completed with 10 of 15 phases silently skipped and the user never told. Two gates at the far ends of a long pipeline meant everything between them was invisible. A gate at every boundary makes the run legible as it happens rather than auditable afterwards.",
   "mechanism": {
     "tool": "AskUserQuestion",
-    "instruction": "A gate is a real AskUserQuestion call, not a sentence in prose asking the user to confirm. Prose requests for confirmation get skipped under context pressure - that is exactly how the invisible run happened. The tool call is the mechanism; the ledger stamp is the record; the Stop hook is the check.",
-    "record": "Every gate decision is written to .onestop/run.json as the phase's gate field before the next phase starts. A phase that ran with no recorded gate decision is a conformance failure and the Stop hook reports it."
+    "instruction": "A gate is a real AskUserQuestion call, not a sentence in prose asking the user to confirm. Prose requests for confirmation get skipped under context pressure - that is exactly how the invisible run happened.",
+    "record": "The engine is the only writer of the ledger: the orchestrator records every answer with gate_record and never edits .onestop/run.json. phase_start refuses to begin a phase while an earlier one is unfinished or awaiting its gate, and refuses implement until its authorising gate is approved. The Stop hook reminds the user when a gate is pending."
   },
   "gate_modes": {
     "every-phase": {
@@ -14,43 +14,46 @@
       "gates": "all"
     },
     "milestone": {
-      "description": "Gate only at the decision-heavy boundaries: after plan, after design, after implement, before ship. Phases in between report but do not stop.",
+      "description": "Gate at gate zero, at the gate that authorises implementation (plan, upgrade-plan, reproduce, verify-green or review - whichever the run has), after design, after implement, and at ship. Phases in between report in one line and continue.",
       "gates": [
-        "plan",
+        "intake",
+        "<authorising phase>",
         "design",
         "implement",
         "ship"
       ]
     },
     "autonomous": {
-      "description": "Gate only before ship. Everything else flows. Use when the task is well understood and the user wants the result, not the journey.",
+      "description": "Gate zero and ship only. Gate zero authorises implementation. Use when the task is well understood and the user wants the result, not the journey.",
       "gates": [
+        "intake",
         "ship"
       ]
-    }
+    },
+    "always_stop": "In every mode: gate zero, ship, a blocked phase, and any phase whose report leaves a decision only the user can make (open:) - a technology, a version, a dependency, an unknown command. A mode decides how often the user approves; it never lets onestop decide for the user."
   },
   "gate_shape": {
-    "instruction": "Every gate shows the whole journey, not just the step. The user must be able to see, without asking: where the run is, everything it has done so far, what happens next, and what is still to come. Keep each line short - the value is in completeness, not volume.",
+    "instruction": "Compact by default: the whole run in one line, then only what changed. Expand every phase outcome only at the plan gate and the ship gate.",
     "sections": [
       {
         "name": "PROGRESS",
-        "content": "A compact one-line-per-phase map of the entire run: done, current, remaining. Mark each done phase with its one-line outcome.",
-        "rule": "Show EVERY phase in the mask, not a window around the current one. The user should never have to scroll back to find out what happened in phase 2."
+        "content": "The engine's progress line: every phase in the mask with one mark - ✓ done, ⤼ skipped, ▶ active, ⏸ awaiting its gate, ✗ blocked, · still to come.",
+        "rule": "Every phase, never a window around the current one. The pending marks are the remaining journey, so the user can redirect early."
       },
       {
         "name": "JUST DID",
-        "content": "What the phase that just finished actually produced - files, findings, decisions, numbers.",
+        "content": "What the phase that just finished produced - files, findings, decisions, numbers - with paths.",
         "rule": "Concrete artifacts. 'Discovery complete' is not a report; 'found 3 auth implementations, next-auth dominant at src/auth/options.ts:14' is."
       },
       {
-        "name": "NEXT",
-        "content": "The next phase, what it will do, and which agents it will spawn by name.",
-        "rule": "Name the agents. The user should know who is about to work and on what."
+        "name": "DECIDE",
+        "content": "Every open item the phase's reports returned, batched, each with the recommended answer.",
+        "rule": "Only when there is something to decide. Technology and version choices always appear here and are never resolved silently."
       },
       {
-        "name": "REMAINING",
-        "content": "The phases after the next one, so the user can see how much is left and redirect early rather than at the end.",
-        "rule": "List them. A user who can see that review is five phases away can ask to reorder now."
+        "name": "NEXT",
+        "content": "The next phase, what it will do, and which specialists it dispatches by name.",
+        "rule": "Name the specialists. The user should know who is about to work and on what."
       },
       {
         "name": "RECOMMEND",
@@ -60,7 +63,7 @@
       {
         "name": "OPTIONS",
         "content": "Continue / skip / adjust / stop, recommendation first.",
-        "rule": "Four at most. Free-text redirect is always implicitly available."
+        "rule": "Four at most. Free-text redirect is always implicitly available. The question header is 12 characters or fewer."
       }
     ]
   },
@@ -108,20 +111,20 @@
     ]
   },
   "skip_policy": {
-    "instruction": "The user may skip any phase. Two exceptions are never silently honoured, because skipping them has consequences the user may not have in mind at that moment.",
+    "instruction": "The user may skip any phase except ship. Two skips are never honoured without a second answer, because their cost may not be in mind at that moment - and the engine, not the orchestrator, decides when they apply.",
     "confirm_twice": [
       {
         "phase": "review",
-        "when": "the change surface touched a security trigger",
-        "say": "State which security surfaces were touched and that review is marked mandatory for them in registry/intents.json, then ask again. If the user still says skip, honour it and record the override in the ledger with their decision - it is their call, not onestop's."
+        "when": "the change surface touched a security trigger, or the intent is security",
+        "say": "gate_record returns needs_confirmation naming the surfaces. Show it, ask again, and pass confirmed:true only if the user still skips. The engine records the override."
       },
       {
         "phase": "test",
-        "when": "the change added or altered behavior",
-        "say": "State that the change will ship with no test proving it works, then ask again. Honour the answer either way and record it."
+        "when": "implement changed behaviour",
+        "say": "gate_record returns needs_confirmation: the change would ship with nothing proving it works. Ask again; pass confirmed:true only if the user still skips."
       }
     ],
-    "rule": "Never refuse a skip. Warn once, with specifics, then do what the user decides and write down that they decided it."
+    "rule": "Never refuse a skip. Warn once, with specifics, then do what the user decides; the ledger records that they decided it. Ship cannot be skipped - to keep work out of git, the user chooses \"leave uncommitted\" at the ship gate."
   },
   "tier_scaling": {
     "instruction": "Gate content scales with tier; the gate itself does not disappear. A trivial change still shows the user what it is about to do - it just does it in two lines instead of ten.",
@@ -166,5 +169,14 @@
       "Stop"
     ],
     "rule": "Never start phase 1 without passing gate zero. Classification is automatic; proceeding on it is not."
+  },
+  "blocked": {
+    "when": "A retry budget ran out (build fix, test fix, review fix, dev loop) and the engine blocked the run.",
+    "shows": "The last real error, verbatim and short, and every approach tried.",
+    "options": [
+      "Try another approach (adjusted - grants one more round)",
+      "Accept and move on (approved)",
+      "Stop here"
+    ]
   }
 }

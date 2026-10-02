@@ -12,14 +12,16 @@ import { registry } from './env.mjs';
 // carries the only gate that lets anything leave the machine.
 const PINNED = new Set(['intake', 'ship']);
 
-// Closest-to-implement wins among these; `plan` outranks them all when present.
-const AUTHORISERS_BY_PROXIMITY = ['reproduce', 'verify-green', 'upgrade-plan', 'review'];
+// A plan outranks everything: `plan`, or `upgrade-plan`, whose gate is the user's choice
+// of target version. Without one, the closest of these to implement wins.
+const PLANS = ['plan', 'upgrade-plan'];
+const AUTHORISERS_BY_PROXIMITY = ['reproduce', 'verify-green', 'review'];
 
 export function authorisingPhase(mask) {
   const i = mask.indexOf('implement');
   if (i < 0) return null;
   const before = mask.slice(0, i);
-  if (before.includes('plan')) return 'plan';
+  for (const p of PLANS) if (before.includes(p)) return p;
   let best = null;
   let bestPos = -1;
   for (const p of AUTHORISERS_BY_PROXIMITY) {

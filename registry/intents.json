@@ -42,9 +42,9 @@
         "requirements",
         "discovery",
         "research",
-        "plan",
         "design",
         "ui-design",
+        "plan",
         "implement",
         "test",
         "automation",
@@ -106,9 +106,9 @@
         "requirements",
         "discovery",
         "research",
-        "plan",
         "design",
         "ui-design",
+        "plan",
         "implement",
         "test",
         "automation",
@@ -322,9 +322,9 @@
         "requirements",
         "discovery",
         "research",
-        "plan",
         "design",
         "ui-design",
+        "plan",
         "scaffold",
         "implement",
         "test",
@@ -433,7 +433,8 @@
         "discovery",
         "test",
         "automation",
-        "review"
+        "review",
+        "ship"
       ],
       "first_move": "Measure current coverage and identify untested behaviors before writing anything.",
       "primary_agents": [
@@ -476,7 +477,8 @@
         "discovery",
         "research",
         "design",
-        "ui-design"
+        "ui-design",
+        "ship"
       ],
       "first_move": "Map the existing architecture before proposing a new one.",
       "primary_agents": [
@@ -555,7 +557,8 @@
         "plan",
         "implement",
         "test",
-        "review"
+        "review",
+        "ship"
       ],
       "first_move": "Profile and produce a baseline measurement. Never optimize without a number to beat.",
       "primary_agents": [
@@ -594,7 +597,8 @@
         "review",
         "implement",
         "test",
-        "compliance"
+        "compliance",
+        "ship"
       ],
       "first_move": "Enumerate the attack surface before proposing fixes.",
       "primary_agents": [
@@ -665,13 +669,65 @@
         "context",
         "discovery",
         "implement",
-        "review"
+        "review",
+        "ship"
       ],
       "first_move": "Read the source of truth (code, schemas, routes) - never document from memory.",
       "primary_agents": [
         "docs-agent"
       ],
       "announce_as": "This is a documentation task, written from the source of truth rather than from memory."
+    },
+    {
+      "id": "upgrade",
+      "label": "Upgrade a dependency, runtime or framework",
+      "description": "Move a dependency, runtime or framework to a new version the USER chooses, proving the suite green before and after.",
+      "signals": {
+        "strong": [
+          "upgrade",
+          "bump",
+          "migrate to",
+          "update to version",
+          "newer version",
+          "outdated",
+          "dependabot",
+          "renovate",
+          "vulnerable dependency",
+          "cve fix",
+          "upgrade to"
+        ],
+        "weak": [
+          "latest",
+          "version",
+          "major version"
+        ],
+        "negative": [
+          "new feature",
+          "refactor",
+          "crashes",
+          "error"
+        ]
+      },
+      "phase_mask": [
+        "intake",
+        "context",
+        "discovery",
+        "research",
+        "upgrade-plan",
+        "verify-green",
+        "implement",
+        "test",
+        "review",
+        "ship"
+      ],
+      "first_move": "List current and available versions from the registry - never from memory - read the breaking changes between them, and put the target version to the user. Never pick it.",
+      "primary_agents": [
+        "researcher",
+        "build-resolver",
+        "test-author",
+        "code-reviewer"
+      ],
+      "announce_as": "This is a dependency upgrade. You choose the target version; the suite is proven green before and after."
     }
   ],
   "size_tiers": {
@@ -685,10 +741,12 @@
         "phase_overrides": {
           "skip": [
             "research",
-            "plan",
             "design",
             "discovery",
             "automation"
+          ],
+          "light": [
+            "plan"
           ]
         }
       },
