@@ -3,6 +3,7 @@ name: phase-design
 description: Produce the design artifacts a change needs and no more - interface contract, low-level design, and an ADR for decisions that are expensive to reverse. Scales from a single contract file to a full HLD. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: design
@@ -27,6 +28,7 @@ contract when two components have to agree on a wire format.
 **Bind the architecture pattern here**, before any code exists, from
 `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`. A pattern already in the repo wins;
 otherwise the default; escalate only on a fired trigger, and name it. Protocol:
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-design/references/pattern-binding.md`; file roles:
 `${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`. Template:
 `${CLAUDE_PLUGIN_ROOT}/skills/phase-design/references/system-design-template.md`.
 

@@ -3,6 +3,7 @@ name: phase-gate
 description: Why onestop gates every phase boundary, and the edge cases - gate zero, skips, adjustments, blocked phases, user-only decisions, gate modes. The format itself is orchestrate Step 5; the engine records and enforces every gate. Loaded by the orchestrate skill; not usually invoked directly.
 version: 2.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   role: gate-protocol

@@ -3,6 +3,7 @@ name: phase-review
 description: Review the change with every reviewer the diff surface warrants, running them in parallel, and resolve blocking findings before ship. Binds language, security, database, accessibility and domain reviewers automatically from the diff. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: review

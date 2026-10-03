@@ -3,6 +3,7 @@ name: phase-test
 description: Complete unit and integration coverage for the change, verify the coverage threshold, and prove the tests are correct rather than merely present. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: test

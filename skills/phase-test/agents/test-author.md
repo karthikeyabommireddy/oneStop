@@ -1,0 +1,78 @@
+# test-author - method
+
+Read by the `test-author` specialist before it acts; its brief names this file first.
+
+## How You Specialise
+
+Load the language packs you are given for test framework, idiom, assertion style, and
+file placement. Follow the repository existing test conventions over the pack default
+whenever the two disagree - a repo that puts tests in `tests/` does not get `__tests__/`
+because a pack prefers it.
+
+## The Loop
+
+**Red.** Write the failing test from the acceptance criterion. Run it. Confirm it fails
+**for the expected reason** - read the failure message. A test that errors on a missing
+import or a bad fixture has proved nothing, and a test that passes before the code
+exists is testing nothing.
+
+**Green.** Hand back for the simplest implementation that satisfies it.
+
+**Refactor.** With green tests, improve structure. If the tests go red, behavior
+changed - revert rather than adjust the tests.
+
+## What a Test Must Be
+
+- **One behavior per test.** A test asserting five unrelated things is useless when it
+  fails, because the failure does not locate the cause.
+- **Arrange, act, assert** - visibly separated, in that order.
+- **Named for the behavior**, not the function. `rejects_expired_token` tells you what
+  broke; `test_validate_3` does not.
+- **Asserting observable behavior** - the return value, the raised error, the persisted
+  state, the rendered output. Never a private field, never a call count that is merely
+  incidental to how the code happens to be written today.
+- **Deterministic.** Fixed clock, seeded randomness, no real network, no real
+  filesystem outside a temp directory, no dependence on execution order.
+- **Independent.** Passes alone, in any order, and in parallel. No shared mutable
+  fixture, no reliance on residue from a previous test.
+
+## What a Test Must Never Be
+
+- **Tautological.** Asserting a value the test itself just set, or that a mock the test
+  configured was called. This is the most common way a suite reaches high coverage
+  while proving nothing.
+- **Assertion-free.** A test that only proves nothing threw must say so explicitly, and
+  only where that genuinely is the behavior under test.
+- **Over-mocked.** Mock at external boundaries - network, clock, filesystem, paid
+  third-party service. Mocking the unit under test means testing the mock.
+- **A stub.** Never `TODO`, never `pass`, never a commented-out body. An unwritten test
+  that looks written is worse than an absent one.
+
+## Coverage of a Behavior
+
+For each behavior, cover: the happy path, the boundaries (empty, one, many, maximum,
+just over the maximum), the error paths including what the caller is expected to do
+about them, and the permission cases where authority matters.
+
+The states nobody mentions - empty, loading, failure, unauthorised - are where defects
+live. Cover them whether or not the criterion names them.
+
+## Test Standards
+
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/standards.md` section 10 is the floor. In short:
+Arrange-Act-Assert with visible separation; one behaviour per test, because a test
+asserting five things reports the first failure and hides the rest; and names that
+state the behaviour and the condition - `returns an empty array when no market
+matches the query`, never `works`. Assert observable behaviour, never that a private
+method was called: that test fails on every refactor and catches no bugs.
+
+## Output
+
+```
+TESTS
+  added:   <path:line, one line each, naming the behavior covered>
+  runner:  <the exact command>
+  result:  <pass/fail counts, actually executed>
+  red:     <for new tests - confirmation each failed first, for the right reason>
+  gaps:    <behavior deliberately untested, and why>
+```

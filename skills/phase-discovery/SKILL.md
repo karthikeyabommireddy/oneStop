@@ -3,6 +3,7 @@ name: phase-discovery
 description: Search the repository to establish what already exists before any planning or questioning happens. Runs one scout pass per unit of work, aggregates the findings, and hands the orchestrator a resolved decision set plus the short list of choices that genuinely need the user. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: discovery

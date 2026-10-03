@@ -8,7 +8,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { nowIso, registry, slash, slugify } from './env.mjs';
+import { guidePath, nowIso, registry, slash, slugify } from './env.mjs';
 import { appendJsonl, ensureStateDir, readJson, readJsonl, statePath, validate, writeJsonAtomic } from './store.mjs';
 import { effectiveSettings } from './config.mjs';
 import { planPhases } from './plan.mjs';
@@ -205,6 +205,7 @@ export function openRun(root, { request = '', on_conflict: onConflict } = {}) {
   return {
     ok: true,
     created: true,
+    guide: guidePath('start'),
     run_id: run.run_id,
     slug,
     git: isGit,
@@ -358,6 +359,7 @@ export function finishPhase(root, { phase, summary: text = '', artifacts = [] } 
           ? Object.entries(ship.choices).map(([k, v]) => `${k}: ${v}`)
           : [`Continue to ${next || 'close the run'}`, ...(next && next !== 'ship' ? [`Skip ${next}`] : []), 'Adjust first', 'Stop here'],
         recommended: phase === 'ship' ? ship.recommended : 'continue',
+        guide: guidePath('gates'),
       }
       : { note: `${phase} is not a stopping boundary in ${run.gate_mode} mode - narrate it in one line and continue to ${next || 'run_close'}.` },
   };
@@ -496,6 +498,7 @@ export function recordGate(root, args = {}) {
       return {
         ok: false,
         needs_confirmation: true,
+        guide: guidePath('gates'),
         warning,
         hint: 'Show this warning to the user and ask once more. If they still choose to skip, call gate_record again with confirmed: true - it is their decision, and it is recorded.',
       };
@@ -700,6 +703,7 @@ export function loopAttempt(root, { loop, kind, root_cause: rootCause } = {}) {
       ok: true,
       allowed: false,
       exhausted: true,
+      guide: guidePath('gates'),
       reason: run.blocked_reason,
       hint: 'Stop looping. Present a gate with the last real error output and every approach tried. Options: try another approach (decision "adjusted", approach in note) | accept and move on ("approved") | stop ("stopped").',
     };

@@ -3,6 +3,7 @@ name: phase-research
 description: Find proven prior art before writing net-new code - vendor documentation, package registries, and reference implementations - and report what should be adopted rather than built. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: research

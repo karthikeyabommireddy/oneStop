@@ -1,5 +1,5 @@
 ---
-description: Show what onestop can do - the kinds of work it recognises with an example of each, the commands, and the settings - without starting a run.
+description: What onestop can do, with examples. Starts nothing.
 allowed-tools: Read
 ---
 

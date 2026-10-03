@@ -3,6 +3,7 @@ name: phase-plan
 description: Turn the discovery picture into an ordered task list of thin vertical slices, each with its own acceptance criteria and test strategy. Produces the artifact presented at the plan gate. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: plan

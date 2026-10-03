@@ -3,6 +3,7 @@ name: phase-reproduce
 description: Turn a reported defect into a failing regression test that fails for the right reason, before any fix is attempted. Loaded by the orchestrate skill for defect intent; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: reproduce

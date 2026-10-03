@@ -3,6 +3,7 @@ name: phase-ui-design
 description: Establish or extend the visual design system before UI implementation - domain-matched palette with verified contrast, type scale, spacing, elevation and motion, emitted as tokens. Runs automatically when the change touches user interface. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: ui-design
@@ -66,8 +67,8 @@ colour as its surface - is its failure: no contrast at the boundary, so every co
 needs a real border and a high-contrast focus ring, and if that removes the look, the
 style was wrong for this product.
 
-Worked recipes per style:
-`${CLAUDE_PLUGIN_ROOT}/skills/phase-ui-design/references/styles.md`.
+Worked recipes: one file per style under
+`${CLAUDE_PLUGIN_ROOT}/skills/phase-ui-design/references/styles/` - read only the bound one.
 
 ## Execution
 

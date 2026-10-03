@@ -1,5 +1,5 @@
 ---
-description: Describe what you want built, fixed, changed, upgraded, tested or reviewed. onestop classifies it, dispatches the right specialists one phase at a time, and stops at each gate for your approval - asking only when information is missing or a real choice exists.
+description: Run a request through onestop - phase by phase, with your approval at each gate.
 argument-hint: "[a request, a narrated flow, a ticket ID, a PR URL, or a spec path]"
 allowed-tools: Read, Grep, Glob, Bash, Agent, Task, Skill, AskUserQuestion, WebFetch, WebSearch, mcp__plugin_onestop_engine
 ---

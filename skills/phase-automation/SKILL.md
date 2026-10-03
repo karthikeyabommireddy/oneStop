@@ -3,6 +3,7 @@ name: phase-automation
 description: Build end-to-end automation for the described journey across web and native app targets. Binds the existing or default framework per target, delegates to the web and app automation agents, and wires artifacts and CI. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: automation

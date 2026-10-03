@@ -35,8 +35,12 @@ only alongside source files of that language; a framework stack binds only when 
 
 ## Add a specialist
 
-1. `agents/<name>.md` with `name`, `description`, `phases`, `tools` and `model: inherit`.
-   Never give a specialist the `Agent` or `Task` tool - specialists are spokes.
+1. Two files. `agents/<name>.md` stays lite - `name`, a one-line `description` (it is in
+   context in every session), `phases`, `tools`, `model: inherit`, a short identity, the
+   "start with your brief" line and the rules. The method - procedure, examples, output -
+   goes in `skills/<owning-skill>/agents/<name>.md`; the engine finds it by name and lists
+   it first in every brief. Never give a specialist the `Agent` or `Task` tool - specialists
+   are spokes.
 2. Lead or join a phase in `registry/phases.json` (`lead`, `also`, `then`, `panel` or
    `roles`).
 3. If it must not edit project files, add it to `write_guard.report_only` (reports only) or

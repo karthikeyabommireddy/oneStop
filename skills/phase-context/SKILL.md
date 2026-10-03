@@ -3,6 +3,7 @@ name: phase-context
 description: Establish what the repository is before any phase reasons about it - the detected stack, the project's own build, test and lint commands, the conventions, and the code knowledge graph - recorded once as stack facts every later specialist reads. Loaded by the orchestrate skill; not usually invoked directly.
 version: 2.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: context

@@ -1,5 +1,5 @@
 ---
-description: Undo the current onestop run's last change - or the whole run - after showing exactly what would be reversed. Only the run's own checkpointed changes are touched; your edits are left alone.
+description: Undo the onestop run's last change, or the whole run, after a preview.
 argument-hint: "[last | whole-run]"
 allowed-tools: AskUserQuestion, mcp__plugin_onestop_engine__run_status, mcp__plugin_onestop_engine__checkpoint_revert
 ---

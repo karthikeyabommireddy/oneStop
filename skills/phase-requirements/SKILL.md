@@ -3,6 +3,7 @@ name: phase-requirements
 description: Turn a thin request, ticket, or spec document into testable acceptance criteria before planning begins. Runs only when the input lacks criteria a plan can be built on. Loaded by the orchestrate skill.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: requirements

@@ -48,6 +48,23 @@ function reportsFrom(root, run, phases) {
 
 const WRITES_CODE = new Set(['implement', 'scaffold', 'test', 'automation', 'reproduce', 'verify-green', 'measure']);
 
+// Each specialist's method lives in the skill that owns it (skills/<skill>/agents/<agent>.md),
+// so its agent file stays a few lines and the method is read only by the agent that uses
+// it. Found by name: moving a method to another skill needs no registry change.
+let methods = null;
+export function methodFile(agent) {
+  if (!methods) {
+    methods = new Map();
+    const base = pluginPath('skills');
+    for (const skill of fs.readdirSync(base)) {
+      const dir = path.join(base, skill, 'agents');
+      if (!fs.existsSync(dir)) continue;
+      for (const f of fs.readdirSync(dir)) if (f.endsWith('.md')) methods.set(f.slice(0, -3), slash(path.join(dir, f)));
+    }
+  }
+  return methods.get(agent) || null;
+}
+
 export function buildBrief(root, args = {}) {
   const { phase, agent, task, unit, write_surface: writeSurface, mode, extra } = args;
   if (!phase || !agent || !task) return fail('brief needs phase, agent and task');
@@ -58,7 +75,10 @@ export function buildBrief(root, args = {}) {
   const rec = recipe(root, run, phase);
   const policies = registry('policies');
 
+  const name = String(agent).replace(/^(?:plugin:)?onestop:/i, '');
   const readFirst = [];
+  const method = methodFile(name);
+  if (method) readFirst.push(`- Your method: ${method}`);
   if (rec.playbook) readFirst.push(`- Playbook for this phase: ${rec.playbook}`);
   const facts = reportsFrom(root, run, ['context']);
   if (facts.length) readFirst.push(`- Stack facts (commands, conventions, layout - do not re-derive): ${facts.join(', ')}`);
@@ -67,12 +87,10 @@ export function buildBrief(root, args = {}) {
     readFirst.push(`- Standards: ${pluginPath('skills', 'shared', 'standards.md')}`);
     readFirst.push(`- Architecture and file roles: ${pluginPath('skills', 'shared', 'architecture.md')}`);
   }
-  if (rec.artifacts.length) readFirst.push(`- Artifact placement: ${pluginPath('skills', 'shared', 'artifacts.md')}`);
   const prior = reportsFrom(root, run, [...new Set(['design', 'plan', phase])].filter((p) => run.phases[p]));
   if (prior.length) readFirst.push(`- Earlier reports you may need (read only what your task requires): ${prior.join(', ')}`);
 
   const commands = Object.entries(run.commands);
-  const name = String(agent).replace(/^(?:plugin:)?onestop:/i, '');
   const scope = writeScope(name);
   const fullPath = slash(path.join('.onestop', 'reports', phase, `${slugify(name, 30)}${unit ? `-${slugify(String(unit), 30)}` : ''}.full.md`));
   const docsRoots = policies.write_guard.docs_roots.join(', ');

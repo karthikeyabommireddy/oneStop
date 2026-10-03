@@ -485,7 +485,9 @@ def main():
             if a["path"].endswith("RTM.md") and want is None:
                 m = re.search(r"Columns, exactly: ([A-Za-z,\- ]+)\.", a["what"])
                 want = [c.strip() for c in m.group(1).split(",")] if m else None
-    ba = open(os.path.join(ROOT, "agents", "ba-analyst.md"), encoding="utf-8").read()
+    # The analyst's method lives in the skill that owns it; the agent file is only its rules.
+    ba_method = os.path.join(ROOT, "skills", "phase-requirements", "agents", "ba-analyst.md")
+    ba = open(ba_method if os.path.isfile(ba_method) else os.path.join(ROOT, "agents", "ba-analyst.md"), encoding="utf-8").read()
     m = re.search(r"^(Req-ID,[^\n]+)$", ba, re.M)
     have = [c.strip() for c in m.group(1).split(",")] if m else None
     if not want:
@@ -499,12 +501,52 @@ def main():
     # 24 - every visual style has a CSS recipe. ui-designer is told the recipes exist;
     # a style without one gets improvised.
     styles = load_json("registry/ui-styles.json") or {"styles": []}
-    recipes = open(os.path.join(ROOT, "skills", "phase-ui-design", "references", "styles.md"), encoding="utf-8").read()
-    heads = [re.sub(r"[^a-z0-9]", "", h.lower()) for h in re.findall(r"^### (.+)$", recipes, re.M)]
-    no_recipe = [s["id"] for s in styles["styles"] if not any(re.sub(r"[^a-z0-9]", "", s["id"]) in h for h in heads)]
+    # One recipe file per style, so the designer reads only the one it binds.
+    recipe_dir = os.path.join(ROOT, "skills", "phase-ui-design", "references", "styles")
+    no_recipe = [s["id"] for s in styles["styles"] if not os.path.isfile(os.path.join(recipe_dir, s["id"] + ".md"))]
     for s in no_recipe:
-        err("style '" + s + "' has no recipe in skills/phase-ui-design/references/styles.md")
+        err("style '" + s + "' has no recipe at skills/phase-ui-design/references/styles/" + s + ".md")
     print("  style recipes       " + ("ok" if not no_recipe else "FAIL"))
+
+    # 25 - what is always loaded stays small. Agent files, the orchestrator skill and every
+    # description are paid for on every spawn or in every session; the detail lives in
+    # method files and guides that are read only when needed.
+    lite = []
+    methods = {}
+    for skill in os.listdir(os.path.join(ROOT, "skills")):
+        mdir = os.path.join(ROOT, "skills", skill, "agents")
+        if os.path.isdir(mdir):
+            for fn in os.listdir(mdir):
+                if fn.endswith(".md"):
+                    methods[fn[:-3]] = os.path.join("skills", skill, "agents", fn)
+    for fn in sorted(os.listdir(adir)):
+        if not fn.endswith(".md"):
+            continue
+        name, text = fn[:-3], open(os.path.join(adir, fn), encoding="utf-8").read()
+        body = FM.sub("", text, count=1)
+        if name not in methods:
+            lite.append(fn + " has no method file at skills/<skill>/agents/" + fn)
+        if len(body) > 2400:
+            lite.append(fn + " body is " + str(len(body)) + " chars - move method detail to its method file (limit 2400)")
+        desc = (frontmatter(os.path.join(adir, fn)) or {}).get("description", "")
+        if len(desc) > 160:
+            lite.append(fn + " description is " + str(len(desc)) + " chars (limit 160) - it is in context in every session")
+    for name in methods:
+        if not os.path.isfile(os.path.join(adir, name + ".md")):
+            lite.append(methods[name] + " is a method with no agent")
+    orch = open(os.path.join(ROOT, "skills", "orchestrate", "SKILL.md"), encoding="utf-8").read()
+    if len(orch) > 4000:
+        lite.append("skills/orchestrate/SKILL.md is " + str(len(orch)) + " chars (limit 4000) - move detail to its references/")
+    for guide in ("start", "context", "dev-loop", "gates", "ship"):
+        if not os.path.isfile(os.path.join(ROOT, "skills", "orchestrate", "references", guide + ".md")):
+            lite.append("orchestrator guide missing: skills/orchestrate/references/" + guide + ".md")
+    for d in os.listdir(os.path.join(ROOT, "skills")):
+        f = os.path.join(ROOT, "skills", d, "SKILL.md")
+        if d != "orchestrate" and os.path.isfile(f) and (frontmatter(f) or {}).get("disable-model-invocation") != "true":
+            lite.append("skills/" + d + " is listed in every session - set disable-model-invocation: true (it is read by path)")
+    for p_ in lite:
+        err("lite: " + p_)
+    print("  lite context        " + ("ok" if not lite else "FAIL"))
 
     # 17 - every plugin-internal file referenced with ${CLAUDE_PLUGIN_ROOT} must exist.
     # A broken reference is silent at runtime: the model simply does not load the

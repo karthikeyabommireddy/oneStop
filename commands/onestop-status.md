@@ -1,5 +1,5 @@
 ---
-description: Show the current onestop run - intent, tier, gate mode, every phase's state, the pending gate, open decisions, and anything blocked - without changing it.
+description: Show where the current onestop run stands.
 allowed-tools: mcp__plugin_onestop_engine__run_status
 ---
 

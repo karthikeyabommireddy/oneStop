@@ -29,3 +29,48 @@ validator; a TypeScript interface proves nothing at runtime about JSON from the 
 
 **Error handling.** A caught value is `unknown`, not `Error` - narrow before reading
 `.message`. Never an empty catch.
+
+## Standards idioms
+
+The shared standards, as TypeScript.
+
+```ts
+// Immutability: new values, not edits. Copy before an in-place sort.
+const updatedUser  = { ...user, name: nextName };
+const updatedItems = [...items, newItem];
+const ranked       = [...items].sort(byScore);
+
+// A deliberate mutation says why.
+// Deliberate mutation: this array is local, and the copy showed up in the profile.
+buffer.push(chunk);
+```
+
+In React a mutated object keeps its identity, so nothing re-renders and the bug presents
+as a stale UI far from its cause.
+
+```ts
+// Errors: fetch does not throw on a 404 - check the status.
+const response = await fetch(url);
+if (!response.ok) {
+  throw new HttpError(`${response.status} ${response.statusText}`, { url });
+}
+
+// Async: independent work runs together; allSettled when one failure must not lose the rest.
+const [users, markets, stats] = await Promise.all([fetchUsers(), fetchMarkets(), fetchStats()]);
+
+// Types: a closed set, not a free string; validate unknown input with a schema at the boundary.
+interface Market {
+  id: string;
+  status: 'active' | 'resolved' | 'closed';
+  createdAt: Date;
+}
+
+// Constants: named, in the component's one constants home.
+const MAX_RETRIES = 3;
+const DEBOUNCE_DELAY_MS = 500;
+
+// Comments: the why.
+// Exponential backoff: the upstream rate-limits aggressively during incidents, and a
+// fixed retry interval turned a partial outage into a full one.
+const delayMs = Math.min(BASE_DELAY_MS * 2 ** retryCount, MAX_DELAY_MS);
+```

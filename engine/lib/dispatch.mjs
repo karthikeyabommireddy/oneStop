@@ -5,7 +5,7 @@
 // membership is decided here from evidence (security flags the hook recorded, the files
 // in the change surface), not by the model's judgement of what "looks" security-relevant.
 
-import { pluginPath, registry } from './env.mjs';
+import { guidePath, pluginPath, registry } from './env.mjs';
 import { readJsonl, statePath } from './store.mjs';
 import { changeSurface } from './git.mjs';
 
@@ -66,6 +66,9 @@ function automationTargets(run) {
   };
 }
 
+// Phases whose orchestration needs more than the core loop - the guide is read only then.
+const GUIDES = { context: 'context', implement: 'dev-loop', ship: 'ship' };
+
 export function recipe(root, run, phase) {
   const reg = registry('phases');
   const spec = reg.phases[phase];
@@ -85,6 +88,7 @@ export function recipe(root, run, phase) {
     light: Boolean(run.phases[phase]?.light),
     stops: run.stops.includes(phase),
     artifacts: artifactsFor(phase, run.slug),
+    ...(GUIDES[phase] ? { guide: guidePath(GUIDES[phase]) } : {}),
   };
   if (spec.roles) out.roles = { ...spec.roles, ...overrides };
   if (spec.panel) out.panel = panelFor(root, run, spec);

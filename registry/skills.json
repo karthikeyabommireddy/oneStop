@@ -7,7 +7,7 @@
     {
       "name": "orchestrate",
       "path": "skills/orchestrate/SKILL.md",
-      "description": "The onestop hub. Use ONLY when the user ran /onestop or /onestop-resume, or explicitly asks onestop to drive a task end to end. Do not use for ordinary questions, single edits, or reviews the user asked for directly.",
+      "description": "The onestop hub that runs a request phase by phase through the engine. Use only when /onestop or /onestop-resume invokes it.",
       "phase": ""
     },
     {

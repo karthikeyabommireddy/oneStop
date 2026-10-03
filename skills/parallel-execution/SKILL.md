@@ -3,6 +3,7 @@ name: parallel-execution
 description: The wave scheduler. Turns a task DAG into waves of independent agents that run at the same time, joins each wave, and continues around failures. Shared engine used by the discovery, implement, test, automation and review phases. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   role: execution-engine

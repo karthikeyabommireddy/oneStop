@@ -329,10 +329,11 @@ onestop/
     test/           53 tests, run with node --test
   hooks/            hooks.json - every event runs engine/hooks.mjs
   commands/         onestop, onestop-status, onestop-resume, onestop-undo, onestop-help
-  agents/           27 specialists
+  agents/           27 specialists - lite: identity and rules only
   skills/
-    orchestrate/    the hub
-    phase-*/        20 phase playbooks, each with its references/
+    orchestrate/    the hub - a short core; references/ holds the guides it reads on demand
+    phase-*/        20 phase playbooks, each with its agents/ (the specialists' methods)
+                    and references/
     shared/         rules, agent flow, artifacts, architecture, standards, severity
   packs/            24 language packs, 5 concern packs
   registry/         intents, phases, policies, stacks, patterns, artifacts, gates,

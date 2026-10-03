@@ -3,6 +3,7 @@ name: phase-compliance
 description: Check a change against the regulatory regime its data and domain actually place it under - HIPAA, GDPR, PCI-DSS, SOC 2 - and report control findings with severity. Loaded by the orchestrate skill when a regulated data path is detected.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: compliance

@@ -3,6 +3,7 @@ name: phase-ship
 description: Close the loop after review - conventional commits scoped to logical changes, a pull request with the repo template, and documentation sync. Owns the ship gate, the last stop before anything leaves the machine. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: ship

@@ -1,5 +1,5 @@
 ---
-description: Resume the active onestop run where it stopped - the engine's ledger restores the intent, phase plan, decisions and approvals, so nothing is re-derived or re-asked.
+description: Resume the current onestop run, optionally with a correction.
 argument-hint: "[optional: a correction or new constraint to apply before resuming]"
 allowed-tools: Read, Grep, Glob, Bash, Agent, Task, Skill, AskUserQuestion, WebFetch, WebSearch, mcp__plugin_onestop_engine
 ---

@@ -3,6 +3,7 @@ name: phase-verify-green
 description: Prove the existing suite is green and actually covers the code about to be restructured, before a refactor begins. Adds characterization tests where coverage is missing. Loaded by the orchestrate skill for refactor and upgrade intent.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: verify-green

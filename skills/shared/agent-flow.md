@@ -151,8 +151,10 @@ Built by the engine's `brief` tool and passed to the specialist unchanged. A spe
 starts with nothing else, so the brief carries everything:
 
 1. the task and its acceptance criteria - one task, never the whole plan
-2. read-first: the phase playbook, the stack facts, the language and concern packs, the
-   standards and architecture protocols for code phases, and the earlier reports it needs
+2. read-first: the specialist's own method (`skills/<skill>/agents/<agent>.md`) first, then
+   the phase playbook, the stack facts, the language and concern packs, the standards and
+   architecture protocols for code phases, and the earlier reports it needs - nothing that
+   does not apply to this dispatch
 3. the resolved commands - use exactly these
 4. the write surface - enforced for read-only and documentation roles
 5. the artifacts this phase writes, and the budget

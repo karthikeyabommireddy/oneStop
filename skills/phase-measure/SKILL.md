@@ -3,6 +3,7 @@ name: phase-measure
 description: Produce a reproducible performance baseline before any optimization, so improvement can be proven rather than assumed. Loaded by the orchestrate skill for perf intent.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: measure

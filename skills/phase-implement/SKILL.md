@@ -3,6 +3,7 @@ name: phase-implement
 description: Execute the approved task list test-first, one vertical slice at a time, following the conventions discovery recorded. Drives the red-green-refactor loop, repairs build breaks in place, and keeps the suite green between slices. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: implement

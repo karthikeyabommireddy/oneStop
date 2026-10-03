@@ -3,6 +3,7 @@ name: phase-scaffold
 description: Stand up the first end-to-end vertical slice of a new project from the ecosystem's official generator, at the language, framework and versions the user chose, so every later slice has a working skeleton to extend. Loaded by the orchestrate skill for mvp intent.
 version: 2.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: scaffold
@@ -57,7 +58,8 @@ and the guard refuses the install without one.
 
 **2. Adjust to the bound pattern.** Lay the tree out as the generator does, then add only
 the layer directories the pattern from `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`
-requires. Protocol: `${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`.
+requires. Protocol: `${CLAUDE_PLUGIN_ROOT}/skills/phase-design/references/pattern-binding.md`;
+file roles: `${CLAUDE_PLUGIN_ROOT}/skills/shared/architecture.md`.
 
 | Pattern | Layers from the first commit |
 |---|---|

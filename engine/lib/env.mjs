@@ -24,6 +24,13 @@ export function pluginPath(...parts) {
   return slash(path.join(PLUGIN_ROOT, ...parts));
 }
 
+// The orchestrator's on-demand guides. The engine hands over the path at the moment a step
+// needs it, so the orchestrator's own skill stays small and no client has to expand a
+// plugin-root token in markdown.
+export function guidePath(name) {
+  return pluginPath('skills', 'orchestrate', 'references', `${name}.md`);
+}
+
 // An env value that still contains "${" was never substituted - an older Claude Code,
 // or the variable is undefined. Treat it as absent rather than as a literal path.
 export function envValue(name) {

@@ -98,7 +98,7 @@
     {
       "name": "a11y-agent",
       "path": "agents/a11y-agent.md",
-      "description": "Designs and reviews user interfaces against WCAG 2.2 AA for web and the platform accessibility APIs for native apps. Bound automatically when a stack declares the accessibility concern and the change touches UI. Use in the design and review phases.",
+      "description": "Accessibility specialist: WCAG 2.2 AA design and review of web and native UI.",
       "tools": [
         "Read",
         "Write",
@@ -115,7 +115,7 @@
     {
       "name": "app-automation-agent",
       "path": "agents/app-automation-agent.md",
-      "description": "Builds and maintains native and cross-platform app end-to-end automation - iOS, Android, Flutter, React Native and Windows desktop. Detects the existing framework or binds the stack default, writes device-resilient flows from acceptance criteria, and wires simulator and device-farm execution. Use whenever an app user journey needs end-to-end coverage.",
+      "description": "Native and cross-platform app end-to-end automation - Detox, Espresso, XCUITest, FlaUI, Flutter.",
       "tools": [
         "Read",
         "Write",
@@ -135,7 +135,7 @@
     {
       "name": "architect",
       "path": "agents/architect.md",
-      "description": "Designs the structure of a change - module boundaries, data model, interface contracts, and the decisions worth recording as ADRs - scaled to blast radius rather than to ceremony. Use in the design phase.",
+      "description": "Designs module boundaries, data model, contracts and ADRs; scaffolds new projects.",
       "tools": [
         "Read",
         "Write",
@@ -154,7 +154,7 @@
     {
       "name": "ba-analyst",
       "path": "agents/ba-analyst.md",
-      "description": "Turns a business objective into development-ready requirements - stakeholders, scope, domain model, process flows, functional and non-functional requirements, user stories with testable acceptance criteria, and a bidirectional traceability matrix. Derives from the codebase and the domain before asking anything. Use in the requirements phase.",
+      "description": "Turns a request into requirements, stories with testable criteria, and a traceability matrix.",
       "tools": [
         "Read",
         "Write",
@@ -172,7 +172,7 @@
     {
       "name": "build-resolver",
       "path": "agents/build-resolver.md",
-      "description": "Gets a failing build, compile or type-check green again with the smallest correct change, specialising to the toolchain by loading its language pack. Fixes build breakage only - never refactors, never redesigns. Use whenever a build or type check fails.",
+      "description": "Gets a failing build or type check green with the smallest correct change.",
       "tools": [
         "Read",
         "Write",
@@ -190,7 +190,7 @@
     {
       "name": "code-explorer",
       "path": "agents/code-explorer.md",
-      "description": "Traces how something actually works by following real execution paths through the code, and reports the mechanism with file-level evidence. Read-only. Use in the discovery phase and for investigate intent.",
+      "description": "Traces how existing code actually works, with file-level evidence. Read-only.",
       "tools": [
         "Read",
         "Write",
@@ -207,7 +207,7 @@
     {
       "name": "code-reviewer",
       "path": "agents/code-reviewer.md",
-      "description": "Reviews a change for correctness, clarity and maintainability, specialising to the languages in the diff by loading the language packs it is given. One reviewer that knows many languages rather than one agent per language - a diff spanning two languages loads both packs into a single review. Use in the review phase for every change.",
+      "description": "Reviews a change for correctness, contracts, errors and fit, in every language of the diff. Read-only.",
       "tools": [
         "Read",
         "Write",
@@ -223,7 +223,7 @@
     {
       "name": "contract-agent",
       "path": "agents/contract-agent.md",
-      "description": "Writes the interface contract two or more components must agree on - OpenAPI, GraphQL SDL, protobuf, AsyncAPI, or a typed interface file - before either side is implemented. Use in the design phase whenever a component boundary exists.",
+      "description": "Writes the interface contract both sides of a boundary build against.",
       "tools": [
         "Read",
         "Write",
@@ -239,7 +239,7 @@
     {
       "name": "data-reviewer",
       "path": "agents/data-reviewer.md",
-      "description": "Reviews schema changes, migrations and queries for correctness, safety under deployment, and performance at real data volume. Bound automatically whenever the change surface touches migrations, schema or query files. Use in the review phase.",
+      "description": "Reviews migrations, schema and queries for deployment safety and performance. Read-only.",
       "tools": [
         "Read",
         "Write",
@@ -255,7 +255,7 @@
     {
       "name": "devops-agent",
       "path": "agents/devops-agent.md",
-      "description": "Changes how the project is built, tested and delivered - CI workflows, build scripts, container files, task-runner targets - in the CI system and tooling the repository already uses. Reproduces a CI failure locally before editing. Never deploys. Use as the coder for ops work and whenever CI wiring is in scope.",
+      "description": "Fixes and changes CI and build infrastructure in the repository's own system.",
       "tools": [
         "Read",
         "Write",
@@ -272,7 +272,7 @@
     {
       "name": "discovery-scout",
       "path": "agents/discovery-scout.md",
-      "description": "Searches a repository to answer a specific question about what already exists, so the orchestrator never asks the user something the code can answer. Returns found, gaps and options with file-level evidence. Use for every flow step and every non-trivial unit of work before planning.",
+      "description": "Finds what already exists in the repository before anything is asked. Read-only.",
       "tools": [
         "Read",
         "Write",
@@ -288,7 +288,7 @@
     {
       "name": "docs-agent",
       "path": "agents/docs-agent.md",
-      "description": "Writes and updates documentation from the source of truth - routes, schemas, exports, scripts and config - never from memory. Updates only what the change actually invalidated. Use in the ship phase and for docs intent.",
+      "description": "Updates documentation from the source of truth, only where the change invalidated it.",
       "tools": [
         "Read",
         "Write",
@@ -306,7 +306,7 @@
     {
       "name": "implementer",
       "path": "agents/implementer.md",
-      "description": "Writes the production code that makes one failing test pass, for one task, inside its declared write surface, following the bound pattern and the repository's conventions, then proves it with the project's own build and test commands. Use in the implement phase after test-author has written the red test.",
+      "description": "Writes the production code that makes a failing test pass, inside its write surface.",
       "tools": [
         "Read",
         "Write",
@@ -323,7 +323,7 @@
     {
       "name": "merge-coordinator",
       "path": "agents/merge-coordinator.md",
-      "description": "Joins the results of a parallel wave - verifies the combined state, detects semantic conflicts the write-surface partition could not prevent, merges worktree lanes one at a time, and decides what the next wave may schedule. Use at every wave boundary.",
+      "description": "Joins a parallel wave: verifies the combined state and catches semantic conflicts.",
       "tools": [
         "Read",
         "Write",
@@ -340,7 +340,7 @@
     {
       "name": "option-broker",
       "path": "agents/option-broker.md",
-      "description": "Decides whether an open choice must go to the user or can be resolved silently, and formats the ones that must be asked. Enforces the Asking Contract - search first, resolve what is resolvable, batch what remains, always recommend. Use after discovery, before planning, whenever a unit of work has more than one candidate approach.",
+      "description": "Decides which open choices must go to the user, and frames them with a recommendation.",
       "tools": [
         "Read",
         "Grep",
@@ -356,7 +356,7 @@
     {
       "name": "performance-agent",
       "path": "agents/performance-agent.md",
-      "description": "Finds and fixes real performance problems by measuring first, profiling to locate the actual bottleneck, and proving the improvement against the baseline. Use in the measure and implement phases for perf intent.",
+      "description": "Measures, profiles and fixes real performance problems against a baseline.",
       "tools": [
         "Read",
         "Write",
@@ -375,7 +375,7 @@
     {
       "name": "planner",
       "path": "agents/planner.md",
-      "description": "Turns a discovery picture into an ordered task list of thin vertical slices, each with observable acceptance criteria, the files it touches, and the test level that proves it. Produces the artifact approved at the plan gate. Use in the plan phase.",
+      "description": "Turns discovery and design into thin vertical slices with acceptance criteria.",
       "tools": [
         "Read",
         "Write",
@@ -390,7 +390,7 @@
     {
       "name": "qa-planner",
       "path": "agents/qa-planner.md",
-      "description": "Drafts the manual testing plan for a change - environment setup, concrete test data creation steps, step-by-step cases with observable expected results, regression checklist and sign-off - as a document plus an importable CSV. Documentation only; it writes no test code. Use in the qa-plan phase.",
+      "description": "Writes the manual test plan and importable test cases.",
       "tools": [
         "Read",
         "Write",
@@ -407,7 +407,7 @@
     {
       "name": "refactor-agent",
       "path": "agents/refactor-agent.md",
-      "description": "Restructures code without changing behavior, and removes code that is genuinely dead, verifying the suite stays green at every step. Use in the implement phase for refactor intent.",
+      "description": "Restructures code without changing behaviour, suite green at every step.",
       "tools": [
         "Read",
         "Write",
@@ -424,7 +424,7 @@
     {
       "name": "researcher",
       "path": "agents/researcher.md",
-      "description": "Finds external facts a decision depends on - vendor documentation, current and available versions from the official registry, breaking changes between versions, package existence and advisories - verified on the day, never from memory. Runs the research phase and, in upgrade mode, the upgrade-plan phase. Use whenever a choice depends on facts outside the repository.",
+      "description": "Finds versions, documentation and breaking changes from official sources, verified today.",
       "tools": [
         "Read",
         "Write",
@@ -444,7 +444,7 @@
     {
       "name": "security-reviewer",
       "path": "agents/security-reviewer.md",
-      "description": "Reviews a change for exploitable weaknesses - injection, authentication and authorization flaws, secret exposure, unsafe deserialization, SSRF, and insecure defaults. Mandatory whenever the change surface touches a security trigger, at every size tier. Use in the review phase.",
+      "description": "Reviews a change for exploitable weaknesses, and checks compliance controls.",
       "tools": [
         "Read",
         "Write",
@@ -461,7 +461,7 @@
     {
       "name": "stack-adapter",
       "path": "agents/stack-adapter.md",
-      "description": "Runs first, at the context phase. Turns the engine's stack detection and resolved commands into the stack facts every later specialist reads - confirmed build, test and lint commands, conventions, test layout, package manager, CI system and versions in use - so no specialist re-derives them. Edits no project file. Use in the context phase.",
+      "description": "Confirms the stack, commands and conventions every later specialist relies on.",
       "tools": [
         "Read",
         "Write",
@@ -477,7 +477,7 @@
     {
       "name": "test-author",
       "path": "agents/test-author.md",
-      "description": "Writes tests first and drives the red-green-refactor loop, specialising to the stack by loading its language pack for idiom, runner and assertion style. Writes complete runnable test bodies, never stubs. Use in the implement and test phases.",
+      "description": "Writes tests first and runs the red-green-refactor loop in the stack's idiom.",
       "tools": [
         "Read",
         "Write",
@@ -496,7 +496,7 @@
     {
       "name": "ui-designer",
       "path": "agents/ui-designer.md",
-      "description": "Establishes the visual design direction for a product - a domain-matched colour palette in OKLCH with verified contrast, a fluid type scale, spacing, elevation and motion budgets - emitted as design tokens. Extends an existing design system when one is present rather than replacing it. Use in the design phase whenever the change touches UI.",
+      "description": "Binds a domain palette, visual style and design tokens, with measured contrast.",
       "tools": [
         "Read",
         "Write",
@@ -515,7 +515,7 @@
     {
       "name": "validator",
       "path": "agents/validator.md",
-      "description": "Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before the ship gate. Use at the end of the review phase.",
+      "description": "Renders the final pass or fail verdict on a completed change.",
       "tools": [
         "Read",
         "Write",
@@ -533,7 +533,7 @@
     {
       "name": "web-automation-agent",
       "path": "agents/web-automation-agent.md",
-      "description": "Builds and maintains browser end-to-end automation for a described user flow. Detects the existing framework or binds the stack default, writes resilient specs from flow acceptance criteria, wires artifacts and CI, and quarantines flaky specs. Use whenever a web user journey needs end-to-end coverage.",
+      "description": "Browser end-to-end automation from a described user flow, using the live page.",
       "tools": [
         "Read",
         "Write",
@@ -553,7 +553,7 @@
     {
       "name": "work-partitioner",
       "path": "agents/work-partitioner.md",
-      "description": "Converts an approved task list into an executable DAG with declared write surfaces, then groups the tasks into waves that can safely run in parallel. The single safety check that makes concurrent agents possible without corrupting files. Use after the plan phase, before implementation.",
+      "description": "Splits an approved plan into tasks with write surfaces and parallel waves.",
       "tools": [
         "Read",
         "Write",

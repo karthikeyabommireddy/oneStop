@@ -3,6 +3,7 @@ name: phase-qa-plan
 description: Draft the manual testing plan for the change as a document plus an importable CSV, covering what a human tester does on top of the automated suites. Runs after automation, before review. Loaded by the orchestrate skill; not usually invoked directly.
 version: 1.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: qa-plan

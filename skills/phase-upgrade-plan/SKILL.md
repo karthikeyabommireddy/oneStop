@@ -3,6 +3,7 @@ name: phase-upgrade-plan
 description: Plan a dependency, runtime or framework upgrade - current and available versions from the official registry, the breaking changes between them, the call sites they hit, and the user's choice of target version as the gate that authorises implementation. Loaded by the orchestrate skill for upgrade intent; not usually invoked directly.
 version: 2.0.0
 user-invocable: false
+disable-model-invocation: true
 metadata:
   origin: onestop
   phase: upgrade-plan
