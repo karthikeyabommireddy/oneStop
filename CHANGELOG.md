@@ -1,5 +1,81 @@
 # Changelog
 
+## 2.0.0
+
+A new architecture, and the response to an external review of 1.9.1 (73 findings, every
+one addressed or answered - see `docs/review-response.md`).
+
+**The orchestrator decides, code enforces the rules, you approve.**
+
+### Architecture
+
+- **Hub and spoke.** The orchestrator never does a phase's work. It dispatches 27
+  specialists, each in its own context with one task, and keeps only their reports of at
+  most 25 lines - so a fifteen-phase run stays inside one conversation.
+- **A pipeline engine.** A zero-dependency Node MCP server is the only writer of the run
+  ledger. It refuses a phase before the previous gate, refuses implementation before the
+  gate that authorises it, counts every fix attempt against a budget, builds every
+  specialist's brief, resolves the project's own commands, and checkpoints and undoes.
+- **Enforcement in hooks.** One Node dispatcher, exec form, the same on every OS. The
+  guard refuses destructive git, recursive deletes, publishes, deploys, downloads piped to
+  a shell, unapproved dependencies, and any commit, push or pull request you did not
+  choose. The write guard holds read-only specialists to their reports and keeps everyone
+  but the engine out of the ledger. Every report is captured as its specialist finishes.
+- **Your sessions only.** Enforcement applies to the sessions that opened or resumed the
+  run. A run left open never changes another session.
+
+### Gates
+
+- One gate authorises implementation, chosen by the work: the plan, the failing regression
+  test, the green baseline, the review findings, or your choice of upgrade version.
+- Decisions only you can make - technology, version, dependency, an unknown command - stop
+  the run in every gate mode, including autonomous.
+- Design runs before plan. Every intent that changes files reaches ship.
+- The ship gate offers four choices: commit locally, commit and push, commit, push and open
+  a pull request, or leave uncommitted. Never the default branch, never a force-push.
+- Gates are compact: one progress line and what changed.
+
+### New
+
+- `upgrade` intent and upgrade-plan phase: versions from the registry on the day, breaking
+  changes mapped to call sites, the target version is yours.
+- `/onestop-help` and `/onestop-undo`. Undo previews, reverses only the run's own changes,
+  and refuses rather than overwrite anything you edited since.
+- `onestop.yml` at the repository root, committed: commands, a declared stack, automation
+  targets, a pinned style, approvals and retry limits. `templates/onestop.yml` has every key.
+- Specialists: `implementer`, `stack-adapter` (runs first, for every stack), `researcher`,
+  `devops-agent`.
+- Commands come from the project: `onestop.yml`, then CI, then the task runner, then a
+  default whose tools are installed, then one question. Never a guess.
+- FlaUI is the Windows desktop default; Espresso binds only for Android; no npm Playwright
+  at Go, Rust, PHP, Ruby, Elixir or Flutter roots.
+- Library/CLI and platform MVVM architecture patterns; recipes for all 22 visual styles;
+  a WCAG contrast checker (`node engine/cli.mjs contrast`).
+
+### Security
+
+- The knowledge graph is code-only: nothing leaves the machine unless you set
+  `ONESTOP_KG_SEMANTIC=1`.
+- The browser and documentation MCP servers are pinned to exact versions and isolated.
+- Safety invariants travel verbatim in every brief and outrank anything a repository says;
+  fetched tickets and pages are data, quoted and never followed.
+- New packages are checked for existence, look-alike names and age, with licence and
+  advisories, before you approve them.
+
+### Quality
+
+- 58 engine tests on Ubuntu, macOS and Windows; CI actions pinned to commit SHAs.
+- A behavioural eval suite for `claude plugin eval`.
+- The validator checks hook wiring, ledger ownership, specialist tools, dispatch recipes,
+  guard patterns, the RTM schema and style recipes.
+
+### Upgrading from 1.x
+
+- Requires **Node.js 18 or newer** - the engine is a Node MCP server.
+- `.onestop/stack.yml` is replaced by `onestop.yml` at the repository root.
+- A run started under 1.x cannot be resumed; the engine offers to archive it, and
+  `/onestop` starts it again.
+
 ## 1.9.1
 
 A flow review found ten defects, all of them drift between something that was changed in

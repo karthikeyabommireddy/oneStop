@@ -10,8 +10,8 @@
     {
       "name": "onestop",
       "source": "./",
-      "description": "Describe what you want; onestop does the rest. Classifies intent, searches the codebase before asking anything, binds the right reviewers, build resolvers, test runners and automation frameworks for your stack, and drives plan, design, code, test, web and app end-to-end automation, review and ship. Asks only when information is genuinely missing or several real options were found.",
-      "version": "1.9.1",
+      "description": "Describe what you want in plain language. onestop plans the phases and dispatches the right specialist for each - requirements, design, code, tests, web and app automation, review, ship - stopping at every gate for your approval. A pipeline engine enforces the gates, retry budgets and safety rules in code; technology and version choices and everything that reaches git stay yours.",
+      "version": "2.0.0",
       "author": {
         "name": "karthikeya"
       },
@@ -25,7 +25,9 @@
         "tdd",
         "code-review",
         "e2e-testing",
-        "mobile-automation"
+        "mobile-automation",
+        "hub-and-spoke",
+        "gated-workflow"
       ],
       "tags": [
         "orchestration",

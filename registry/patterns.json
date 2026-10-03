@@ -393,7 +393,7 @@
         "operational_test": "Can this file be described in one sentence with no 'and'? Does it have exactly one reason to change?",
         "violation_signals": [
           "A file whose name needs 'and', or whose name is a category (utils, helpers, manager, common)",
-          "A file over 400 lines - onestop's hard cap",
+          "A new file over 400 lines, unless the repository's own lint rule allows more",
           "A class whose methods split cleanly into two groups sharing no fields"
         ],
         "fix": "Extract along the seam the field usage already reveals, not along an arbitrary line count."

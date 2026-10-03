@@ -144,9 +144,11 @@ Full protocol: `${CLAUDE_PLUGIN_ROOT}/skills/shared/standards.md` - naming, immu
 error handling, async, types, comments, tests and the smell table. It travels with every
 delegation. The points below are the ones this phase enforces directly:
 
-- **File size.** Target 300 lines, hard fail at 400. One responsibility per file.
-  Decompose in the planned structure, before writing - never emit a monolith intending
-  to split it later. A file already near the cap gets an extraction, not more lines.
+- **File size.** For new files: target 300 lines, flag at 400. A repository lint rule
+  (`max-lines`, `MaxLineCount` and the like) overrides these numbers. Decompose in the
+  planned structure, before writing - never emit a monolith intending to split it later.
+  An existing file already over the limit is reported, never split as a side effect.
+  Generated files, migrations and snapshots are exempt.
 - **Constants.** One constants home per component, following the ecosystem idiom.
   Every magic number, status string, limit, and shared literal lives there. Never
   inline a value used more than once; never duplicate a literal across files.

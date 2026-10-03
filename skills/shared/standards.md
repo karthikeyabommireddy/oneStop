@@ -190,8 +190,9 @@ need one; a good name has already done that work.
   unindented. Five levels of `if` is a function with three functions inside it.
 - **One responsibility.** If describing it needs "and", split it.
 - **Length is a symptom, not the disease** - but a function past roughly 50 lines, or a
-  file past 300 (hard fail at 400), reliably has a seam in it. Find the seam rather than
-  cutting at the line count.
+  new file past 300 (flagged at 400, unless the repository's own lint rule says
+  otherwise), reliably has a seam in it. Find the seam rather than cutting at the line
+  count. Generated files, migrations and snapshots are exempt.
 - **Return early, return one shape.** A function that returns an object, or `null`, or
   throws, forces three code paths on every caller.
 
