@@ -1,9 +1,9 @@
 {
   "version": "1.8.0",
-  "description": "Fifteen visual styles the ui-designer chooses between. The style is DERIVED from the product's domain, audience and job - never asked, never picked by taste. design.json answers what the palette is; this answers what the interface feels like and how it is built. Every entry carries the recipe that makes it convincing, the accessibility cost it imposes, and - the part usually missing - the conditions under which it is the wrong answer.",
+  "description": "Twenty-two visual styles the ui-designer chooses between. The style is DERIVED from the product's domain, audience and job - never asked, never picked by taste. design.json answers what the palette is; this answers what the interface feels like and how it is built. Every entry carries the recipe that makes it convincing, the accessibility cost it imposes, and - the part usually missing - the conditions under which it is the wrong answer.",
 
   "selection": {
-    "instruction": "Run this before any component is written, in the ui-design phase. Announce the bound style and the one-line reason in the same line as the palette. Never present all fifteen to the user.",
+    "instruction": "Run this before any component is written, in the ui-design phase. Announce the bound style and the one-line reason in the same line as the palette. Never present all twenty-two to the user.",
     "inputs": [
       "Domain, from design.json signals found in the repo and the request.",
       "Audience: consumer / professional-daily-driver / developer / child / mixed-public.",
@@ -611,7 +611,7 @@
   },
 
   "combination_rules": {
-    "layout_plus_skin": "`bento` and `editorial` are layout systems; the other thirteen are skins. One layout plus one skin is a normal, good binding - bento tiles in a minimalist skin, or an editorial grid with neo-brutalist accents.",
+    "layout_plus_skin": "`bento` and `editorial` are layout systems; the other twenty are skins. One layout plus one skin is a normal, good binding - bento tiles in a minimalist skin, or an editorial grid with neo-brutalist accents.",
     "never_combine": [
       ["neumorphism", "glassmorphism"],
       ["brutalism", "skeuomorphism"],
@@ -623,7 +623,7 @@
   },
 
   "never": [
-    "Never present the full list of fifteen to the user. Deriving the style from the domain is the job; a menu is the abdication of it.",
+    "Never present the full list of twenty-two to the user. Deriving the style from the domain is the job; a menu is the abdication of it.",
     "Never bind a style whose domain_fit marks the detected domain `never`, whatever it looks like.",
     "Never restyle an existing design system. If the repo has one, extend it - the bound style then describes new surfaces only, and that limitation is stated.",
     "Never let a style's accessibility cost go unstated. If a style needs mitigation to be usable, the mitigation ships with it or the style does not.",

@@ -1,15 +1,17 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Stack detection and knowledge binding. The orchestrator detects the stack from marker files and source extensions, then binds the language packs, test runner, coverage command and automation frameworks WITHOUT asking the user. Role agents (code-reviewer, build-resolver, test-author, ...) are bound per phase and specialise by loading the packs a stack names - onestop has one reviewer that knows many languages, not one agent per language. Ask only when detection returns two or more stacks of equal confidence in the same component directory.",
   "detection": {
     "order": [
-      "1. Read .onestop/stack.yml if present - it is authoritative and ends detection.",
+      "1. Read onestop.yml at the repository root if present - committed and authoritative. Its stack.components replace detection for the paths they declare; its commands replace resolution for the commands they name.",
       "2. Read .github/tech-stack.md then .claude/tech-stack.md - authoritative if present.",
-      "3. Match marker files below, weighted by proximity to the change surface.",
-      "4. Fall back to source file extension census across the repo.",
-      "5. Still unknown: ask ONE question naming the top candidates found, never an open-ended question."
+      "3. Match strong marker files. A marker several stacks claim (build.gradle.kts for Java and Kotlin) says which family, not which stack, and its score is shared between them.",
+      "4. Weak markers count only alongside an extension census above 30 percent, and a framework stack binds only when one of its dependency_markers is in the manifest.",
+      "5. Fall back to the source file extension census.",
+      "6. Still unknown: ask ONE question naming the top candidates found, never an open-ended question."
     ],
-    "confidence_rule": "A marker file scores 1.0, a lockfile 1.0, an extension census above 60 percent scores 0.7, below that 0.3. Two stacks within 0.2 of each other in the SAME component directory is a genuine ambiguity - ask. Different directories means multi-component, not ambiguity - bind both."
+    "confidence_rule": "A strong marker scores 1.0 divided by the number of stacks that claim it, a dependency marker 1.0, a weak marker 0.3 (only with an extension census above 30 percent), an extension census above 60 percent 0.7 and below that 0.3. A stack binds at 0.7 or more; a framework stack binds only on a dependency hit. Two stacks within 0.2 of each other in the SAME component that share no pack are a genuine ambiguity - ask. Different directories means multi-component - bind both.",
+    "commands": "Command defaults below are used only when onestop.yml, CI and the task runner say nothing, and only when everything in requires is present in the manifest (a nested list means any one of them). {x} is the package runner for the lockfile (npx, pnpm exec, yarn, bunx); {py} is \"uv run \" or \"poetry run \" when that lockfile exists. A default whose requirements are missing is offered to the user as a candidate, never run."
   },
   "stacks": [
     {
@@ -45,7 +47,35 @@
       "app_automation": null,
       "packs": [
         "typescript"
-      ]
+      ],
+      "commands_default": {
+        "test": "{x} vitest run",
+        "coverage": "{x} vitest run --coverage",
+        "typecheck": "{x} tsc --noEmit",
+        "lint": "{x} eslint .",
+        "format": "{x} prettier --check ."
+      },
+      "requires": {
+        "test": [
+          "vitest"
+        ],
+        "coverage": [
+          "vitest",
+          [
+            "@vitest/coverage-v8",
+            "@vitest/coverage-istanbul"
+          ]
+        ],
+        "typecheck": [
+          "typescript"
+        ],
+        "lint": [
+          "eslint"
+        ],
+        "format": [
+          "prettier"
+        ]
+      }
     },
     {
       "id": "react",
@@ -53,8 +83,7 @@
       "markers": [
         "next.config.js",
         "next.config.mjs",
-        "next.config.ts",
-        "vite.config.ts"
+        "next.config.ts"
       ],
       "dependency_markers": [
         "react",
@@ -82,6 +111,10 @@
       "concern_packs": [
         "accessibility",
         "visual-design"
+      ],
+      "weak_markers": [
+        "vite.config.ts",
+        "vite.config.js"
       ]
     },
     {
@@ -142,14 +175,38 @@
       "app_automation": null,
       "packs": [
         "python"
-      ]
+      ],
+      "commands_default": {
+        "test": "{py}pytest",
+        "coverage": "{py}pytest --cov --cov-report=term-missing",
+        "lint": "{py}ruff check .",
+        "format": "{py}ruff format --check .",
+        "typecheck": "{py}mypy ."
+      },
+      "requires": {
+        "test": [
+          "pytest"
+        ],
+        "coverage": [
+          "pytest",
+          "pytest-cov"
+        ],
+        "lint": [
+          "ruff"
+        ],
+        "format": [
+          "ruff"
+        ],
+        "typecheck": [
+          "mypy"
+        ]
+      }
     },
     {
       "id": "django",
       "label": "Django",
       "markers": [
-        "manage.py",
-        "settings.py"
+        "manage.py"
       ],
       "dependency_markers": [
         "django"
@@ -174,6 +231,9 @@
       "concern_packs": [
         "security",
         "data"
+      ],
+      "weak_markers": [
+        "settings.py"
       ]
     },
     {
@@ -219,11 +279,20 @@
         "default": "go test"
       },
       "coverage_cmd": "go test ./... -cover -coverprofile=coverage.out",
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": null,
       "packs": [
         "go"
-      ]
+      ],
+      "commands_default": {
+        "build": "go build ./...",
+        "test": "go test ./...",
+        "coverage": "go test ./... -cover -coverprofile=coverage.out",
+        "lint": "go vet ./...",
+        "format": "gofmt -l ."
+      },
+      "requires": {},
+      "notes": "gofmt -l prints unformatted files and exits 0 - any output is a failure."
     },
     {
       "id": "rust",
@@ -242,11 +311,23 @@
         "default": "cargo test"
       },
       "coverage_cmd": "cargo llvm-cov --summary-only",
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": null,
       "packs": [
         "rust"
-      ]
+      ],
+      "commands_default": {
+        "build": "cargo build",
+        "test": "cargo test",
+        "lint": "cargo clippy -- -D warnings",
+        "format": "cargo fmt --check",
+        "coverage": "cargo llvm-cov --summary-only"
+      },
+      "requires": {
+        "coverage": [
+          "cargo-llvm-cov"
+        ]
+      }
     },
     {
       "id": "java",
@@ -254,7 +335,9 @@
       "markers": [
         "pom.xml",
         "build.gradle",
-        "build.gradle.kts"
+        "build.gradle.kts",
+        "settings.gradle",
+        "settings.gradle.kts"
       ],
       "extensions": [
         ".java"
@@ -278,7 +361,9 @@
       "id": "kotlin",
       "label": "Kotlin (JVM / Android / KMP)",
       "markers": [
+        "build.gradle",
         "build.gradle.kts",
+        "settings.gradle",
         "settings.gradle.kts"
       ],
       "extensions": [
@@ -294,15 +379,27 @@
       },
       "coverage_cmd": "gradle koverHtmlReport",
       "web_automation": null,
-      "app_automation": "espresso",
-      "platform": "android",
+      "app_automation": null,
+      "platform": null,
       "packs": [
         "kotlin"
       ],
       "concern_packs": [
         "visual-design",
         "accessibility"
-      ]
+      ],
+      "app_automation_when": {
+        "espresso": [
+          "com.android.application",
+          "com.android.library"
+        ]
+      },
+      "platform_when": {
+        "android": [
+          "com.android.application",
+          "com.android.library"
+        ]
+      }
     },
     {
       "id": "swift",
@@ -332,7 +429,19 @@
       "concern_packs": [
         "visual-design",
         "accessibility"
-      ]
+      ],
+      "commands_default": {
+        "build": "swift build",
+        "test": "swift test"
+      },
+      "requires": {
+        "build": [
+          "swift-tools-version"
+        ],
+        "test": [
+          "swift-tools-version"
+        ]
+      }
     },
     {
       "id": "flutter",
@@ -351,7 +460,7 @@
         "default": "flutter test"
       },
       "coverage_cmd": "flutter test --coverage",
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": "flutter-integration-test",
       "platform": "cross-mobile",
       "packs": [
@@ -360,7 +469,14 @@
       "concern_packs": [
         "accessibility",
         "visual-design"
-      ]
+      ],
+      "commands_default": {
+        "test": "flutter test",
+        "coverage": "flutter test --coverage",
+        "lint": "flutter analyze",
+        "format": "dart format --output=none --set-exit-if-changed ."
+      },
+      "requires": {}
     },
     {
       "id": "react-native",
@@ -370,7 +486,6 @@
         "expo"
       ],
       "markers": [
-        "app.json",
         "metro.config.js"
       ],
       "extensions": [
@@ -395,7 +510,22 @@
       "concern_packs": [
         "accessibility",
         "visual-design"
-      ]
+      ],
+      "weak_markers": [
+        "app.json"
+      ],
+      "commands_default": {
+        "test": "{x} jest",
+        "coverage": "{x} jest --coverage"
+      },
+      "requires": {
+        "test": [
+          "jest"
+        ],
+        "coverage": [
+          "jest"
+        ]
+      }
     },
     {
       "id": "csharp",
@@ -418,18 +548,42 @@
       },
       "coverage_cmd": "dotnet test --collect:\"XPlat Code Coverage\"",
       "web_automation": "playwright-dotnet",
-      "app_automation": "winappdriver",
-      "platform": "windows-desktop",
+      "app_automation": null,
+      "platform": null,
       "packs": [
         "csharp"
-      ]
+      ],
+      "commands_default": {
+        "build": "dotnet build",
+        "test": "dotnet test",
+        "coverage": "dotnet test --collect:\"XPlat Code Coverage\"",
+        "format": "dotnet format --verify-no-changes"
+      },
+      "requires": {
+        "coverage": [
+          "coverlet.collector"
+        ]
+      },
+      "app_automation_when": {
+        "flaui": [
+          "<UseWPF>true</UseWPF>",
+          "<UseWindowsForms>true</UseWindowsForms>",
+          "Microsoft.WindowsAppSDK"
+        ]
+      },
+      "platform_when": {
+        "windows-desktop": [
+          "<UseWPF>true</UseWPF>",
+          "<UseWindowsForms>true</UseWindowsForms>",
+          "Microsoft.WindowsAppSDK"
+        ]
+      }
     },
     {
       "id": "cpp",
       "label": "C / C++",
       "markers": [
         "CMakeLists.txt",
-        "Makefile",
         "meson.build",
         "conanfile.txt"
       ],
@@ -454,6 +608,9 @@
       "app_automation": null,
       "packs": [
         "cpp"
+      ],
+      "weak_markers": [
+        "Makefile"
       ]
     },
     {
@@ -474,11 +631,27 @@
         "default": "phpunit"
       },
       "coverage_cmd": "phpunit --coverage-text",
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": null,
       "packs": [
         "php"
-      ]
+      ],
+      "commands_default": {
+        "test": "vendor/bin/phpunit",
+        "lint": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/php-cs-fixer fix --dry-run --diff"
+      },
+      "requires": {
+        "test": [
+          "phpunit/phpunit"
+        ],
+        "lint": [
+          "phpstan/phpstan"
+        ],
+        "format": [
+          "friendsofphp/php-cs-fixer"
+        ]
+      }
     },
     {
       "id": "fsharp",
@@ -502,7 +675,18 @@
       "app_automation": null,
       "packs": [
         "fsharp"
-      ]
+      ],
+      "commands_default": {
+        "build": "dotnet build",
+        "test": "dotnet test",
+        "coverage": "dotnet test --collect:\"XPlat Code Coverage\"",
+        "format": "dotnet format --verify-no-changes"
+      },
+      "requires": {
+        "coverage": [
+          "coverlet.collector"
+        ]
+      }
     },
     {
       "id": "pytorch",
@@ -593,7 +777,27 @@
         "visual-design",
         "accessibility"
       ],
-      "note": "Never select on ng-tns-c* scope classes in automation - they are build-generated and change every deploy."
+      "note": "Never select on ng-tns-c* scope classes in automation - they are build-generated and change every deploy.",
+      "commands_default": {
+        "build": "{x} ng build",
+        "test": "{x} ng test --watch=false",
+        "coverage": "{x} ng test --watch=false --code-coverage",
+        "lint": "{x} ng lint"
+      },
+      "requires": {
+        "build": [
+          "@angular/cli"
+        ],
+        "test": [
+          "@angular/cli"
+        ],
+        "coverage": [
+          "@angular/cli"
+        ],
+        "lint": [
+          "@angular-eslint/builder"
+        ]
+      }
     },
     {
       "id": "svelte",
@@ -645,7 +849,7 @@
         "default": "bundle exec rspec"
       },
       "coverage_cmd": "COVERAGE=true bundle exec rspec",
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": null,
       "packs": [
         "ruby"
@@ -653,7 +857,22 @@
       "concern_packs": [
         "security",
         "data"
-      ]
+      ],
+      "commands_default": {
+        "test": "bundle exec rspec",
+        "lint": "bundle exec rubocop"
+      },
+      "requires": {
+        "test": [
+          [
+            "rspec",
+            "rspec-rails"
+          ]
+        ],
+        "lint": [
+          "rubocop"
+        ]
+      }
     },
     {
       "id": "elixir",
@@ -673,14 +892,26 @@
         "default": "mix test"
       },
       "coverage_cmd": "mix test --cover",
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": null,
       "packs": [
         "elixir"
       ],
       "concern_packs": [
         "data"
-      ]
+      ],
+      "commands_default": {
+        "build": "mix compile --warnings-as-errors",
+        "test": "mix test",
+        "coverage": "mix test --cover",
+        "format": "mix format --check-formatted",
+        "lint": "mix credo"
+      },
+      "requires": {
+        "lint": [
+          "credo"
+        ]
+      }
     },
     {
       "id": "generic",
@@ -692,7 +923,7 @@
         "default": null
       },
       "coverage_cmd": null,
-      "web_automation": "playwright",
+      "web_automation": null,
       "app_automation": null,
       "note": "A stack with no entry is never a blocker. Follow the ecosystem own conventions, use the generic reviewer, and read the repo existing test files to infer the runner.",
       "packs": [
@@ -715,7 +946,7 @@
           "playwright.config.js",
           "@playwright/test"
         ],
-        "install": "npm install -D @playwright/test && npx playwright install",
+        "install": "{pm} add -D @playwright/test@<version verified on the registry today> && {x} playwright install --with-deps chromium",
         "run": "npx playwright test",
         "artifacts": [
           "screenshots",
@@ -726,12 +957,11 @@
           "typescript",
           "react",
           "vue",
-          "go",
-          "rust",
-          "php",
-          "generic"
+          "angular",
+          "svelte"
         ],
-        "strengths": "Cross-browser, auto-wait, trace viewer, parallel by default. The default choice for new web automation."
+        "strengths": "Cross-browser, auto-wait, trace viewer, parallel by default. The default choice for new web automation.",
+        "install_policy": "ask"
       },
       {
         "id": "cypress",
@@ -763,7 +993,7 @@
         "markers": [
           "pytest-playwright"
         ],
-        "install": "pip install pytest-playwright && playwright install",
+        "install": "{py}pip install pytest-playwright==<version verified today> && playwright install --with-deps chromium",
         "run": "pytest --browser chromium",
         "artifacts": [
           "screenshots",
@@ -774,7 +1004,8 @@
           "python",
           "django",
           "fastapi"
-        ]
+        ],
+        "install_policy": "ask"
       },
       {
         "id": "playwright-dotnet",
@@ -786,7 +1017,7 @@
         "markers": [
           "Microsoft.Playwright"
         ],
-        "install": "dotnet add package Microsoft.Playwright.NUnit",
+        "install": "dotnet add <test project> package Microsoft.Playwright.<NUnit|MSTest|Xunit> - the flavour matching the test framework the repository already uses",
         "run": "dotnet test",
         "artifacts": [
           "screenshots",
@@ -796,7 +1027,8 @@
         "default_for": [
           "csharp",
           "fsharp"
-        ]
+        ],
+        "install_policy": "ask"
       },
       {
         "id": "playwright-java",
@@ -830,7 +1062,9 @@
         ],
         "markers": [
           "selenium",
-          "webdriver"
+          "selenium-webdriver",
+          "Selenium.WebDriver",
+          "org.seleniumhq.selenium"
         ],
         "install": "language-specific selenium package",
         "run": "framework test command",
@@ -858,7 +1092,7 @@
           "detox"
         ],
         "install": "npm install -D detox && npx detox init",
-        "run": "npx detox test --configuration ios.sim.debug",
+        "run": "npx detox test --configuration <first configuration in .detoxrc*>",
         "artifacts": [
           "screenshots",
           "videos",
@@ -867,7 +1101,8 @@
         "default_for": [
           "react-native"
         ],
-        "strengths": "Grey-box, auto-synchronised with the RN bridge. Far less flaky than black-box drivers for React Native."
+        "strengths": "Grey-box, auto-synchronised with the RN bridge. Far less flaky than black-box drivers for React Native.",
+        "install_policy": "ask"
       },
       {
         "id": "maestro",
@@ -885,14 +1120,15 @@
           ".maestro/",
           "maestro"
         ],
-        "install": "curl -Ls https://get.maestro.mobile.dev | bash",
+        "install": "manual - see https://docs.maestro.dev/getting-started/installing-maestro ; onestop never pipes a download into a shell",
         "run": "maestro test .maestro/",
         "artifacts": [
           "screenshots",
           "recordings"
         ],
         "default_for": [],
-        "strengths": "YAML flows, no build integration, works across React Native, Flutter and native. Best when one suite must cover several app stacks."
+        "strengths": "YAML flows, no build integration, works across React Native, Flutter and native. Best when one suite must cover several app stacks.",
+        "install_policy": "manual"
       },
       {
         "id": "appium",
@@ -961,7 +1197,7 @@
           "XCUIApplication"
         ],
         "install": "add a UI Testing Bundle target in Xcode",
-        "run": "xcodebuild test -scheme SchemeUITests -destination platform=iOS Simulator,name=iPhone 15",
+        "run": "xcodebuild test -scheme <UI test scheme from xcodebuild -list> -destination 'platform=iOS Simulator,name=<first from xcrun simctl list devices available>'",
         "artifacts": [
           "screenshots",
           "xcresult bundles"
@@ -998,8 +1234,8 @@
         "strengths": "First-party Flutter, runs the real app on device or simulator and shares the widget-test API."
       },
       {
-        "id": "winappdriver",
-        "label": "WinAppDriver and FlaUI",
+        "id": "flaui",
+        "label": "FlaUI (UI Automation)",
         "platforms": [
           "windows-desktop"
         ],
@@ -1009,10 +1245,12 @@
           "winui"
         ],
         "markers": [
-          "FlaUI",
-          "WinAppDriver"
+          "FlaUI.UIA3",
+          "FlaUI.UIA2",
+          "FlaUI.Core"
         ],
-        "install": "install WinAppDriver, add FlaUI.Core via NuGet",
+        "install": "dotnet add <test project> package FlaUI.UIA3 --version <version verified on nuget.org today>",
+        "install_policy": "ask",
         "run": "dotnet test",
         "artifacts": [
           "screenshots"
@@ -1020,7 +1258,30 @@
         "default_for": [
           "csharp"
         ],
-        "strengths": "The practical option for Windows desktop UI automation."
+        "strengths": "Actively maintained .NET wrapper over Microsoft UI Automation (UIA3); drives WPF, WinForms and WinUI from an ordinary dotnet test project with no separate driver service."
+      },
+      {
+        "id": "winappdriver",
+        "label": "WinAppDriver (legacy)",
+        "platforms": [
+          "windows-desktop"
+        ],
+        "frameworks": [
+          "wpf",
+          "winforms",
+          "winui"
+        ],
+        "markers": [
+          "WinAppDriver"
+        ],
+        "install": "install WinAppDriver, add FlaUI.Core via NuGet",
+        "run": "dotnet test",
+        "artifacts": [
+          "screenshots"
+        ],
+        "default_for": [],
+        "strengths": "The practical option for Windows desktop UI automation.",
+        "status": "Unmaintained - last release v1.2.1 (November 2020). Kept only so an existing WinAppDriver suite keeps working; new suites bind flaui."
       }
     ],
     "selection_rules": [
@@ -1029,7 +1290,9 @@
       "When the app target is React Native and the team wants device-cloud execution, Detox and Appium are both valid - that is a genuine two-option choice, so ask.",
       "When the app target is Flutter, flutter-integration-test is the default; Maestro is the alternative only when the same suite must also drive a native app.",
       "A repo with BOTH a web app and a native app binds one framework from each list - that is not ambiguity, it is two targets.",
-      "Never write automation for a flow whose steps discovery could not locate in the code. Report the gap instead."
+      "Never write automation for a flow whose steps discovery could not locate in the code. Report the gap instead.",
+      "Installing a framework is a new dependency: present it at a gate with the exact package, the version verified on the registry today, and the command - never run it unasked.",
+      "A stack whose web_automation is null gets web automation only when a JS or TS front end is detected in the repository; bind that front end's framework there - never npm tooling at a non-JS root."
     ]
   },
   "binding_model": {

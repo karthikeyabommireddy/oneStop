@@ -1,0 +1,81 @@
+# onestop.yml - repository root, committed. Optional.
+#
+# onestop works without this file: it detects the stack and reads your build and test
+# commands from CI and your task runner. Add it when you want the team to share a
+# setting, or when detection cannot settle something. Everything here is authoritative
+# and overrides both detection and the plugin settings.
+#
+# Parsed strictly: plain keys, lists and nested maps only. Anchors, tags, block scalars
+# and tabs are refused with the line number - never guessed at.
+
+# How often the run stops for you: every-phase (default) | milestone | autonomous.
+# Gate zero, the ship gate, a blocked phase, and any decision only you can make stop in
+# every mode.
+gate_mode: every-phase
+
+# Line and branch coverage required on the change surface (0-100).
+coverage_threshold: 80
+
+# Write end-to-end automation for user-facing changes (true | false).
+auto_automation: true
+
+# none | standard | deep - how much vendor documentation research runs.
+research_depth: standard
+
+# Code knowledge graph: auto | manual | off. Code-only; nothing leaves the machine unless
+# ONESTOP_KG_SEMANTIC=1 is set in your environment.
+knowledge_graph: auto
+
+# The commands every specialist uses, verbatim. Anything left out is resolved from CI,
+# then your task runner, then a registry default whose tools are already installed.
+commands:
+  build: pnpm build
+  test: pnpm test
+  coverage: pnpm test -- --coverage
+  lint: pnpm lint
+  # format: pnpm format:check
+  # typecheck: pnpm typecheck
+
+# Declare components when detection cannot settle them - a monorepo, an unusual layout,
+# or a stack you want pinned. A declared component replaces detection for its path.
+# Stack ids come from registry/stacks.json.
+stack:
+  components:
+    - path: apps/web
+      stacks: [typescript, react]
+      concerns: [visual-design, accessibility]
+      web_automation: playwright
+    - path: apps/api
+      stacks: [python, fastapi]
+      concerns: [api-contract, security]
+    - path: apps/desktop
+      stacks: [csharp]
+      app_automation: flaui
+
+# Turn an automation target off for this repository: off, or leave it out.
+automation:
+  web: on
+  app: off
+
+# Pin the visual style instead of deriving it from the domain (ids from
+# registry/ui-styles.json). One skin, optionally one layout.
+style:
+  skin: minimalism
+  layout: bento
+
+# always | ask-once-per-run. Commit, push and pull requests are always asked at the ship
+# gate and cannot be configured here.
+approvals:
+  add_dependency: always
+  choose_version: always
+  install_tool: always
+  delete_file: ask-once-per-run
+  edit_ci: always
+
+# Retry budgets, 1-20 each. When one runs out the run stops and you decide.
+limits:
+  dev_loop_iterations: 3
+  build_fix_per_root_cause: 3
+  build_fix_per_phase: 8
+  test_fix_per_test: 2
+  review_fix_per_finding: 2

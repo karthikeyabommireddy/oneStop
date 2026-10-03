@@ -27,7 +27,7 @@ pass is for a new product, a new surface, or a deliberate redesign.
 
 ## Bind the Visual Style
 
-Before the palette, decide what the interface *feels* like. Fifteen styles are available
+Before the palette, decide what the interface *feels* like. Twenty-two styles are available
 in `${CLAUDE_PLUGIN_ROOT}/registry/ui-styles.json`; exactly one skin is bound, optionally
 with one layout system alongside it.
 

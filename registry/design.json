@@ -5,7 +5,7 @@
     "order": [
       "1. Read an existing design system first. Tailwind config, CSS custom properties, a tokens file, a Figma export, or a component library already in the manifest. If one exists it is AUTHORITATIVE - extend it, never replace it.",
       "2. Read the brand if one is present - logo colours, marketing site, README banner, existing favicon.",
-      "3. Detect the domain from the request language, dependencies, model and route names.",
+      "3. Detect the domain from the request language, dependencies, model and route names. A domain binds only with two or more DISTINCT signal hits across those sources; with fewer, bind generic and say so - a palette chosen from one coincidental word is worse than a neutral one.",
       "4. Bind the domain profile below as the starting point.",
       "5. Generate the full token set from the seed, then VERIFY contrast programmatically before using any pair."
     ],
@@ -68,7 +68,6 @@
         "transaction",
         "wallet",
         "trading",
-        "portfolio",
         "stripe",
         "plaid",
         "accounting"
@@ -113,12 +112,8 @@
       "signals": [
         "cli",
         "sdk",
-        "api",
         "developer",
-        "deploy",
-        "pipeline",
         "terminal",
-        "repository",
         "compiler",
         "observability",
         "logs"
@@ -136,13 +131,11 @@
     {
       "id": "ecommerce",
       "signals": [
-        "product",
         "cart",
         "checkout",
         "catalog",
         "sku",
         "inventory",
-        "order",
         "shipping",
         "storefront",
         "shopify"
@@ -282,7 +275,6 @@
       "signals": [
         "portfolio",
         "gallery",
-        "design",
         "studio",
         "agency",
         "showcase",

@@ -1,4 +1,4 @@
-# Reference - The fifteen styles, as CSS
+# Reference - Style Recipes (CSS)
 
 Selection data and accessibility notes live in
 `${CLAUDE_PLUGIN_ROOT}/registry/ui-styles.json`. This is the code.
@@ -280,6 +280,191 @@ p  { font-family: system-ui; color: #2a1d12; }   /* darker than the era ever pri
 Period palettes fail contrast easily - keep the era hues for surfaces and ornament, and
 darken the text past what the decade actually used. The grain overlay sits *behind* text,
 never over it.
+
+---
+
+## The current generation
+
+### Liquid glass
+
+On Apple platforms, use the system material - in SwiftUI, the glass effect modifiers that
+arrived with iOS 26. It reacts to content, scroll and ambient light in ways CSS cannot
+reproduce. On the web, approximate it and say that it is an approximation:
+
+```css
+/* Chrome only - toolbars, tab bars, floating controls. Content stays on opaque surfaces. */
+.liquid-glass {
+  background: color-mix(in oklch, var(--surface) 55%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid color-mix(in oklch, white 22%, transparent);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 45%, transparent),   /* the specular edge */
+    inset 0 -1px 0 color-mix(in oklch, black 12%, transparent),
+    0 8px 24px color-mix(in oklch, black 18%, transparent);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .liquid-glass { background: var(--surface); }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .liquid-glass { background: var(--surface); backdrop-filter: none; border-color: var(--border-strong); }
+}
+```
+
+Body text never sits on the material. Same budget as glassmorphism: a few elements per
+viewport, and never an animated backdrop filter.
+
+### Swiss
+
+```css
+.swiss {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--space-6);
+  font-family: var(--font-sans);           /* one family: Inter, Helvetica Neue, a modern grotesk */
+}
+.swiss__title { grid-column: 1 / span 7; font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.swiss__meta  { grid-column: 9 / span 4; align-self: end; font-weight: 500; }   /* asymmetry inside the grid */
+.swiss__body  { grid-column: 3 / span 6; max-width: 70ch; text-align: start; hyphens: auto; }
+.swiss :where(*) { border-radius: 0; box-shadow: none; }
+
+@media (max-width: 40rem) {
+  .swiss > * { grid-column: 1 / -1; }      /* a minimum column width keeps ragged lines readable */
+}
+```
+
+Hierarchy comes from position and scale. Remove every colour: if the hierarchy goes with
+it, the layout is not Swiss.
+
+### Spatial
+
+The test first: does depth carry information a flat view could not? If not, flatten it.
+
+```css
+.scene { perspective: 1200px; }
+.layer { transform: translateZ(var(--z, 0)); transition: transform 400ms cubic-bezier(.2, .8, .2, 1); }
+.layer--near { --z: 60px; box-shadow: 0 30px 60px -20px color-mix(in oklch, black 35%, transparent); }
+.layer--far  { --z: -40px; opacity: .85; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene { perspective: none; }
+  .layer { transform: none; transition: none; }          /* flatten - do not merely slow */
+}
+```
+
+A WebGPU or Three.js canvas always ships with an equivalent non-visual path - the same
+data as a table or list in the DOM - and a 2D fallback where WebGPU is unavailable.
+
+### Generative UI
+
+The style is a contract more than a look. The agent chooses from a catalogue of
+pre-approved components and passes structured props; it never emits markup.
+
+```tsx
+const catalogue = { OrderSummary, FlightOptions, ConfirmDialog } as const;
+
+function renderSurface(surface: { component: string; props: unknown }) {
+  if (!(surface.component in catalogue)) return <Fallback />;              // unknown names fail closed
+  const Component = catalogue[surface.component as keyof typeof catalogue];
+  const props = schemas[surface.component].parse(surface.props);         // validated before render
+  return <Component {...props} />;
+}
+```
+
+```css
+.surface--generated { animation: settle 180ms ease-out; }
+@keyframes settle { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .surface--generated { animation: none; } }
+```
+
+Announce agent progress in a `role="status"` live region, and move focus deliberately to
+each new surface. Tight, structured cards where actions are irreversible; looser surfaces
+only where exploration is the point.
+
+### Aurora
+
+```css
+.aurora { position: relative; isolation: isolate; overflow: hidden; background: var(--ground-deep); }
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  filter: blur(80px);
+  animation: drift 12s ease-in-out infinite alternate;
+}
+.aurora::before {
+  background:
+    radial-gradient(40% 50% at 20% 30%, oklch(0.62 0.20 300 / .55), transparent 70%),
+    radial-gradient(35% 45% at 80% 20%, oklch(0.70 0.16 200 / .45), transparent 70%);
+}
+.aurora::after {
+  background: radial-gradient(45% 40% at 60% 80%, oklch(0.68 0.18 150 / .35), transparent 70%);
+  animation-duration: 16s;
+}
+@keyframes drift { to { transform: translate3d(4%, -3%, 0) scale(1.05); } }
+
+.aurora__panel { background: color-mix(in oklch, var(--surface) 88%, transparent); border-radius: 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before, .aurora::after { animation: none; }   /* freeze the motion, keep the colour */
+}
+```
+
+Text always sits on a panel - the gradient moves, so its contrast against any word moves
+with it. One aurora region per page.
+
+### Kinetic type
+
+```css
+.kinetic { font-family: var(--font-display-variable); font-variation-settings: "wght" 700; }
+
+@supports (animation-timeline: view()) {
+  .kinetic {
+    animation: rise linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 40%;
+  }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(0.4em); font-variation-settings: "wght" 300; }
+  to   { opacity: 1; transform: none; font-variation-settings: "wght" 700; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kinetic { animation: none; }                          /* the final state, immediately */
+}
+```
+
+When a phrase is split into per-letter spans for animation, the whole phrase keeps its
+accessible name: `aria-label` on the element, `aria-hidden="true"` on the spans. Display
+type only - body copy never moves.
+
+### Dark dense
+
+```css
+:root[data-theme="dark"] {
+  --surface-0: oklch(0.17 0.01 260);
+  --surface-1: oklch(0.21 0.01 260);   /* elevation lightens the surface; no shadows */
+  --surface-2: oklch(0.25 0.012 260);
+  --text: oklch(0.93 0.005 260);       /* not pure white on pure black */
+  --text-muted: oklch(0.72 0.01 260);
+  --positive: oklch(0.78 0.15 155);    /* tuned for a dark ground */
+  --negative: oklch(0.70 0.17 25);
+}
+.dense-table { font-size: 0.875rem; font-weight: 500; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.dense-table :is(td, th) { padding: 0.375rem 0.75rem; border-bottom: 1px solid var(--surface-2); }
+
+/* A second cue besides colour, with alternative text for screen readers. */
+.delta--up::before   { content: "▲ " / "up "; color: var(--positive); }
+.delta--down::before { content: "▼ " / "down "; color: var(--negative); }
+```
+
+Measure the dark theme on its own: a pair that passes on light often fails here.
 
 ---
 

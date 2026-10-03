@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "generated_by": "scripts/build_registry.py",
   "description": "Derived agent catalogue. Do not hand-edit. onestop uses role agents that specialise by loading language and concern packs, rather than one agent per language.",
-  "count": 23,
+  "count": 27,
   "by_phase": {
     "automation": [
       "app-automation-agent",
@@ -10,6 +10,9 @@
     ],
     "compliance": [
       "security-reviewer"
+    ],
+    "context": [
+      "stack-adapter"
     ],
     "design": [
       "a11y-agent",
@@ -25,7 +28,9 @@
     ],
     "implement": [
       "build-resolver",
+      "devops-agent",
       "docs-agent",
+      "implementer",
       "merge-coordinator",
       "performance-agent",
       "refactor-agent",
@@ -52,6 +57,9 @@
     "requirements": [
       "ba-analyst"
     ],
+    "research": [
+      "researcher"
+    ],
     "review": [
       "a11y-agent",
       "code-reviewer",
@@ -75,6 +83,9 @@
     "ui-design": [
       "ui-designer"
     ],
+    "upgrade-plan": [
+      "researcher"
+    ],
     "verify-green": [
       "build-resolver",
       "validator"
@@ -88,11 +99,11 @@
       "tools": [
         "Read",
         "Write",
-        "Edit",
         "Grep",
-        "Glob"
+        "Glob",
+        "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "design",
         "review"
@@ -108,9 +119,11 @@
         "Edit",
         "Bash",
         "Grep",
-        "Glob"
+        "Glob",
+        "mcp__plugin_onestop_playwright",
+        "mcp__plugin_onestop_chrome-devtools"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "automation",
         "test"
@@ -122,10 +135,13 @@
       "description": "Designs the structure of a change - module boundaries, data model, interface contracts, and the decisions worth recording as ADRs - scaled to blast radius rather than to ceremony. Use in the design phase.",
       "tools": [
         "Read",
+        "Write",
+        "Edit",
         "Grep",
-        "Glob"
+        "Glob",
+        "Bash"
       ],
-      "model": "opus",
+      "model": "inherit",
       "phases": [
         "design",
         "plan",
@@ -144,7 +160,7 @@
         "Glob",
         "Bash"
       ],
-      "model": "opus",
+      "model": "inherit",
       "phases": [
         "requirements"
       ]
@@ -161,7 +177,7 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "implement",
         "verify-green"
@@ -173,11 +189,12 @@
       "description": "Traces how something actually works by following real execution paths through the code, and reports the mechanism with file-level evidence. Read-only. Use in the discovery phase and for investigate intent.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "discovery",
         "reproduce"
@@ -189,11 +206,12 @@
       "description": "Reviews a change for correctness, clarity and maintainability, specialising to the languages in the diff by loading the language packs it is given. One reviewer that knows many languages rather than one agent per language - a diff spanning two languages loads both packs into a single review. Use in the review phase for every change.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "review"
       ]
@@ -209,7 +227,7 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "design"
       ]
@@ -220,13 +238,31 @@
       "description": "Reviews schema changes, migrations and queries for correctness, safety under deployment, and performance at real data volume. Bound automatically whenever the change surface touches migrations, schema or query files. Use in the review phase.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "review"
+      ]
+    },
+    {
+      "name": "devops-agent",
+      "path": "agents/devops-agent.md",
+      "description": "Changes how the project is built, tested and delivered - CI workflows, build scripts, container files, task-runner targets - in the CI system and tooling the repository already uses. Reproduces a CI failure locally before editing. Never deploys. Use as the coder for ops work and whenever CI wiring is in scope.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "inherit",
+      "phases": [
+        "implement"
       ]
     },
     {
@@ -235,11 +271,12 @@
       "description": "Searches a repository to answer a specific question about what already exists, so the orchestrator never asks the user something the code can answer. Returns found, gaps and options with file-level evidence. Use for every flow step and every non-trivial unit of work before planning.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "discovery"
       ]
@@ -256,9 +293,26 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "ship",
+        "implement"
+      ]
+    },
+    {
+      "name": "implementer",
+      "path": "agents/implementer.md",
+      "description": "Writes the production code that makes one failing test pass, for one task, inside its declared write surface, following the bound pattern and the repository's conventions, then proves it with the project's own build and test commands. Use in the implement phase after test-author has written the red test.",
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Grep",
+        "Glob"
+      ],
+      "model": "inherit",
+      "phases": [
         "implement"
       ]
     },
@@ -274,7 +328,7 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "implement"
       ]
@@ -288,7 +342,7 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "discovery",
         "design",
@@ -307,7 +361,7 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "measure",
         "implement",
@@ -320,10 +374,11 @@
       "description": "Turns a discovery picture into an ordered task list of thin vertical slices, each with observable acceptance criteria, the files it touches, and the test level that proves it. Produces the artifact approved at the plan gate. Use in the plan phase.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob"
       ],
-      "model": "opus",
+      "model": "inherit",
       "phases": [
         "plan"
       ]
@@ -340,7 +395,7 @@
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "qa-plan"
       ]
@@ -357,9 +412,29 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "implement"
+      ]
+    },
+    {
+      "name": "researcher",
+      "path": "agents/researcher.md",
+      "description": "Finds external facts a decision depends on - vendor documentation, current and available versions from the official registry, breaking changes between versions, package existence and advisories - verified on the day, never from memory. Runs the research phase and, in upgrade mode, the upgrade-plan phase. Use whenever a choice depends on facts outside the repository.",
+      "tools": [
+        "Read",
+        "Write",
+        "Grep",
+        "Glob",
+        "Bash",
+        "WebFetch",
+        "WebSearch",
+        "mcp__plugin_onestop_context7"
+      ],
+      "model": "inherit",
+      "phases": [
+        "research",
+        "upgrade-plan"
       ]
     },
     {
@@ -368,14 +443,31 @@
       "description": "Reviews a change for exploitable weaknesses - injection, authentication and authorization flaws, secret exposure, unsafe deserialization, SSRF, and insecure defaults. Mandatory whenever the change surface touches a security trigger, at every size tier. Use in the review phase.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "review",
         "compliance"
+      ]
+    },
+    {
+      "name": "stack-adapter",
+      "path": "agents/stack-adapter.md",
+      "description": "Runs first, at the context phase. Turns the engine's stack detection and resolved commands into the stack facts every later specialist reads - confirmed build, test and lint commands, conventions, test layout, package manager, CI system and versions in use - so no specialist re-derives them. Edits no project file. Use in the context phase.",
+      "tools": [
+        "Read",
+        "Write",
+        "Grep",
+        "Glob",
+        "Bash"
+      ],
+      "model": "inherit",
+      "phases": [
+        "context"
       ]
     },
     {
@@ -390,7 +482,7 @@
         "Grep",
         "Glob"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "reproduce",
         "implement",
@@ -409,7 +501,7 @@
         "Glob",
         "Bash"
       ],
-      "model": "opus",
+      "model": "inherit",
       "phases": [
         "ui-design",
         "design",
@@ -422,11 +514,12 @@
       "description": "Renders the final pass or fail verdict on a completed change - contract conformance, test correctness, coverage, standards, and whether every claim made about the work is actually true. The last check before the ship gate. Use at the end of the review phase.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "review",
         "verify-green",
@@ -443,9 +536,11 @@
         "Edit",
         "Bash",
         "Grep",
-        "Glob"
+        "Glob",
+        "mcp__plugin_onestop_playwright",
+        "mcp__plugin_onestop_chrome-devtools"
       ],
-      "model": "sonnet",
+      "model": "inherit",
       "phases": [
         "automation",
         "test"
@@ -457,11 +552,12 @@
       "description": "Converts an approved task list into an executable DAG with declared write surfaces, then groups the tasks into waves that can safely run in parallel. The single safety check that makes concurrent agents possible without corrupting files. Use after the plan phase, before implementation.",
       "tools": [
         "Read",
+        "Write",
         "Grep",
         "Glob",
         "Bash"
       ],
-      "model": "opus",
+      "model": "inherit",
       "phases": [
         "plan",
         "implement"

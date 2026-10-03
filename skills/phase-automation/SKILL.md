@@ -59,7 +59,7 @@ shows up as a failing test. Bind the structure too, from
 | Cypress | app actions with `cy.session` |
 | Selenium *(only if already present)* | page objects with explicit waits |
 | Detox, Espresso | robot pattern |
-| XCUITest, Appium, WinAppDriver | screen objects |
+| XCUITest, Appium, FlaUI, WinAppDriver | screen objects |
 | Maestro | composed YAML flows |
 
 Selection order: **a pattern already in the repo always wins**; otherwise the registry

@@ -15,7 +15,8 @@ explicit about environment and honest about what could not be run.
 
 1. **Detect first.** Scan for `.detoxrc*`, `.maestro/`, `androidTest/`, `UITests/`,
    `integration_test/`, `wdio.conf.js` with an Appium capability block, or a FlaUI or
-   WinAppDriver dependency. **An existing framework always wins.**
+   WinAppDriver package in a project file. **An existing framework always wins** - an
+   existing WinAppDriver suite keeps WinAppDriver, even though it is unmaintained.
 2. **No framework** - bind the stack default from `${CLAUDE_PLUGIN_ROOT}/registry/stacks.json`
    (`automation_frameworks.app`):
 
@@ -25,11 +26,11 @@ explicit about environment and honest about what could not be run.
    | Flutter | integration_test |
    | Android native or Compose | Espresso and UI Automator |
    | iOS SwiftUI or UIKit | XCUITest |
-   | Windows desktop | WinAppDriver with FlaUI |
+   | Windows desktop (WPF, WinForms, WinUI) | FlaUI (UIA3) - WinAppDriver has had no release since 2020 |
 
 3. **Bind the pattern too** from `${CLAUDE_PLUGIN_ROOT}/registry/patterns.json`
    (`automation_patterns.app`). Detox and Espresso -> **robot pattern**; XCUITest,
-   Appium and WinAppDriver -> **screen objects**; Maestro -> **composed YAML flows**;
+   Appium, FlaUI and WinAppDriver -> **screen objects**; Maestro -> **composed YAML flows**;
    Flutter -> **page objects over `WidgetTester`**. A pattern already in the repo always
    wins. State both bindings in one line.
 

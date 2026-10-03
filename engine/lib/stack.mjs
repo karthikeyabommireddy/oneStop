@@ -86,10 +86,47 @@ function npmDeps(root, comp) {
   } catch { return new Set(); }
 }
 
+// A nested list is "any one of these" - rspec or rspec-rails, either vitest coverage provider.
 function depHit(dep, text, npm) {
+  if (Array.isArray(dep)) return dep.some((d) => depHit(d, text, npm));
   if (npm.has(dep)) return true;
   const esc = dep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`(^|[^A-Za-z0-9_.@/-])${esc}([^A-Za-z0-9_-]|$)`, 'im').test(text);
+}
+
+// onestop.yml `stack.components` is the user's word. A declared component replaces the
+// detected one at the same path, or is added; whatever it leaves out keeps the detected
+// value, else the registry's value for its first stack.
+function applyDeclared(root, components, existing) {
+  const declared = effectiveSettings(root).declared_stack;
+  const list = Array.isArray(declared?.components) ? declared.components : [];
+  if (!list.length) return;
+  const byId = Object.fromEntries(registry('stacks').stacks.map((s) => [s.id, s]));
+  const strings = (v) => (Array.isArray(v) ? v.map(String) : null);
+  for (const d of list) {
+    if (!d || typeof d !== 'object') continue;
+    const at = String(d.path || '.').replace(/^\.\/+/, '').replace(/\/+$/, '') || '.';
+    const prior = components.find((c) => c.path === at);
+    const named = (strings(d.stacks) || []).filter((id) => byId[id]);
+    const ids = named.length ? named : prior ? prior.stacks.map((s) => s.id) : ['generic'];
+    const fromRegistry = (field) => ids.map((id) => byId[id][field]).find(Boolean) || null;
+    const comp = {
+      path: at,
+      primary: ids[0],
+      stacks: ids.map((id) => ({ id, score: 1, evidence: ['declared in onestop.yml'] })),
+      packs: strings(d.packs) || [...new Set(ids.flatMap((id) => byId[id].packs || []))],
+      concern_packs: strings(d.concerns) || [...new Set(ids.flatMap((id) => byId[id].concern_packs || []))],
+      web_automation: d.web_automation ?? prior?.web_automation ?? fromRegistry('web_automation'),
+      app_automation: d.app_automation ?? prior?.app_automation ?? fromRegistry('app_automation'),
+      declared: true,
+    };
+    for (const target of ['web', 'app']) {
+      const found = existing.find((e) => e.target === target);
+      if (found && comp[`${target}_automation`] && d[`${target}_automation`] === undefined) comp[`${target}_automation`] = found.framework;
+    }
+    if (prior) components.splice(components.indexOf(prior), 1, comp);
+    else components.push(comp);
+  }
 }
 
 export function detectStack(root) {
@@ -113,7 +150,13 @@ export function detectStack(root) {
       }
     }
   }
-  const sourceFiles = files.filter((f) => allExts.has(extOf(f)));
+  // A marker several stacks claim (build.gradle.kts: Java and Kotlin) names the family,
+  // not the stack, so its weight is shared and the source files decide.
+  const claims = new Map();
+  for (const s of reg.stacks) for (const m of s.markers || []) claims.set(m, (claims.get(m) || 0) + 1);
+  // Build scripts are configuration, not product source: a Java project's build.gradle.kts
+  // must not count as Kotlin code in the census.
+  const sourceFiles = files.filter((f) => allExts.has(extOf(f)) && !/\.gradle\.kts$/i.test(f));
   const greenfield = hits.size === 0 && sourceFiles.length === 0 && files.filter((f) => !NOT_SOURCE.test(path.posix.basename(f)) && !f.startsWith('docs/')).length === 0;
   if (!hits.size && sourceFiles.length) hits.set('.', new Map());
 
@@ -131,7 +174,10 @@ export function detectStack(root) {
       const evidence = [];
       let score = 0;
       const strong = hits.get(comp).get(s.id) || [];
-      if (strong.length) { score += 1.0; evidence.push(`marker ${strong.join(', ')}`); }
+      if (strong.length) {
+        score += Math.max(...strong.map((m) => 1 / (claims.get(m) || 1)));
+        evidence.push(`marker ${strong.join(', ')}`);
+      }
       const exts = new Set(s.extensions || []);
       const share = mine.length ? mine.filter((f) => exts.has(extOf(f))).length / mine.length : 0;
       const weak = (s.weak_markers || []).filter((m) => files.some((f) => markerMatcher(m)(f) && owner(f) === comp));
@@ -183,7 +229,10 @@ export function detectStack(root) {
   const existing = [];
   for (const [target, list] of [['web', reg.automation_frameworks.web], ['app', reg.automation_frameworks.app]]) {
     for (const fw of list) {
-      const found = (fw.markers || []).filter((m) => files.some((f) => markerMatcher(m)(f)) || [...hits.keys()].some((c) => npmDeps(root, c).has(m)));
+      // A file marker, or a package in any manifest - FlaUI in a .csproj is as real as
+      // @playwright/test in package.json.
+      const found = (fw.markers || []).filter((m) => files.some((f) => markerMatcher(m)(f))
+        || [...hits.keys()].some((c) => depHit(m, manifestText(root, files, c), npmDeps(root, c))));
       if (found.length) existing.push({ target, framework: fw.id, evidence: found });
     }
   }
@@ -193,6 +242,8 @@ export function detectStack(root) {
     if (web && c.web_automation) c.web_automation = web.framework;
     if (app && c.app_automation) c.app_automation = app.framework;
   }
+
+  applyDeclared(root, components, existing);
 
   return {
     ok: true,
@@ -330,12 +381,23 @@ function taskRunnerCommands(root, files, comp) {
 
 // A registry default is used only when everything it needs is already in the project.
 // Installing a runner to make a default work is a new dependency - the user's call.
+// {x} is the package runner the lockfile implies, {py} the virtualenv runner, {pm} the
+// package manager - so a default runs the way the project runs everything else.
+function fillPlaceholders(root, comp, cmd) {
+  const at = (f) => fs.existsSync(path.join(root, comp === '.' ? f : `${comp}/${f}`)) || fs.existsSync(path.join(root, f));
+  const { pm } = packageManager(root, comp);
+  const x = { npm: 'npx', pnpm: 'pnpm exec', yarn: 'yarn', bun: 'bunx' }[pm] || 'npx';
+  const py = at('uv.lock') ? 'uv run ' : at('poetry.lock') ? 'poetry run ' : '';
+  return cmd.replace(/\{x\}/g, x).replace(/\{py\}/g, py).replace(/\{pm\}/g, pm);
+}
+
 function stackDefaults(root, files, comp, stackId) {
   const s = registry('stacks').stacks.find((x) => x.id === stackId);
   if (!s) return { resolved: {}, candidates: {} };
   const defaults = { ...(s.commands_default || {}) };
   if (!defaults.test && s.test_runner?.default) defaults.test = s.test_runner.default;
   if (!defaults.coverage && s.coverage_cmd) defaults.coverage = s.coverage_cmd;
+  for (const [name, cmd] of Object.entries(defaults)) if (cmd) defaults[name] = fillPlaceholders(root, comp, cmd);
   const text = manifestText(root, files, comp);
   const npm = npmDeps(root, comp);
   const resolved = {};
@@ -347,7 +409,7 @@ function stackDefaults(root, files, comp, stackId) {
     if (missing.length || !s.requires) {
       candidates[name] = { cmd, missing: missing.length ? missing : ['not verified - this stack declares no requirements'] };
     } else {
-      resolved[name] = { cmd, source: `registry default for ${stackId} (requirements present: ${needs.join(', ') || 'toolchain only'})` };
+      resolved[name] = { cmd, source: `registry default for ${stackId} (requirements present: ${needs.map((d) => [].concat(d).join(' or ')).join(', ') || 'toolchain only'})` };
     }
   }
   return { resolved, candidates };
@@ -375,11 +437,15 @@ export function resolveCommands(root, { detection } = {}) {
     const tr = taskRunnerCommands(root, files, comp);
     for (const name of COMMAND_NAMES) if (!commands[name] && tr[name]) commands[name] = { ...tr[name], confidence: 'task-runner' };
   }
+  // Every bound stack may supply a default - a React component is also TypeScript, and a
+  // Django one also Python - first resolvable default wins.
   for (const c of det.components) {
-    const d = stackDefaults(root, files, c.path, c.primary);
-    for (const name of COMMAND_NAMES) {
-      if (!commands[name] && d.resolved[name]) commands[name] = { ...d.resolved[name], confidence: 'stack-default' };
-      else if (!commands[name] && d.candidates[name]) (candidates[name] ||= []).push({ component: c.path, ...d.candidates[name] });
+    for (const s of c.stacks) {
+      const d = stackDefaults(root, files, c.path, s.id);
+      for (const name of COMMAND_NAMES) {
+        if (!commands[name] && d.resolved[name]) commands[name] = { ...d.resolved[name], confidence: 'stack-default' };
+        else if (!commands[name] && d.candidates[name]) (candidates[name] ||= []).push({ component: c.path, ...d.candidates[name] });
+      }
     }
   }
   const compiled = det.components.some((c) => COMPILED.has(c.primary));

@@ -36,12 +36,14 @@ Bind the profile, and state it in one line: the domain, the seed hue, and the de
 ## Bind the Style
 
 The domain tells you the palette. It also tells you the **style** - what the interface
-feels like and how it is built. Fifteen are available in
+feels like and how it is built. Twenty-two are available in
 `${CLAUDE_PLUGIN_ROOT}/registry/ui-styles.json`; bind exactly one skin, optionally with
 one layout system (`bento` or `editorial`) alongside it.
 
-Derive, never ask. Score on domain, audience, session length and the stakes of a
-mistake. Three rules are absolute:
+If `onestop.yml` at the repository root sets `style:` (a `skin`, optionally a `layout`),
+that is the user's choice: bind it and say so - the rules below still apply to how it is
+built. Otherwise derive, never ask. Score on domain, audience, session length and the
+stakes of a mistake. Three rules are absolute:
 
 1. **`domain_fit.never` is a hard exclusion.** Cyberpunk does not get bound for a
    healthcare product because it would look good. It would not look good - it would look

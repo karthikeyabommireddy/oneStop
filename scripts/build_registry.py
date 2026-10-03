@@ -55,7 +55,7 @@ def collect_agents():
             "path": "agents/" + fn,
             "description": fm.get("description", ""),
             "tools": [t.strip() for t in fm.get("tools", "").split(",") if t.strip()],
-            "model": fm.get("model", "sonnet"),
+            "model": fm.get("model", "inherit"),
             "phases": phases or ["implement"],
         })
     return agents
@@ -85,11 +85,16 @@ def collect_skills():
         if not os.path.isfile(p):
             continue
         fm = parse_frontmatter(p) or {}
+        # Skills keep phase under metadata:, which the top-level parser does not see.
+        phase = fm.get("phase", "")
+        if not phase:
+            m = re.search(r"^\s+phase:\s*(\S+)", open(p, encoding="utf-8").read(), re.M)
+            phase = m.group(1) if m else ""
         skills.append({
             "name": fm.get("name", name),
             "path": "skills/" + name + "/SKILL.md",
             "description": fm.get("description", ""),
-            "phase": fm.get("phase", ""),
+            "phase": phase,
         })
     return skills
 
