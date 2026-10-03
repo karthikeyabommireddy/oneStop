@@ -1,34 +1,125 @@
 # onestop
 
-**One stop, one command, whole lifecycle.**
+**One command, the whole lifecycle.**
 
-Describe what you want in plain language. onestop classifies the intent, searches your
-codebase, binds the right specialists, and drives plan, design, code, test, web and app
-end-to-end automation, review and ship.
+Describe what you want in plain language. onestop works out what kind of task it is,
+plans the phases, and runs them one at a time with the right specialist for each -
+requirements, design, code, tests, web and app automation, review, ship - stopping at
+every phase for your approval.
 
-You never pick an agent. You never pick a skill. You never pick a phase.
+You never pick an agent, a skill or a phase. You do approve every gate, choose every
+technology and version, and decide what reaches git.
 
 ```
-/onestop "user signs in with Google, lands on the dashboard, sees their recent orders"
+/onestop "a user signs in with Google, lands on the dashboard and sees their recent orders"
 ```
 
 ---
 
+## How it is built
+
+**The orchestrator decides, code enforces the rules, you approve.**
+
+```
+                                   you
+            approve gates · choose technologies and versions · own git
+                                    │
+                                    ▼
+   ┌──────────────────────┐   tool calls   ┌────────────────────────────────────┐
+   │     orchestrator     │ ─────────────► │  pipeline engine  (MCP server)      │
+   │ plans · delegates ·  │ ◄───────────── │  ledger · gates · budgets · briefs  │
+   │ explains · asks      │                │  commands · checkpoints · undo      │
+   └──────────┬───────────┘                └─────────────────▲──────────────────┘
+      brief   │   ▲  REPORT (≤ 25 lines)                      │
+              ▼   │                                           │
+   ┌──────────────────────────────────┐           ┌──────────┴─────────────────┐
+   │ 27 specialists, each in its own  │ ────────► │ hooks: command guard,      │
+   │ context: one task, one report    │   tools   │ write guard, report capture│
+   └──────────────────────────────────┘           └────────────────────────────┘
+```
+
+- **The orchestrator is the hub.** It never does a phase's work. It asks the engine what
+  the phase needs, dispatches the specialists, reads their short reports, and puts the
+  gate to you. Its context holds reports, not file bodies - which keeps a fifteen-phase
+  run inside one conversation.
+- **Specialists are the spokes.** Each starts with an empty context and a brief built by
+  the engine: one task, the stack facts, the resolved commands, its write surface, the
+  safety rules, and the exact report to return. It cannot talk to you or dispatch anyone;
+  a decision only you can make comes back as an open question.
+- **The engine holds the state and refuses what is out of order.** It is the only writer
+  of the run ledger. A phase cannot start before the previous gate is answered,
+  implementation cannot start before the gate that authorises it, and a fix loop stops
+  when its budget is spent.
+- **Hooks enforce what prose cannot.** Destructive git, recursive deletes, publishes,
+  deploys, downloads piped to a shell, unapproved dependencies, and any commit or push you
+  did not choose are refused. Read-only specialists can write only their own reports. Every
+  specialist's report is captured the moment it finishes.
+
+Full mapping of each component: [docs/architecture.md](docs/architecture.md). Why each
+rule exists: [docs/design-rationale.md](docs/design-rationale.md).
+
+## What you can ask for
+
+onestop classifies the request itself and shows its reading at gate zero, where one
+answer corrects it.
+
+| Kind of work | Example request |
+|---|---|
+| A new capability | `add CSV export to the reports page` |
+| A narrated user journey | `a user signs in with Google, lands on the dashboard and sees their recent orders` |
+| Something broken | `checkout returns a 500 when the cart is empty` |
+| Different behaviour | `make the session timeout 30 minutes instead of 15` |
+| Better structure, same behaviour | `split the 900-line OrderService into smaller services without changing behaviour` |
+| A new project | `build a todo API with user accounts` (in an empty folder) |
+| A dependency upgrade | `upgrade React to the next major version` |
+| A review | `review PR #142` |
+| Tests or automation | `add tests for the billing module` |
+| Architecture only | `design the notification centre` |
+| An explanation | `how does the permission check reach the database?` |
+| Something slow | `the search endpoint takes 4 seconds - make it fast` |
+| Security | `audit the login and password-reset flow` |
+| CI and operations | `the CI build fails on Windows only` |
+| Documentation | `document the public API` |
+
+A request can also be a ticket key, an issue or PR URL, or a path to a spec.
+
+## Gates
+
+Every phase boundary is a gate: what the phase produced, what it left for you to decide,
+what comes next and who does it, and a recommendation. You continue, skip, adjust, or
+stop.
+
+```
+PROGRESS   ✓intake ✓context ✓requirements ✓discovery ✓research ⏸design ·ui-design ·plan ·implement ·test ·review ·ship
+JUST DID   design - modules, the redirect contract (302/410/404) -> docs/design/short-links/
+NEXT       ui-design - ui-designer binds the domain palette and style
+RECOMMEND  Continue. The contract is settled, so implement can build both sides at once.
+```
+
+| `gate_mode` | Stops at |
+|---|---|
+| `every-phase` (default) | every phase boundary |
+| `milestone` | gate zero, the gate that authorises implementation, design, implement, ship |
+| `autonomous` | gate zero and ship |
+
+**In every mode** the run also stops at a blocked phase and at any phase that left a
+decision only you can make - a technology, a version, a dependency, an unknown command.
+A mode decides how often you approve; it never lets onestop decide for you.
+
+**Implementation is authorised by exactly one gate:** the plan for features, the failing
+regression test for defects, the green baseline for refactors, your choice of target
+version for upgrades. **Nothing reaches git until the ship gate**, where you choose:
+commit locally (recommended) · commit and push · commit, push and open a pull request ·
+leave uncommitted. onestop never pushes to your default branch, never force-pushes, and
+never merges.
+
 ## The Asking Contract
 
-This is the rule the whole plugin is built around.
-
-**It asks you only when:**
-
-1. **Information is genuinely missing** and guessing wrong would produce wrong work.
-2. **Discovery found two or more real options** that lead to materially different work.
-
-**It never asks when:** it has not searched yet, only one option is viable, the repo
-already demonstrates a convention, a professional default exists, or it just wants
-permission to continue.
-
-When it does ask, it asks once per phase, with evidence, ranked, with a recommendation
-and a default - so `go` is always a valid answer.
+onestop asks only when **information is genuinely missing**, or when **discovery found
+two or more real options** that lead to materially different work - and always for
+technology and version choices. It never asks before searching the repository, never when
+only one option is viable, and never when the repository already shows the convention.
+When it asks, it asks once per phase, with the evidence and a recommended default.
 
 ```
 Step 1 - Google OAuth sign-in. Three viable paths found:
@@ -38,376 +129,217 @@ Step 1 - Google OAuth sign-in. Three viable paths found:
      Adding the Google provider is ~15 lines, one env pair, zero new deps.
 
   B. Add Auth.js v5 alongside
-     Newer API, but next-auth v4 is pinned at package.json:31 and the
-     migration touches every call site in src/app/api/auth/.
+     next-auth v4 is pinned at package.json:31; the migration touches every
+     call site in src/app/api/auth/.
 
   C. Hand-rolled OAuth against googleapis
      Full control, but you own token refresh, PKCE and session rotation.
 ```
 
-## How a run works
+## Specialists and packs
 
-```
-   your request
-        |
-   [ classify ]   14 intents, 4 size tiers - automatic, never asked
-        |
-   [ decompose ]  narrated flows split into steps, each independently verified
-        |
-   [ discover ]   one scout per step, in parallel - searches before asking anything
-        |
-   [ broker ]     7-test cascade resolves what it can; only the rest reaches you
-        |
-   [ bind ]       role agents + language packs, from your detected stack
-        |
-   [ partition ]  task DAG + write surfaces -> waves that can run concurrently
-        |
-   [ phases ]     plan -> design -> implement -> test -> automation -> review -> ship
-                     |       |          |        |         |          |       |
-                   gate    gate       gate     gate      gate       gate    gate
-```
+onestop separates **role** from **knowledge**: 27 role agents define how to plan, build,
+review or test; 29 packs define what is true about a language or a concern. One
+`code-reviewer` loads the TypeScript and Python packs into a single review of a diff that
+spans both. Adding a language is one pack file.
 
-**Every phase boundary is a gate** - the run stops, shows what it did and what comes
-next, and you approve, skip, adjust or stop. Two of them carry extra force: no
-implementation exists before the **plan gate**, and nothing is committed, pushed or
-published before the **ship gate**, which stops in every mode at every tier.
-
-Prefer fewer interruptions? `gate_mode` takes `milestone` (plan, design, implement,
-ship) or `autonomous` (ship only). The mode changes which boundaries stop; it never
-changes what a gate shows, and it never turns off the narration in between.
-
-## Role agents and knowledge packs
-
-Most agent catalogues ship one reviewer per language - sixteen near-identical files that
-drift apart as they are maintained. onestop separates **role** from **knowledge**:
-
-- **23 role agents** define *how* to review, plan, test, refactor, or resolve a build.
-- **29 packs** define *what* is true about a language or a concern.
-
-A role agent loads the packs the detected stack names and applies them on top of its own
-contract. One `code-reviewer` knows every language onestop has a pack for, and a diff
-spanning TypeScript and Python loads both packs into a **single** review rather than
-running two agents that each see half the change.
-
-```
-django project  ->  code-reviewer + packs[python, django] + concerns[security, data]
-react + RN app  ->  code-reviewer + packs[typescript, react, react-native]
-                    + concerns[accessibility]
-```
-
-Adding a language means adding one pack file, not another sixteen-file agent.
-A language with no pack falls back to `packs/languages/generic.md` - an unrecognised
-stack is never a blocker.
-
-**The role agents**
-
-| Phase | Agents |
+| Phase | Specialists |
 |---|---|
-| requirements | `ba-analyst` |
-| discovery | `discovery-scout`, `code-explorer`, `option-broker` |
-| design | `architect`, `contract-agent`, `a11y-agent` |
+| context | `stack-adapter` |
+| requirements, flow decomposition | `ba-analyst` |
+| discovery | `discovery-scout` (one per unit), `code-explorer`, `option-broker` |
+| research, upgrade plan | `researcher` |
+| design, scaffold | `architect`, `contract-agent`, `a11y-agent` |
 | ui-design | `ui-designer`, `a11y-agent` |
 | plan | `planner`, `work-partitioner` |
-| implement | `test-author`, `build-resolver`, `refactor-agent`, `performance-agent`, `merge-coordinator` |
-| test, qa-plan | `test-author`, `qa-planner` |
-| automation | `web-automation-agent`, `app-automation-agent` |
-| review | `code-reviewer`, `security-reviewer`, `data-reviewer`, `validator` |
-| ship | `docs-agent` |
+| implement | `implementer`, `test-author`, `build-resolver`, `merge-coordinator`; `refactor-agent`, `performance-agent`, `devops-agent` by intent |
+| test, automation, qa-plan | `test-author`, `web-automation-agent`, `app-automation-agent`, `qa-planner` |
+| review, compliance | `code-reviewer`, `security-reviewer`, `data-reviewer`, `a11y-agent`, `performance-agent`, `validator` |
+| ship | `docs-agent`, `validator` |
 
-Full map, with what each phase hands on: `skills/shared/agent-flow.md`.
+Reviewers bind by evidence, never by choice: the security reviewer when the change
+touched a security surface, the data reviewer when migrations or queries changed, the
+accessibility reviewer when UI changed. Full map: [skills/shared/agent-flow.md](skills/shared/agent-flow.md).
 
-## Parallel execution
+**Implementation runs as a development loop per module** - failing test, code, build,
+review, test - and on failure fix and rework, up to a budget (three iterations, three
+build fixes per root cause). Independent modules run as parallel lanes whose write
+surfaces cannot overlap, joined and verified after each wave.
 
-Independent work runs at the same time. The binding constraint is never the dependency
-graph - it is the **write surface**, because two agents editing one file corrupt it in a
-way that looks plausible.
+## Your stack, your commands
 
-```
-partition  ->  wave 1 (5 lanes, one message)  ->  join + verify
-           ->  wave 2 (2 lanes, one message)  ->  join + verify  ->  ...
-```
+24 stacks are detected from marker files, manifests and source files. The commands every
+specialist uses come from your project, in this order:
 
-`work-partitioner` resolves each task's *true* write surface - including the registration
-and barrel files a plan never mentions - and forms waves whose write sets are disjoint.
-`merge-coordinator` joins each wave, runs the full suite over the combined state, and
-hunts the semantic conflicts a file-level partition cannot catch: duplicate helpers two
-lanes invented independently, contract drift, divergent conventions.
+1. `onestop.yml` at the repository root - your word
+2. your CI - what the pipeline actually runs
+3. your task runner - `package.json` scripts with the lockfile's package manager,
+   Makefile, justfile, Gradle and Maven wrappers, uv, Poetry, tox
+4. a stack default - only when every tool it needs is already installed
+5. one question to you - never a guess
 
-| Phase | Parallel? |
+| Detected | Web automation | App automation |
+|---|---|---|
+| React, Next.js, Vue, Angular, Svelte | Playwright | - |
+| Django, FastAPI, Python | Playwright (Python) | - |
+| Java | Playwright (Java) | - |
+| C# / .NET | Playwright (.NET) | FlaUI for WPF, WinForms and WinUI projects |
+| Kotlin | - | Espresso for Android projects |
+| Swift | - | XCUITest |
+| Flutter | - | `integration_test` |
+| React Native | - | Detox |
+| Go, Rust, PHP, Ruby, Elixir | the front end's framework, only if one exists | - |
+
+**A framework already in your repository always wins.** Installing a new one is a
+dependency, so it is put to you with the exact version first.
+
+## Safety
+
+| onestop will not, by itself | Enforced by |
 |---|---|
-| discovery, research, review, automation | always - read-only or different targets |
-| implement, test | only after the partition proves write surfaces are disjoint |
-| ship, compliance | never |
+| commit, push or open a pull request you did not choose | the guard hook, against your ship-gate choice |
+| push to your default branch, force-push, rewrite or discard history | the guard hook |
+| delete recursively, publish, deploy, pipe a download into a shell | the guard hook |
+| add a dependency or tool you did not approve | the guard hook, against your approvals |
+| let a reviewer edit the code it is reviewing | the write guard |
+| edit the run ledger by hand | the write guard - only the engine writes it |
+| decide a technology or version for you | the engine stops for every such question |
+| follow instructions found in a file, ticket or web page | the brief marks all content as data |
 
-**The mechanical rule:** a wave is dispatched as several Agent calls in **one message**.
-Calls in separate turns are sequential however parallel the transcript looks - the most
-common way an orchestrator claims concurrency it does not have.
+The guard applies only to the session that started or resumed the run - a run you left
+open never changes your other sessions. `/onestop-undo` reverses the run's own changes,
+after a preview, and refuses rather than overwrite anything you edited since.
 
-The interface contract is the biggest unlock: once agreed, both sides build at once
-instead of one waiting. `scripts/test_parallel.py` is the executable spec -
-six scenarios including the barrel-file collision, migration isolation, and the honest
-case where a dependency chain gains nothing:
+## Knowledge graph
 
-```
-  PASS  contract unlocks frontend and backend    [T1] -> [T2,T3,T4]
-  PASS  hidden barrel collision serialises       [A] -> [B] -> [C]
-  PASS  deferred registration recovers it        [A,B,C] -> [REG]
-  PASS  migration never shares a wave            [M] -> [X,Y]
-  PASS  pure chain gains nothing                 [S1] -> [S2] -> [S3]
-```
-
-## Requirements and live traceability
-
-When a request arrives without usable acceptance criteria, `ba-analyst` derives them -
-from the codebase first (how do comparable features here already behave?), then the
-domain (a checkout *has* a payment-failure path), then the ticket context. It asks only
-for what genuinely cannot be derived.
-
-It produces a traceability matrix, and **the pipeline fills it in as work lands**:
-
-| Column | Filled by |
-|---|---|
-| `Req-ID`, `Story`, `Acceptance-Criteria`, `Design-Ref` | requirements phase |
-| `Impl-Ref` | implement phase, as each slice lands |
-| `Test-Ref` | test and automation phases, as coverage arrives |
-| verified against reality | `validator`, before the ship gate |
-
-So the matrix is a live coverage report rather than a document that goes stale in a
-sprint. The number it exists to surface is the one that usually disappears: requirements
-with **no test of any kind**.
-
-`qa-planner` then drafts the manual test plan - documents only, never test code, with
-concrete test data creation steps runnable by a stranger - and reports automated coverage
-gaps back rather than papering over them with manual cases.
-
-## The knowledge graph
-
-onestop keeps a structural map of your repository so phases ask *where* something is
-instead of reading the codebase to find out. Built by
-[graphify](https://pypi.org/project/graphifyy/), driven through `scripts/kg.sh`.
+With [graphify](https://pypi.org/project/graphifyy/) installed, onestop keeps a structural
+map of the repository so specialists ask *where* something is instead of reading the
+codebase to find it.
 
 ```bash
-pip install graphifyy==0.9.16     # the whole setup
+pip install graphifyy==0.9.16
 ```
 
-| When | What happens | Cost |
-|---|---|---|
-| First run in a repo | full build + report | slow, once |
-| Every turn that changed source | `graphify update` via the `Stop` hook | **~1s, no LLM** |
-| A phase needs to locate something | `kg.sh explain` / `kg.sh path` | instant |
-
-Each edit appends to `.onestop/kg-dirty`; the Stop hook does **one** refresh per turn,
-not one per edit, and skips non-source files. Discovery queries the graph before it
-greps, and reads only the files the graph pointed at.
-
-The graph is **structural truth, not behavioural truth** - an edge means a call exists,
-not that it runs or is correct. It cannot see dynamic dispatch or string routing, so
-onestop never concludes code is unused from the graph alone.
-
-No graphify installed? It says so once and reads files directly. Slower, still correct.
-Full detail in [docs/knowledge-graph.md](docs/knowledge-graph.md).
+The graph is built **code-only - local AST extraction, nothing leaves your machine**.
+graphify's semantic mode sends repository text to whichever LLM provider it finds a key
+for; onestop uses it only if you set `ONESTOP_KG_SEMANTIC=1`. The graph refreshes in the
+background after each turn that changed code. Without graphify, everything still works -
+specialists read files directly. Details: [docs/knowledge-graph.md](docs/knowledge-graph.md).
 
 ## Design direction
 
-When a change touches UI, a `ui-design` phase runs **before** any component is written,
-because retrofitting a design system means touching every component - which is why it
-usually never happens.
-
-**Colour follows the domain.** A palette that fights its domain reads as untrustworthy
-before anyone can say why: a clinical product in neon feels unsafe, a developer tool in
-pastel feels like a toy. onestop detects the domain and binds one of 11 profiles:
-
-| Domain | Hue | Density | Motion | Defining constraint |
-|---|---|---|---|---|
-| fintech | deep blue / forest green | compact | minimal | one accent only; tabular figures |
-| healthcare | teal / soft blue | comfortable | minimal | red reserved **entirely** for clinical alerts |
-| devtools | indigo / cyan | compact | fast | dark-first; syntax is a separate scale |
-| ecommerce | neutral canvas | comfortable | moderate | CTA colour used for nothing else |
-| enterprise | neutral blue | compact | minimal | interface recedes, data is the content |
-| media | dark, one accent | comfortable | expressive | never pure black behind video |
-| education | warm blue / green | comfortable | moderate | "incorrect" informs, never punishes |
-| social | neutral chrome | comfortable | expressive | chrome must host any user content |
-| logistics | status-led | compact | minimal | readable in greyscale and sunlight |
-| creative | monochrome | spacious | expressive | typography and whitespace carry it |
-| generic | neutral blue | comfortable | moderate | defensible defaults, stated as such |
-
-Palettes are built in **OKLCH** (perceptually uniform, so ramp steps look evenly spaced -
-HSL ramps always have a muddy middle), named **by role not by hue**
-(`--color-danger`, never `--color-red-500`), and **contrast-verified programmatically**
-before use. A palette that looks good and fails contrast is a redesign scheduled for
-later.
-
-Dark mode is designed, not inverted: elevation gets *lighter* rather than gaining a
-shadow, accents lose chroma, and the base is never pure black.
-
-An existing design system always wins - onestop extends it rather than replacing it.
-Full detail in [docs/design-system.md](docs/design-system.md).
-
-## Intents
-
-The router scores your request against 14 intents and runs that intent phase mask.
-
-| Intent | When | Distinctive first move |
-|---|---|---|
-| `feature` | capability does not exist | research prior art before designing |
-| `flow` | you narrate a journey | decompose, then discover **per step** |
-| `defect` | something is broken | reproduce as a failing test first |
-| `change` | works, but should differ | update tests to the new spec first |
-| `refactor` | structure improves, behavior stays | prove the suite is green first |
-| `mvp` | bootstrap from nothing or a spec | vertical slices, never layers |
-| `review` | assess a diff or PR | bind every reviewer the diff triggers |
-| `test` | coverage or automation work | measure current coverage first |
-| `design` | architecture only | map what exists before proposing |
-| `investigate` | explain how it works | trace real paths, never assume |
-| `perf` | something is slow | baseline and profile before optimizing |
-| `security` | hardening or vulnerabilities | enumerate the attack surface |
-| `ops` | CI, deploy, infra | reproduce locally before editing CI |
-| `docs` | documentation | read the source of truth |
-
-Size tiers - `trivial`, `small`, `standard`, `large` - decide which phases are skipped
-or forced, so a one-line change does not get a full architecture document. Security
-triggers and public contract changes escalate the tier automatically.
-
-## Automatic stack binding
-
-24 stacks are detected from marker files and lockfiles. Each binds its packs, test
-runner, coverage command and automation frameworks with no input from you:
-
-| Detected | Packs | Web automation | App automation |
-|---|---|---|---|
-| React / Next.js | typescript, react | Playwright | - |
-| Vue / Nuxt | typescript, vue | Playwright | - |
-| Django | python, django | Playwright (Python) | - |
-| FastAPI | python, fastapi | Playwright (Python) | - |
-| Go | go | Playwright | - |
-| Rust | rust | Playwright | - |
-| Java | java | Playwright (Java) | - |
-| Kotlin / Android | kotlin | - | Espresso |
-| Swift / iOS | swift | - | XCUITest |
-| Flutter | dart | Playwright | `integration_test` |
-| React Native | typescript, react, react-native | - | Detox |
-| C# / .NET | csharp | Playwright (.NET) | WinAppDriver |
-
-Plus TypeScript, Python, C/C++, PHP/Laravel, F#, PyTorch/ML, SQL, and a generic fallback.
-
-**A framework already in your repo always wins over the default.** onestop never
-installs a second Playwright next to your Cypress.
-
-## Web and app automation
-
-A repo with both a web front end and a mobile client gets **both** suites. That is two
-targets, not a choice.
-
-Every automated journey covers the happy path plus the states the narration skipped -
-loading, empty, error, unauthorised - and on app targets also permissions, offline,
-cold start versus warm resume, and back-navigation.
-
-Two rules keep the suites trustworthy: **never automate a step discovery could not
-locate in the code** (report the gap instead), and **never weaken an assertion to stop
-a flake** (diagnose the cause, or quarantine with a written reason).
+When a change touches UI, a ui-design phase runs before any component is written. The
+domain decides the palette - a clinical product in neon reads as unsafe, a developer tool
+in pastel as a toy - from 11 domain profiles, built in OKLCH, named by role, with every
+contrast pair measured. The domain and audience also decide the style, from 22: an
+existing design system always wins, and a style whose accessibility mitigation cannot ship
+is the wrong style. Details: [docs/design-system.md](docs/design-system.md).
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `/onestop <request>` | The entry point. A request, a narrated flow, a ticket ID, a PR URL, or a spec path. |
-| `/onestop-status` | Read-only view of the current run - phases, decisions, open questions, gates. |
-| `/onestop-resume` | Resume the active run from its first incomplete phase. |
-
-`/onestop` fetches ticket and issue content through MCP when a server is available and
-falls back to asking for a paste - a failed fetch never aborts a run.
+| `/onestop <request>` | Start a run. |
+| `/onestop-status` | Where the current run stands - phases, pending gate, open questions. |
+| `/onestop-resume [correction]` | Continue the current run, optionally with a change. |
+| `/onestop-undo [last \| whole-run]` | Reverse the run's last change, or all of it, after a preview. |
+| `/onestop-help` | What onestop can do, with examples. Starts nothing. |
 
 ## Install
+
+Requirements: Claude Code, **Node.js 18 or newer** (the engine and the browser and
+documentation servers run on it), and **git** for checkpoints, undo and ship.
+Python is needed only to contribute.
 
 ```bash
 claude plugin marketplace add karthikeyabommireddy/oneStop
 claude plugin install onestop@onestop
 ```
 
-That is the whole install. Then, in any repository:
+Then, in any repository: `/onestop "<what you want>"`. `/mcp` should list the onestop
+`engine` server as connected.
+
+### Update
 
 ```bash
-/onestop "user signs in with Google, lands on the dashboard, sees their recent orders"
+claude plugin marketplace update onestop
+claude plugin update onestop@onestop
 ```
 
-**Optional but recommended** - the knowledge graph, so onestop stops re-reading your
-codebase:
+Restart Claude Code to apply it.
+
+### Uninstall
 
 ```bash
-pip install graphifyy==0.9.16
+claude plugin uninstall onestop@onestop
+claude plugin marketplace remove onestop
 ```
 
-Without it everything still works; phases read files directly instead, which is slower.
+onestop leaves nothing in your repositories except `.onestop/` (run state, which ignores
+itself in git) and `graphify-out/` (the graph, likewise). Delete them if you like.
 
-### Verify an install
+## Settings
 
-```bash
-python scripts/verify_install.py   # packaging - 20 checks
-python scripts/validate.py         # internal consistency
-python scripts/test_routing.py     # classifier and stack binding
-python scripts/test_parallel.py    # wave scheduler
-```
-
-All four run on every push via GitHub Actions.
-
-## Configuration
+Plugin settings, changed with `/plugin`:
 
 | Setting | Default | Effect |
 |---|---|---|
-| `gate_mode` | `standard` | `strict` adds a gate before automation; `autonomous` keeps only the ship gate |
-| `coverage_threshold` | `80` | Minimum line coverage before review runs |
-| `auto_automation` | `true` | Generate web and app E2E suites automatically |
-| `research_depth` | `standard` | `none` searches only your repo; `deep` always researches externally |
-| `knowledge_graph` | `auto` | `auto` builds and refreshes the graph automatically; `manual` refreshes only on request; `off` disables it |
+| `gate_mode` | `every-phase` | `every-phase` stops at every boundary; `milestone` at gate zero, the authorising gate, design, implement and ship; `autonomous` at gate zero and ship. User-only decisions stop in every mode. |
+| `coverage_threshold` | `80` | Line coverage the test phase must reach on the change surface. |
+| `auto_automation` | `true` | Write web and app end-to-end suites for user-facing changes. |
+| `research_depth` | `standard` | `none` searches only the repository; `standard` adds vendor documentation and package registries; `deep` researches every decision. |
+| `knowledge_graph` | `auto` | `auto` builds and refreshes the graph; `manual` only when asked; `off` never. |
 
-Optional per-repo overrides: `.onestop/stack.yml` declares components and stacks
-explicitly and ends detection; `.onestop/run.json` is the run ledger, written
-automatically.
+For a team, commit `onestop.yml` at the repository root. It overrides the plugin settings
+and adds what they cannot express: the exact commands, a declared stack for a monorepo,
+automation targets, a pinned visual style, approval policy and retry limits. Every key is
+optional - see [templates/onestop.yml](templates/onestop.yml).
 
-Your repo always wins: `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, lint and format
-config, and existing conventions outrank every default in this plugin.
+Your repository always wins over onestop's defaults: `CLAUDE.md`, `AGENTS.md`,
+`CONTRIBUTING.md`, lint and format configuration, and the conventions the code already
+shows.
 
-## Layout
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| "the onestop engine is not running" | Node.js 18+ is missing or not on `PATH`. `/mcp` shows the engine's error. Install Node and restart. |
+| A phase will not finish: "no specialist report is stored" | Hooks are disabled, so reports are not captured automatically. onestop stores them by hand and continues; re-enable hooks to avoid the extra step. |
+| A command is refused with "onestop guard" | It is outside what the run may do on its own. The refusal says why; the run returns the need to you instead of working around it. |
+| A run from yesterday is still "active" | `/onestop-resume` to continue it, or resume and choose stop to close it. It never affects other sessions. |
+| The knowledge graph is empty on Windows | The repository path is longer than about 150 characters, which overflows graphify's cache path. Move the repository to a shorter path, or set `knowledge_graph: off`. |
+| The first run pauses while servers download | The browser and documentation servers are fetched by `npx` on first use, at pinned versions. |
+
+## Development
+
+```bash
+python scripts/verify_install.py         # packaging: marketplace add and install will work
+python scripts/validate.py               # registries, agents, phases, hooks and policies agree
+node --test "engine/test/*.test.mjs"     # engine: routing, scheduler, guards, stacks, ledger, hooks, server
+```
+
+All three run on Ubuntu, macOS and Windows on every push. Adding a language, an agent or a
+phase: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```
 onestop/
-  .claude-plugin/   plugin.json, marketplace.json
-  commands/         onestop, onestop-status, onestop-resume
-  registry/         the routing brain
-    intents.json    14 intents, size tiers, security triggers
-    stacks.json     24 stacks, 6 web + 7 app automation frameworks
-    patterns.json   architecture + automation patterns, SOLID checks, file roles
-    artifacts.json  where every phase writes what it produces
-    design.json     11 domain design profiles, OKLCH system, scales
-    ui-styles.json  22 visual styles, derived from domain and audience
-    gates.json      gate protocol - shape, no-batching, gate zero
-    parallel.json   wave scheduling, write-surface and failure rules
-    agents.json     derived role-agent catalogue  (generated)
-    packs.json      derived pack catalogue        (generated)
-    skills.json     derived skill catalogue       (generated)
-  agents/   23 role agents
-  packs/
-    languages/      24 language packs
-    concerns/       5 concern packs
+  .claude-plugin/   plugin.json (the engine and three pinned MCP servers), marketplace.json
+  engine/           the pipeline engine - MCP server, CLI, hook dispatcher
+    lib/            ledger, plan, classify, stack, guard, brief, dispatch, schedule, kg, git
+    test/           53 tests, run with node --test
+  hooks/            hooks.json - every event runs engine/hooks.mjs
+  commands/         onestop, onestop-status, onestop-resume, onestop-undo, onestop-help
+  agents/           27 specialists
   skills/
-    orchestrate/          the engine
-    parallel-execution/   the wave scheduler
-    phase-*/              19 phase skills, each with its own references/
-    shared/               protocols every phase reads
-      architecture.md     pattern binding, smart/dumb roles, SOLID, system design
-      artifacts.md        artifact placement and the RTM relay
-      agent-flow.md       phase-to-agent map and the delegation brief
-      standards.md        naming, errors, async, types, tests, code smells
-  hooks/            PostToolUse + Stop, keeping the knowledge graph fresh
-  rules/common/     operating rules and the authority order
-  templates/        stack.yml, adr.md
-  docs/             knowledge-graph.md, design-system.md
-  scripts/
-    kg.sh               knowledge graph wrapper
-    build_registry.py   regenerate the derived registries
-    validate.py         consistency gate - run in CI
-    test_routing.py     executable spec - classifier and stack binding
-    test_parallel.py    executable spec - wave scheduler
+    orchestrate/    the hub
+    phase-*/        20 phase playbooks, each with its references/
+    shared/         rules, agent flow, artifacts, architecture, standards, severity
+  packs/            24 language packs, 5 concern packs
+  registry/         intents, phases, policies, stacks, patterns, artifacts, gates,
+                    design, ui-styles, parallel, run.schema, and derived catalogues
+  templates/        onestop.yml, adr.md
+  docs/             architecture, design rationale, knowledge graph, design system, MCP servers
+  scripts/          validate.py, verify_install.py, build_registry.py, changelog_section.py
 ```
 
 ## License

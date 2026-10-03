@@ -1274,14 +1274,15 @@
         "markers": [
           "WinAppDriver"
         ],
-        "install": "install WinAppDriver, add FlaUI.Core via NuGet",
+        "install": "existing suites only - WinAppDriver is installed by hand from its GitHub release; onestop never installs it",
         "run": "dotnet test",
         "artifacts": [
           "screenshots"
         ],
         "default_for": [],
         "strengths": "The practical option for Windows desktop UI automation.",
-        "status": "Unmaintained - last release v1.2.1 (November 2020). Kept only so an existing WinAppDriver suite keeps working; new suites bind flaui."
+        "status": "Unmaintained - last release v1.2.1 (November 2020). Kept only so an existing WinAppDriver suite keeps working; new suites bind flaui.",
+        "install_policy": "manual"
       }
     ],
     "selection_rules": [

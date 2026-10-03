@@ -3,8 +3,13 @@
 # CI for every non-Windows user while working fine on the machine that committed it.
 * text=auto eol=lf
 *.sh   text eol=lf
+*.mjs  text eol=lf
 *.py   text eol=lf
 *.json text eol=lf
 *.md   text eol=lf
 *.yml  text eol=lf
 *.yaml text eol=lf
+
+# Not part of the installed plugin: CI configuration and the engine's own tests.
+.github      export-ignore
+engine/test  export-ignore
