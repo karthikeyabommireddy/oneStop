@@ -33,7 +33,13 @@
           "broken",
           "fails",
           "regression",
-          "was working"
+          "was working",
+          "add tests",
+          "write tests",
+          "tests for",
+          "unit tests",
+          "test coverage",
+          "add a test"
         ]
       },
       "phase_mask": [
@@ -64,7 +70,8 @@
         "merge-coordinator",
         "qa-planner"
       ],
-      "announce_as": "This is a new-capability task - building something that does not exist yet."
+      "announce_as": "This is a new-capability task - building something that does not exist yet.",
+      "example": "add CSV export to the reports page"
     },
     {
       "id": "flow",
@@ -72,7 +79,6 @@
       "description": "The user narrates a multi-step journey (login to dashboard to checkout). Requires per-step discovery to find what already exists, and disambiguation when several implementations or approaches are found.",
       "signals": {
         "strong": [
-          "flow",
           "journey",
           "user goes",
           "then they",
@@ -81,14 +87,24 @@
           "end to end",
           "e2e scenario",
           "after that",
-          "user should be able to"
+          "user should be able to",
+          "user flow",
+          "user journey"
         ],
         "weak": [
           "screen",
           "page",
           "navigate",
           "redirect",
-          "then"
+          "then",
+          "flow",
+          "signs in",
+          "logs in",
+          "lands on",
+          "sees",
+          "clicks",
+          "goes to",
+          "is taken to"
         ],
         "negative": [
           "automate",
@@ -132,7 +148,8 @@
         "qa-planner"
       ],
       "notes": "The headline intent: the user explains a flow, onestop searches for what exists, and asks the user to choose only when discovery returns several genuine options. Discovery is mandatory and per-step, never global.",
-      "announce_as": "This is a user-flow task - a multi-step journey, decomposed and discovered step by step."
+      "announce_as": "This is a user-flow task - a multi-step journey, decomposed and discovered step by step.",
+      "example": "a user signs in with Google, lands on the dashboard and sees their recent orders"
     },
     {
       "id": "defect",
@@ -160,7 +177,17 @@
           "failing",
           "erroring",
           "throwing",
-          "returns the wrong"
+          "returns the wrong",
+          "returns a 500",
+          "500 error",
+          "internal server error",
+          "null pointer",
+          "stack trace",
+          "stopped working",
+          "no longer works",
+          "does not work",
+          "doesn t work",
+          "returns an error"
         ],
         "weak": [
           "issue",
@@ -190,7 +217,8 @@
         "code-reviewer",
         "work-partitioner"
       ],
-      "announce_as": "This is a bug fix. The first move is reproducing it as a failing test, before any fix."
+      "announce_as": "This is a bug fix. The first move is reproducing it as a failing test, before any fix.",
+      "example": "checkout returns a 500 when the cart is empty"
     },
     {
       "id": "change",
@@ -242,7 +270,8 @@
         "work-partitioner",
         "merge-coordinator"
       ],
-      "announce_as": "This is a behaviour change to something that already works. Tests move to the new spec first."
+      "announce_as": "This is a behaviour change to something that already works. Tests move to the new spec first.",
+      "example": "make the session timeout 30 minutes instead of 15"
     },
     {
       "id": "refactor",
@@ -261,12 +290,20 @@
           "reorganize",
           "refactoring",
           "cleaning up",
-          "simplifying"
+          "simplifying",
+          "without changing behaviour",
+          "without changing behavior",
+          "break up",
+          "decouple",
+          "modularize",
+          "god class"
         ],
         "weak": [
           "tidy",
           "improve",
-          "readable"
+          "readable",
+          "split",
+          "smaller"
         ],
         "negative": [
           "new feature",
@@ -290,7 +327,8 @@
         "code-reviewer",
         "work-partitioner"
       ],
-      "announce_as": "This is a refactor - structure changes, behaviour must not. The suite stays green throughout."
+      "announce_as": "This is a refactor - structure changes, behaviour must not. The suite stays green throughout.",
+      "example": "split the 900-line OrderService into smaller services without changing behaviour"
     },
     {
       "id": "mvp",
@@ -345,7 +383,8 @@
         "merge-coordinator",
         "qa-planner"
       ],
-      "announce_as": "This is a bootstrap / MVP task - standing a project up from nothing or from a spec."
+      "announce_as": "This is a bootstrap / MVP task - standing a project up from nothing or from a spec.",
+      "example": "build a todo API with user accounts"
     },
     {
       "id": "review",
@@ -387,7 +426,8 @@
         "code-reviewer",
         "security-reviewer"
       ],
-      "announce_as": "This is a review task. Nothing will be implemented; the diff is assessed and reported."
+      "announce_as": "This is a review task. Nothing will be implemented; the diff is assessed and reported.",
+      "example": "review PR #142"
     },
     {
       "id": "test",
@@ -444,7 +484,8 @@
         "validator"
       ],
       "announce_as": "This is an automation / testing task. It builds or repairs test coverage; it does not change production behaviour. If the intent is to change how the product works, say so at gate zero and it will be reclassified.",
-      "notes": "A direct automation request lands here. The mask deliberately excludes plan, design and implement: writing tests for behaviour that already exists needs discovery and coverage measurement, not a design phase. If discovery finds the behaviour under test does not exist yet, say so at the gate rather than silently building it."
+      "notes": "A direct automation request lands here. The mask deliberately excludes plan, design and implement: writing tests for behaviour that already exists needs discovery and coverage measurement, not a design phase. If discovery finds the behaviour under test does not exist yet, say so at the gate rather than silently building it.",
+      "example": "add tests for the billing module"
     },
     {
       "id": "design",
@@ -486,7 +527,8 @@
         "a11y-agent",
         "ui-designer"
       ],
-      "announce_as": "This is a design task. Architecture and contracts only - no implementation code."
+      "announce_as": "This is a design task. Architecture and contracts only - no implementation code.",
+      "example": "design the notification centre"
     },
     {
       "id": "investigate",
@@ -522,7 +564,8 @@
       "primary_agents": [
         "code-explorer"
       ],
-      "announce_as": "This is an investigation. Read-only: the code is traced and explained, nothing is changed."
+      "announce_as": "This is an investigation. Read-only: the code is traced and explained, nothing is changed.",
+      "example": "how does the permission check reach the database?"
     },
     {
       "id": "perf",
@@ -541,7 +584,16 @@
           "throughput",
           "slowing",
           "timing out",
-          "times out"
+          "times out",
+          "make it fast",
+          "make it faster",
+          "too slow",
+          "takes too long",
+          "speed up",
+          "load time",
+          "response time",
+          "p95",
+          "p99"
         ],
         "weak": [
           "faster",
@@ -565,7 +617,8 @@
         "performance-agent",
         "code-reviewer"
       ],
-      "announce_as": "This is performance work. A baseline is measured and profiled before anything is optimised."
+      "announce_as": "This is performance work. A baseline is measured and profiled before anything is optimised.",
+      "example": "the search endpoint takes 4 seconds - make it fast"
     },
     {
       "id": "security",
@@ -582,11 +635,25 @@
           "injection",
           "xss",
           "secrets",
-          "auth bypass"
+          "auth bypass",
+          "audit",
+          "security review",
+          "security audit",
+          "threat model",
+          "csrf",
+          "ssrf",
+          "brute force",
+          "privilege escalation",
+          "account takeover"
         ],
         "weak": [
           "safe",
-          "risk"
+          "risk",
+          "login",
+          "password",
+          "authentication",
+          "token",
+          "session"
         ],
         "negative": []
       },
@@ -605,7 +672,8 @@
         "security-reviewer",
         "code-reviewer"
       ],
-      "announce_as": "This is security work. The attack surface is enumerated before any fix is proposed."
+      "announce_as": "This is security work. The attack surface is enumerated before any fix is proposed.",
+      "example": "audit the login and password-reset flow"
     },
     {
       "id": "ops",
@@ -643,7 +711,8 @@
         "build-resolver",
         "code-reviewer"
       ],
-      "announce_as": "This is build / CI / deploy work."
+      "announce_as": "This is build / CI / deploy work.",
+      "example": "the CI build fails on Windows only"
     },
     {
       "id": "docs",
@@ -676,7 +745,8 @@
       "primary_agents": [
         "docs-agent"
       ],
-      "announce_as": "This is a documentation task, written from the source of truth rather than from memory."
+      "announce_as": "This is a documentation task, written from the source of truth rather than from memory.",
+      "example": "document the public API"
     },
     {
       "id": "upgrade",
@@ -727,7 +797,8 @@
         "test-author",
         "code-reviewer"
       ],
-      "announce_as": "This is a dependency upgrade. You choose the target version; the suite is proven green before and after."
+      "announce_as": "This is a dependency upgrade. You choose the target version; the suite is proven green before and after.",
+      "example": "upgrade React to the next major version"
     }
   ],
   "size_tiers": {

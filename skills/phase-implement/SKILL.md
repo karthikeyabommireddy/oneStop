@@ -31,9 +31,11 @@ The contract exists if the design phase produced one.
 
 ## Checkpoints
 
-The orchestrator calls the engine's `checkpoint` before the first slice (`pre-implement`)
-and after each slice (`slice <n>`). A checkpoint snapshots the working tree through a
-private index - your staging area and files are untouched. To undo your own last step
+The engine checkpoints on its own - a baseline when the run starts, and after every phase
+that wrote files - and the orchestrator adds one after each slice (`slice <n>`), so
+`/onestop-undo` can reverse a single slice. A checkpoint snapshots the working tree through
+a private index - the user's staging area, branches and files are untouched - and an undo
+reverses only the run's own checkpointed changes. To undo your own last step
 inside a slice, reverse your own edit; never discard files with git, which destroys work
 you did not make. Undoing a whole slice is the user's call, through `/onestop-undo`.
 

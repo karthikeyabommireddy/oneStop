@@ -296,6 +296,10 @@ export function startPhase(root, { phase, mode = 'delegated', note } = {}) {
 
   Object.assign(ph, { status: 'active', started: nowIso(), mode, ...(note ? { note } : {}) });
   run.current = phase;
+  // The baseline, once, at the first phase after gate zero: the tree before this run
+  // wrote anything, the user's own uncommitted work included - so undoing the whole run
+  // never touches that work.
+  if (run.git && !run.checkpoints.length) addCheckpoint(root, run, 'baseline');
   save(root, run);
   event(root, 'phase_start', { phase, mode });
   return { ok: true, phase, recipe: recipe(root, run, phase), progress: progressLine(run) };
@@ -320,6 +324,11 @@ export function finishPhase(root, { phase, summary: text = '', artifacts = [] } 
   ph.summary = trim(text, 400);
   if (artifacts.length) ph.artifacts = artifacts.map(String);
   ph.finished = nowIso();
+  // A checkpoint after every phase that wrote something, review fixes included, so
+  // /onestop-undo can reverse exactly that phase.
+  if (run.git && run.checkpoints.length && (registry('phases').phases[phase]?.read_only === false || phaseWrote(root, ph))) {
+    addCheckpoint(root, run, `after ${phase}`);
+  }
   // A decision only the user can make stops the run in every gate mode: autonomous
   // means "do not stop to approve", never "decide for the user".
   const asks = run.open.filter((o) => !o.resolved && o.phase === phase);
@@ -702,43 +711,76 @@ export function loopAttempt(root, { loop, kind, root_cause: rootCause } = {}) {
 
 // ---------------------------------------------------------------- checkpoints
 
+function addCheckpoint(root, run, label) {
+  const snap = git.snapshot(root, label);
+  if (!snap.ok) return snap;
+  if (!run.base_commit && snap.base) run.base_commit = snap.base;
+  const n = run.checkpoints.length ? run.checkpoints[run.checkpoints.length - 1].n + 1 : 0;
+  run.checkpoints.push({ n, label, tree_commit: snap.commit, at: nowIso(), ...(run.current ? { phase: run.current } : {}) });
+  event(root, 'checkpoint', { n, label });
+  return { ok: true, n, commit: snap.commit };
+}
+
+// The engine checkpoints on its own: a baseline before the first phase that may write,
+// and a checkpoint after every phase that wrote something. Undo then covers the whole
+// run - not only the slices the orchestrator remembered to mark.
+function phaseWrote(root, ph) {
+  return (ph.reports || []).some((rel) => {
+    let text = '';
+    try { text = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return false; }
+    const files = parseReport(text, Infinity).fields.files;
+    return Boolean(files && !/^(none|n\/a|-)?$/i.test(files.trim()));
+  });
+}
+
 export function checkpoint(root, { label } = {}) {
   const loaded = loadRun(root);
   if (!loaded.ok) return fail(loaded.error || 'no active run');
   const run = loaded.run;
   if (!run.git) return { ok: false, available: false, error: 'not a git repository - checkpoints are unavailable', hint: 'Say so at the next gate; undo is not possible for this run.' };
   const name = label || `checkpoint ${run.checkpoints.length}`;
-  const snap = git.snapshot(root, name);
+  const snap = addCheckpoint(root, run, name);
   if (!snap.ok) return fail(snap.error);
-  if (!run.base_commit && snap.base) run.base_commit = snap.base;
-  const n = run.checkpoints.length;
-  run.checkpoints.push({ n, label: name, tree_commit: snap.commit, at: nowIso(), ...(run.current ? { phase: run.current } : {}) });
   save(root, run);
-  event(root, 'checkpoint', { n, label: name });
-  return { ok: true, n, label: name, commit: snap.commit };
+  return { ok: true, n: snap.n, label: name, commit: snap.commit };
 }
 
 // Undo is two-step: without confirm it only describes what would change, so the
 // command can show the user before anything is touched.
+//
+// Only the run's own checkpointed delta is reversed - from the chosen checkpoint to the
+// latest one, never to "now". Anything changed after the latest checkpoint, the user's
+// own edits included, is not part of the delta and is left alone; and if those edits
+// touched the same lines, the reverse patch no longer applies and nothing is modified.
 export function checkpointRevert(root, { scope = 'last', confirm = false } = {}) {
   const loaded = loadRun(root);
   if (!loaded.ok) return fail(loaded.error || 'no run');
   const run = loaded.run;
   if (!run.git) return fail('not a git repository - there are no checkpoints to revert');
+  if (!['last', 'whole-run'].includes(scope)) return fail('scope must be "last" or "whole-run"');
   const cps = run.checkpoints;
-  if (cps.length < 1) return fail('no checkpoints recorded for this run');
-  let from;
-  if (scope === 'whole-run') from = cps[0].tree_commit;
-  else if (scope === 'last') from = cps.length >= 2 ? cps[cps.length - 2].tree_commit : cps[0].tree_commit;
-  else return fail('scope must be "last" or "whole-run"');
-  const now = git.snapshot(root, 'before undo');
-  if (!now.ok) return fail(now.error);
-  const to = now.commit;
+  if (cps.length < 2) return fail('nothing to undo yet - the run has no checkpointed change since its baseline');
+  const latest = cps[cps.length - 1];
+  const base = scope === 'whole-run' ? cps[0] : cps[cps.length - 2];
   if (!confirm) {
-    return { ok: true, preview: true, scope, changes: git.diffStat(root, from, to) || '(no changes)', hint: 'Show this to the user and ask: reverse it | cancel. Call again with confirm:true only on "reverse it".' };
+    const now = git.snapshot(root, 'undo preview');
+    const later = now.ok ? git.diffStat(root, latest.tree_commit, now.commit) : '';
+    return {
+      ok: true,
+      preview: true,
+      scope,
+      undoes: `${base.label} -> ${latest.label}`,
+      changes: git.diffStat(root, base.tree_commit, latest.tree_commit) || '(no changes)',
+      ...(later ? { left_alone: later } : {}),
+      hint: 'Show the changes. If left_alone is present, say those later changes are not part of the undo and stay as they are. Ask: reverse it | cancel. Call again with confirm:true only on "reverse it".',
+    };
   }
-  const result = git.revertBetween(root, from, to);
+  const result = git.revertBetween(root, base.tree_commit, latest.tree_commit);
   event(root, 'checkpoint_revert', { scope, ok: result.ok });
-  if (result.ok) addNote(root, { kind: 'amendment', note: `undo (${scope}) reversed ${result.files.length} file(s)` });
+  if (result.ok) {
+    run.checkpoints = scope === 'whole-run' ? [cps[0]] : cps.slice(0, -1);
+    run.amendments.push({ at: nowIso(), ...(run.current ? { phase: run.current } : {}), note: `undo (${scope}) reversed ${result.files.length} file(s): ${base.label} -> ${latest.label}` });
+    save(root, run);
+  }
   return result;
 }

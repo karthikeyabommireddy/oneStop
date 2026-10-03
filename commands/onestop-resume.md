@@ -1,29 +1,22 @@
 ---
-description: Resume the active onestop run from its first incomplete phase, restoring the intent, bound specialists and decisions from the run ledger.
+description: Resume the active onestop run where it stopped - the engine's ledger restores the intent, phase plan, decisions and approvals, so nothing is re-derived or re-asked.
 argument-hint: "[optional: a correction or new constraint to apply before resuming]"
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task
+allowed-tools: Read, Grep, Glob, Bash, Agent, Task, Skill, AskUserQuestion, WebFetch, WebSearch, mcp__plugin_onestop_engine
 ---
 
-Resume the active onestop run.
+Resume the active onestop run with the `orchestrate` skill.
 
-1. Read `.onestop/run.json`. If it is missing or its status is `complete`, say so and
-   stop - suggest `/onestop <request>` to start a new run.
-
-2. Restore the run state without re-deriving it: the intent, the tier, the bound
-   specialists, the decisions already made, and the phase progress. **Do not re-run
-   discovery for units already searched**, and do not re-ask a question the ledger
-   records as answered - that is the entire purpose of the ledger.
-
-3. Re-acquire only what could have changed since the run paused: the working tree
-   state, the current diff, and whether the suite is still green. If the tree moved
-   under the run - new commits, changed files in the change surface - say so and
-   reconcile before continuing.
-
-4. If `$ARGUMENTS` carries a correction or new constraint, apply it to the remaining
-   plan before resuming, and record it in the ledger as an amendment.
-
-5. Invoke the `orchestrate` skill, entering at the first incomplete phase. Honour any
-   gate the ledger shows as pending - a resumed run does not skip a gate that was
-   never approved.
-
-State in one line where you are resuming from and why, then continue.
+1. Call the engine's `run_status`.
+   - No run, or the last one is complete: say so and suggest `/onestop <request>`. Stop.
+   - The ledger is unreadable: report the error and offer to archive it and start fresh
+     (`run_open` with `on_conflict: "archive"`), or stop.
+2. Call `run_open` with `on_conflict: "resume"`. This also makes this session the run's
+   owner, so the guard and reminders apply here.
+3. If the user gave a correction - `$ARGUMENTS` - record it with `run_note`
+   (`kind: "amendment"`) before anything else, and say how it changes the remaining
+   phases.
+4. Show the progress line and where the run stands. If a gate is awaiting an answer,
+   present that gate first (orchestrate Step 5). If the run is blocked, present the
+   blocked gate.
+5. Continue with orchestrate Step 4 from the current phase. Never re-run a finished phase
+   and never re-ask an answered question - the ledger already holds both.
