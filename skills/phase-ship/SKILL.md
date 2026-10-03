@@ -100,10 +100,11 @@ SHIP
   branch:  <name>   pushed: <yes/no>
   pr:      <url, or not created>
   docs:    <files updated>
-  ledger:  run marked complete
+  ledger:  run closed by the engine
 ```
 
-Mark the run `status: complete` in `.onestop/run.json`.
+Close the run with the engine's `run_close` (`status: complete`). The engine archives the
+ledger; nothing else edits it.
 
 ## Rules
 

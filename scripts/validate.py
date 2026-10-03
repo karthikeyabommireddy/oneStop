@@ -22,9 +22,9 @@ FM = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
 # Phases the orchestrate skill handles inline rather than in a phase-* skill.
 INLINE_PHASES = {"intake", "flow-decomposition"}
 
-# Phases the orchestrator runs itself, with no delegated agent. Everything else must
+# Phases with no delegated specialist: intake is run by the engine. Everything else must
 # have an agent declaring it, or the phase has nobody to execute it.
-ORCHESTRATOR_PHASES = {"intake", "flow-decomposition", "context", "research"}
+ORCHESTRATOR_PHASES = {"intake"}
 
 errors, warnings = [], []
 
@@ -178,32 +178,52 @@ def main():
 
     print("  registry sync       " + ("ok" if agents_reg["count"] == len(have_agents) else "STALE"))
 
-    # 9 - kg.sh build must not require an LLM key. Bare `graphify <path>` demands one
-    # the moment the corpus has any doc/markdown file - true of nearly every real repo,
-    # starting with README.md - which would silently break the graph for every user
-    # without an LLM key configured. This was a real bug, found by running kg.sh
-    # against a genuine mixed code+docs project. Guard against it regressing.
-    kg = os.path.join(ROOT, "scripts", "kg.sh")
-    if os.path.isfile(kg):
-        kg_src = open(kg, encoding="utf-8").read()
-        build_fn = kg_src.split("cmd_build()")[1].split("\ncmd_refresh()")[0] if "cmd_build()" in kg_src else ""
-        kg_llm_safe = "--code-only" in build_fn and "API_KEY" in build_fn
-        if not kg_llm_safe:
-            err("kg.sh build calls bare `graphify <path>` with no --code-only fallback - "
-                "this fails on any repo with a doc/markdown file unless an LLM key is set")
-        print("  kg.sh no-LLM build   " + ("ok" if kg_llm_safe else "FAIL"))
+    # 9 - the knowledge graph is code-only unless the user opts in. graphify's semantic
+    # mode sends repository text to whichever LLM provider it finds a key for, billed to
+    # that key, with no notice - so the engine must build with --code-only and gate
+    # semantic extraction on ONESTOP_KG_SEMANTIC.
+    kg = os.path.join(ROOT, "engine", "lib", "kg.mjs")
+    kg_src = open(kg, encoding="utf-8").read() if os.path.isfile(kg) else ""
+    kg_ok = "'--code-only'" in kg_src and "ONESTOP_KG_SEMANTIC" in kg_src
+    if not kg_ok:
+        err("engine/lib/kg.mjs must build with --code-only unless ONESTOP_KG_SEMANTIC=1")
+    if os.path.exists(os.path.join(ROOT, "scripts", "kg.sh")):
+        err("scripts/kg.sh exists again - the engine owns the knowledge graph")
+        kg_ok = False
+    print("  graph code-only     " + ("ok" if kg_ok else "FAIL"))
 
-    # 10 - the conformance hooks must stay registered. They are the only mechanical
-    # check that a run actually executed its declared phases and reviewed its security
-    # surfaces; without them every gate in this plugin is prose nothing enforces.
-    hj = os.path.join(ROOT, "hooks", "hooks.json")
-    if os.path.isfile(hj):
-        hooks_src = open(hj, encoding="utf-8").read()
-        need = ["kg-mark-dirty.sh", "kg-refresh.sh", "security-watch.sh", "run-conformance.sh"]
-        missing_hooks = [h for h in need if h not in hooks_src]
-        for h in missing_hooks:
-            err("hooks.json no longer registers " + h)
-        print("  conformance hooks    " + ("ok" if not missing_hooks else "FAIL"))
+    # 10 - the enforcement hooks must stay wired to the engine. They are what makes the
+    # rules code instead of prose: the guard, the write guard, report capture and the
+    # session ownership claim. A hook wired to an event the dispatcher does not handle
+    # silently does nothing.
+    hj = load_json("hooks/hooks.json")
+    dispatcher = os.path.join(ROOT, "engine", "hooks.mjs")
+    hook_problems = []
+    if hj and os.path.isfile(dispatcher):
+        dsrc = open(dispatcher, encoding="utf-8").read()
+        table = dsrc[dsrc.rfind("try {"):]
+        wired = {}
+        for event, entries in hj.get("hooks", {}).items():
+            for entry in entries:
+                for h in entry.get("hooks", []):
+                    args = h.get("args", [])
+                    if h.get("command") != "node" or len(args) != 2 or not args[0].endswith("engine/hooks.mjs"):
+                        hook_problems.append(event + " does not run node engine/hooks.mjs in exec form")
+                        continue
+                    if not re.search(r"['\"]?" + re.escape(args[1]) + r"['\"]?\s*[:,]", table):
+                        hook_problems.append(event + " is wired to '" + args[1] + "', which hooks.mjs does not handle")
+                    wired[event] = entry.get("matcher", "")
+        for event in ("PreToolUse", "PostToolUse", "SubagentStop", "Stop", "SessionStart", "UserPromptSubmit"):
+            if event not in wired:
+                hook_problems.append(event + " is not wired")
+        for tool in ("Bash", "PowerShell", "Write", "Edit"):
+            if tool not in wired.get("PreToolUse", "").split("|"):
+                hook_problems.append("the PreToolUse guard does not cover " + tool)
+        if "mcp__plugin_onestop_engine__run_open" not in wired.get("PostToolUse", ""):
+            hook_problems.append("PostToolUse no longer sees run_open - sessions would never claim their run")
+    for p_ in hook_problems:
+        err("hooks: " + p_)
+    print("  enforcement hooks   " + ("ok" if not hook_problems else "FAIL"))
 
     # 11 - the gate protocol must keep its teeth: one gate per phase, a progress-bearing
     # gate shape, and gate zero. Each of these was added after a real run lost them.
@@ -215,9 +235,11 @@ def main():
         if "gate_zero" not in g:
             gate_problems.append("gate_zero (classification consent) missing")
         shape = [s["name"] for s in g.get("gate_shape", {}).get("sections", [])]
-        for required in ("PROGRESS", "REMAINING"):
+        for required in ("PROGRESS", "JUST DID", "DECIDE", "NEXT", "RECOMMEND"):
             if required not in shape:
                 gate_problems.append(f"gate_shape is missing {required}")
+        if not g.get("gate_modes", {}).get("always_stop"):
+            gate_problems.append("gate_modes.always_stop is missing - user-only decisions must stop in every mode")
         for p_ in gate_problems:
             err("registry/gates.json: " + p_)
         print("  gate protocol       " + ("ok" if not gate_problems else "FAIL"))
@@ -360,37 +382,129 @@ def main():
         print("  ui styles           " + ("ok (" + str(len(ui["styles"])) + ")"
                                           if not problems else "FAIL"))
 
-    # 19 - the run.json shape documented by orchestrate must be the shape the conformance
-    # hook parses. These drifted once: orchestrate documented phases as bare status
-    # strings with a top-level {gate_1, gate_2}, while the hook detected an ungated phase
-    # by finding `"status": "done"` with no `"gate"` on the line. Nothing matched, so the
-    # only mechanical check that per-phase gating happened reported clean on runs that
-    # gated nothing. Enforcement that cannot fire is worse than none, because it is
-    # trusted.
-    orch = os.path.join(ROOT, "skills", "orchestrate", "SKILL.md")
-    hook = os.path.join(ROOT, "hooks", "run-conformance.sh")
-    if os.path.isfile(orch) and os.path.isfile(hook):
-        orch_src = open(orch, encoding="utf-8").read()
-        hook_src = open(hook, encoding="utf-8").read()
-        drift = []
-        # The superseded two-gate object, in any file that documents run state.
-        if re.search(r'"gate_[12]"', orch_src):
-            drift.append("orchestrate still documents a top-level gate_1/gate_2 object")
-        # A phase mapped straight to a status string is the shape the hook cannot read.
-        flat = re.search(
-            r'"(?:intake|context|discovery|research|plan|design|ui-design|scaffold|'
-            r'implement|test|automation|qa-plan|review|compliance|measure|reproduce|'
-            r'verify-green|ship)"\s*:\s*"(?:pending|active|done|skipped)"', orch_src)
-        if flat:
-            drift.append("orchestrate documents a phase as a bare status string (" +
-                         flat.group(0) + ") - the hook needs a per-phase object")
-        # And the hook must still be looking for the fields the schema provides.
-        for token in ('"status"', '"gate"'):
-            if token not in hook_src:
-                drift.append("run-conformance.sh no longer reads " + token)
-        for d_ in drift:
-            err("run.json schema drift: " + d_)
-        print("  run.json schema     " + ("ok" if not drift else "FAIL"))
+    # 19 - the engine is the only writer of the run ledger. A playbook, agent or command
+    # telling the model to write, mark or stamp .onestop/run.json brings back the
+    # hand-written ledgers that produced three incompatible shapes in three releases.
+    ledger_writes = []
+    verb = re.compile(r"\b(mark|stamp|write|update|edit|set|append)\b", re.I)
+    negated = re.compile(r"\b(never|nobody|not|engine)\b", re.I)
+    for sub in ("skills", "agents", "commands"):
+        for dirpath, _, files in os.walk(os.path.join(ROOT, sub)):
+            for fn in files:
+                if not fn.endswith(".md"):
+                    continue
+                src = os.path.join(dirpath, fn)
+                for n, line in enumerate(open(src, encoding="utf-8"), 1):
+                    if ".onestop/run.json" in line and verb.search(line) and not negated.search(line):
+                        ledger_writes.append(os.path.relpath(src, ROOT) + ":" + str(n))
+    pol = load_json("registry/policies.json") or {}
+    if ".onestop/run.json" not in pol.get("write_guard", {}).get("ledger_files", []):
+        ledger_writes.append("registry/policies.json write_guard.ledger_files")
+    if not os.path.isfile(os.path.join(ROOT, "registry", "run.schema.json")):
+        ledger_writes.append("registry/run.schema.json is missing")
+    for w_ in ledger_writes:
+        err("only the engine writes the ledger: " + w_)
+    print("  ledger writer       " + ("ok" if not ledger_writes else "FAIL"))
+
+    # 20 - specialists are spokes: none may dispatch another agent, and none pins a
+    # model - they inherit the session's, so a user on any plan is never sent to a model
+    # their account cannot use.
+    spoke_problems = []
+    adir = os.path.join(ROOT, "agents")
+    for fn in sorted(os.listdir(adir)):
+        if not fn.endswith(".md"):
+            continue
+        fm = frontmatter(os.path.join(adir, fn)) or {}
+        tools = [t.strip() for t in fm.get("tools", "").split(",") if t.strip()]
+        if any(t in ("Agent", "Task") for t in tools):
+            spoke_problems.append(fn + " can dispatch agents (Agent/Task in tools)")
+        if fm.get("model", "inherit") != "inherit":
+            spoke_problems.append(fn + " pins model: " + fm.get("model"))
+    wg = pol.get("write_guard", {})
+    names = agent_names()
+    for role in wg.get("report_only", []) + wg.get("docs_only", []):
+        if role not in names:
+            spoke_problems.append("write_guard names an agent that does not exist: " + role)
+    for p_ in spoke_problems:
+        err("agents: " + p_)
+    print("  specialist spokes   " + ("ok" if not spoke_problems else "FAIL"))
+
+    # 21 - every phase any intent can run has a dispatch recipe, every specialist the
+    # recipes name exists, and every playbook they point at is on disk.
+    phases_reg = load_json("registry/phases.json") or {}
+    ints = load_json("registry/intents.json") or {"intents": []}
+    recipe_problems = []
+    specs = phases_reg.get("phases", {})
+    for intent in ints["intents"]:
+        for ph in intent["phase_mask"]:
+            if ph not in specs:
+                recipe_problems.append(intent["id"] + " runs " + ph + ", which phases.json does not describe")
+    for ph, spec in specs.items():
+        named = [spec.get("lead")] + spec.get("also", []) + spec.get("then", []) + list(spec.get("panel", {}).keys())
+        named += [v for v in spec.get("roles", {}).values() if v]
+        for a in filter(None, named):
+            if a not in names:
+                recipe_problems.append(ph + " names a missing agent: " + a)
+        pb = spec.get("playbook")
+        if pb and not os.path.isfile(os.path.join(ROOT, "skills", pb, "SKILL.md")):
+            recipe_problems.append(ph + " points at a missing playbook: skills/" + pb)
+        if spec.get("dispatch") not in phases_reg.get("dispatch_shapes", {}):
+            recipe_problems.append(ph + " has an unknown dispatch shape: " + str(spec.get("dispatch")))
+    for intent_id, over in phases_reg.get("intent_overrides", {}).items():
+        if not isinstance(over, dict):
+            continue
+        for roles in over.values():
+            for a in roles.values():
+                if a and a not in names:
+                    recipe_problems.append("intent override " + intent_id + " names a missing agent: " + a)
+    for p_ in recipe_problems:
+        err("phases: " + p_)
+    print("  dispatch recipes    " + ("ok" if not recipe_problems else "FAIL"))
+
+    # 22 - every guard pattern compiles. A pattern that fails to compile throws inside
+    # the hook, and the hook fails open - the rule silently stops existing.
+    bad_patterns = []
+    rules = (pol.get("bash_guard", {}).get("always_blocked", []) + pol.get("bash_guard", {}).get("allowed_after_ship_gate", [])
+             + pol.get("dependency_guard", {}).get("add_commands", []) + wg.get("scoped_bash", []))
+    for r in rules:
+        try:
+            re.compile(r["pattern"], 0 if r.get("flags") == "" else re.I)
+        except re.error as e:
+            bad_patterns.append(str(r.get("id") or r.get("ecosystem")) + ": " + str(e))
+    for b in bad_patterns:
+        err("policies.json pattern does not compile: " + b)
+    print("  guard patterns      " + ("ok (" + str(len(rules)) + ")" if not bad_patterns else "FAIL"))
+
+    # 23 - one RTM schema. The analyst writes the matrix, three phases complete it, and
+    # the validator reads it: if their column lists differ, the relay silently breaks.
+    rtm_problems = []
+    arts = load_json("registry/artifacts.json") or {"by_phase": []}
+    want = None
+    for entry in arts["by_phase"]:
+        for a in entry.get("artifacts", []):
+            if a["path"].endswith("RTM.md") and want is None:
+                m = re.search(r"Columns, exactly: ([A-Za-z,\- ]+)\.", a["what"])
+                want = [c.strip() for c in m.group(1).split(",")] if m else None
+    ba = open(os.path.join(ROOT, "agents", "ba-analyst.md"), encoding="utf-8").read()
+    m = re.search(r"^(Req-ID,[^\n]+)$", ba, re.M)
+    have = [c.strip() for c in m.group(1).split(",")] if m else None
+    if not want:
+        rtm_problems.append("artifacts.json does not state the RTM columns")
+    elif have != want:
+        rtm_problems.append("ba-analyst writes " + str(have) + " but artifacts.json says " + str(want))
+    for p_ in rtm_problems:
+        err("RTM: " + p_)
+    print("  RTM schema          " + ("ok" if not rtm_problems else "FAIL"))
+
+    # 24 - every visual style has a CSS recipe. ui-designer is told the recipes exist;
+    # a style without one gets improvised.
+    styles = load_json("registry/ui-styles.json") or {"styles": []}
+    recipes = open(os.path.join(ROOT, "skills", "phase-ui-design", "references", "styles.md"), encoding="utf-8").read()
+    heads = [re.sub(r"[^a-z0-9]", "", h.lower()) for h in re.findall(r"^### (.+)$", recipes, re.M)]
+    no_recipe = [s["id"] for s in styles["styles"] if not any(re.sub(r"[^a-z0-9]", "", s["id"]) in h for h in heads)]
+    for s in no_recipe:
+        err("style '" + s + "' has no recipe in skills/phase-ui-design/references/styles.md")
+    print("  style recipes       " + ("ok" if not no_recipe else "FAIL"))
 
     # 17 - every plugin-internal file referenced with ${CLAUDE_PLUGIN_ROOT} must exist.
     # A broken reference is silent at runtime: the model simply does not load the

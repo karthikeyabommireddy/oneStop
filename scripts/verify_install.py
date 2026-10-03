@@ -121,7 +121,12 @@ def main():
     ok("every skill declares a name", not bad, ", ".join(bad[:3]))
 
     # 7 - the one that silently breaks an install
-    bare = re.compile(r"(?<![\w/}])(?:scripts/[a-z_]+\.(?:sh|py)|registry/[a-z]+\.json)")
+    # Any plugin-internal file a model is told to open: scripts, registries, packs,
+    # templates, skill references, engine modules. A bare relative path resolves against
+    # the user's repository once installed, and the model silently reads nothing. A path
+    # written as ${CLAUDE_PLUGIN_ROOT}/... is preceded by "/" and so never matches.
+    bare = re.compile(r"(?<![\w/}.-])(?:scripts/[\w.-]+\.(?:sh|py|mjs)|registry/[\w.-]+\.json|packs/[\w/-]+\.md"
+                      r"|templates/[\w.-]+|(?:skills/[\w/-]+/)?references/[\w.-]+\.md|engine/[\w/.-]+\.mjs|kg\.sh)")
     offenders = []
     for base in ("skills", "agents", "commands"):
         for dp, _, fs in os.walk(os.path.join(ROOT, base)):
@@ -129,12 +134,12 @@ def main():
                 if not fn.endswith(".md"):
                     continue
                 fp = os.path.join(dp, fn)
-                for line in open(fp, encoding="utf-8"):
-                    if bare.search(line) and "CLAUDE_PLUGIN_ROOT" not in line:
-                        offenders.append(os.path.relpath(fp, ROOT))
-                        break
+                with open(fp, encoding="utf-8") as fh:
+                    for n, line in enumerate(fh, 1):
+                        if bare.search(line):
+                            offenders.append(os.path.relpath(fp, ROOT) + ":" + str(n))
     ok("plugin-internal paths use ${CLAUDE_PLUGIN_ROOT}", not offenders,
-       "bare relative paths in: " + ", ".join(sorted(set(offenders))[:4]))
+       "bare relative paths at: " + ", ".join(offenders[:8]))
 
     return report()
 

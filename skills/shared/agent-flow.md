@@ -2,10 +2,11 @@
 
 How a run moves: one orchestrator at the hub, specialists at the spokes, an engine that
 holds the state and enforces the rules. The sources of truth are data, not this page:
-`registry/intents.json` (which phases run, in what order), `registry/phases.json` (who
-leads each phase and how it is dispatched) and `registry/policies.json` (budgets, the
-report contract, the guards). `scripts/validate.py` checks that every agent named there
-exists and that each agent's `phases:` frontmatter agrees.
+`${CLAUDE_PLUGIN_ROOT}/registry/intents.json` (which phases run, in what order),
+`${CLAUDE_PLUGIN_ROOT}/registry/phases.json` (who leads each phase and how it is
+dispatched) and `${CLAUDE_PLUGIN_ROOT}/registry/policies.json` (budgets, the report
+contract, the guards). The plugin's validator checks that every agent named there exists
+and that each agent's `phases:` frontmatter agrees.
 
 ---
 

@@ -6,31 +6,33 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # The hooks and the engine run on the user's machine, so they are tested on all three.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Packaging - marketplace add and plugin install will work
         run: python scripts/verify_install.py
 
-      - name: Consistency - phases, agents, packs and registries agree
+      - name: Consistency - phases, agents, packs, policies and registries agree
         run: python scripts/validate.py
 
-      - name: Spec - intent classifier and stack binding
-        run: python scripts/test_routing.py
-
-      - name: Spec - parallel wave scheduler
-        run: python scripts/test_parallel.py
-
-      - name: Shell syntax
-        run: |
-          for f in scripts/*.sh hooks/*.sh; do
-            bash -n "$f" || exit 1
-          done
-          echo "all shell scripts parse"
+      - name: Engine - routing, scheduler, guards, stacks, ledger, hooks, MCP server
+        run: node --test "engine/test/*.test.mjs"

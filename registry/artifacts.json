@@ -55,6 +55,17 @@
       ]
     },
     {
+      "phase": "flow-decomposition",
+      "owner": "ba-analyst",
+      "artifacts": [
+        {
+          "path": ".onestop/reports/flow-decomposition/",
+          "format": "markdown",
+          "what": "The narrated journey as ordered steps, the inferred ones included, each independently verifiable. Discovery then runs once per step."
+        }
+      ]
+    },
+    {
       "phase": "requirements",
       "owner": "ba-analyst",
       "artifacts": [

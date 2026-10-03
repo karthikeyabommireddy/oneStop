@@ -26,6 +26,9 @@
       "discovery-scout",
       "option-broker"
     ],
+    "flow-decomposition": [
+      "ba-analyst"
+    ],
     "implement": [
       "build-resolver",
       "devops-agent",
@@ -162,7 +165,8 @@
       ],
       "model": "inherit",
       "phases": [
-        "requirements"
+        "requirements",
+        "flow-decomposition"
       ]
     },
     {

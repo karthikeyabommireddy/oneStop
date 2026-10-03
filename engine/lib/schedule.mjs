@@ -2,7 +2,7 @@
 //
 // The binding constraint is never the dependency graph - it is the write surface. Two
 // agents editing one file corrupt it in a way that looks plausible. This is the rule
-// registry/parallel.json describes and scripts/test_parallel.py specified, now used at
+// registry/parallel.json describes and its original Python specification used, now used at
 // run time instead of being re-derived by the model from prose.
 
 import { registry } from './env.mjs';

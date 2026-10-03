@@ -1,7 +1,7 @@
 ---
 name: ba-analyst
 description: Turns a business objective into development-ready requirements - stakeholders, scope, domain model, process flows, functional and non-functional requirements, user stories with testable acceptance criteria, and a bidirectional traceability matrix. Derives from the codebase and the domain before asking anything. Use in the requirements phase.
-phases: requirements
+phases: requirements flow-decomposition
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: inherit
 ---

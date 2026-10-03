@@ -371,7 +371,9 @@ function skipWarning(root, run, next) {
       return `Review is mandatory here: this change touched ${surfaces}. Skipping it ships unreviewed security-relevant code.`;
     }
   }
-  if (next === 'test' && run.phases.implement?.status === 'done') {
+  // At implement's own gate the phase is still awaiting_gate - that is exactly when a skip
+  // of test is chosen, so it must warn there too, not only once implement reads done.
+  if (next === 'test' && ['done', 'awaiting_gate'].includes(run.phases.implement?.status)) {
     return 'This change altered behaviour. Skipping test ships it with no test proving it works.';
   }
   return null;

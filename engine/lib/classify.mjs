@@ -3,7 +3,7 @@
 // The rule is registry/intents.json `classification`: whole-word signal matching,
 // strong 1.0 / weak 0.4 / negative -0.8, divided by (1 + 0.15 * positive hits) so an
 // intent with a long signal list is not automatically favoured. This is a direct port
-// of the rule scripts/test_routing.py specified - same normalisation, same weights,
+// of the rule the original Python specification used - same normalisation, same weights,
 // same stable tie order - so every routing case that held before still holds.
 
 import { registry } from './env.mjs';
