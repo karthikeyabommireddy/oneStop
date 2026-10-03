@@ -6,3 +6,6 @@ __pycache__/
 
 # knowledge graph output (built per-repo, never committed)
 graphify-out/
+
+# eval results (claude plugin eval)
+evals/results/

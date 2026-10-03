@@ -121,7 +121,8 @@ UI DESIGN
 
 1. **Design before components.** Retrofitting is how products stay inconsistent.
 2. **Extend, never replace, an existing system.**
-3. **Contrast is verified programmatically and reported**, never estimated by eye.
+3. **Contrast is verified programmatically and reported**, never estimated by eye - with
+   `node ${CLAUDE_PLUGIN_ROOT}/engine/cli.mjs contrast <fg> <bg> ...`.
 4. **Every colour is a token.**
 5. **Dark mode is designed deliberately**, not derived by inversion.
 6. **Tokens nothing consumes are not done.** Check adoption before closing the phase.

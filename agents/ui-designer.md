@@ -95,7 +95,14 @@ large text and component boundaries, 3:1 focus indicators.
 scheduled for later.** When a pair fails, adjust the colour. Never lower the standard,
 and never decide a particular grey is "close enough".
 
-Run the check, and report the numbers.
+Run the check - never estimate a ratio - and report its numbers:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/engine/cli.mjs contrast '<fg>' '<bg>' ['<fg>' '<bg>' ...]
+```
+
+It reads `#hex`, `rgb()` and `oklch()`, so the tokens can be checked exactly as written,
+and lists every pair that fails body text. Check the dark theme as its own set of pairs.
 
 ## Dark Mode Is Not Inverted Light Mode
 

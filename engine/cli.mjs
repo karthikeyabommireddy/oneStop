@@ -5,11 +5,13 @@
 //   node engine/cli.mjs call <tool> ['<json args>'] [--project <dir>]
 //   node engine/cli.mjs classify "<request>"         [--project <dir>]
 //   node engine/cli.mjs kg <status|build-sync|refresh-sync> [--project <dir>]
+//   node engine/cli.mjs contrast <fg> <bg> [<fg> <bg> ...]
 //   node engine/cli.mjs tools
 
 import { projectRoot } from './lib/env.mjs';
 import { TOOLS, callTool } from './lib/tools.mjs';
 import { kgBuildSync, kgRefreshSync, kgStatus } from './lib/kg.mjs';
+import { contrast } from './lib/contrast.mjs';
 
 const argv = process.argv.slice(2);
 let project;
@@ -44,10 +46,26 @@ switch (command) {
     else out({ ok: true, ...kgStatus(root) });
     break;
   }
+  case 'contrast': {
+    if (!rest.length || rest.length % 2) {
+      out({ ok: false, error: 'give colour pairs: contrast <fg> <bg> [<fg> <bg> ...]' });
+      break;
+    }
+    const pairs = [];
+    for (let i = 0; i < rest.length; i += 2) pairs.push(contrast(rest[i], rest[i + 1]));
+    const unreadable = pairs.filter((p) => !p.ok);
+    out({
+      ok: !unreadable.length,
+      pairs,
+      failing_body_text: pairs.filter((p) => p.ok && !p.aa_text).map((p) => `${p.fg} on ${p.bg} (${p.ratio}:1)`),
+      thresholds: 'AA: 4.5:1 body text; 3:1 large text, UI component boundaries and focus indicators',
+    });
+    break;
+  }
   case 'tools':
     out({ ok: true, tools: TOOLS.map((t) => t.name) });
     break;
   default:
-    process.stderr.write('usage: cli.mjs call <tool> [json] | classify <request> | kg <status|build-sync|refresh-sync> | tools   [--project <dir>]\n');
+    process.stderr.write('usage: cli.mjs call <tool> [json] | classify <request> | kg <status|build-sync|refresh-sync> | contrast <fg> <bg> ... | tools   [--project <dir>]\n');
     process.exitCode = 2;
 }
