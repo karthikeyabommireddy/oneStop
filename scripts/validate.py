@@ -195,9 +195,12 @@ def main():
     # 10 - the enforcement hooks must stay wired to the engine. They are what makes the
     # rules code instead of prose: the guard, the write guard, report capture and the
     # session ownership claim. A hook wired to an event the dispatcher does not handle
-    # silently does nothing.
+    # silently does nothing. The command must stay in the one form Claude Code, Copilot
+    # CLI and VS Code all run: Copilot ignores exec-form "args" and runs a bare `node`,
+    # which fails - and a failing PreToolUse hook there denies every tool.
     hj = load_json("hooks/hooks.json")
     dispatcher = os.path.join(ROOT, "engine", "hooks.mjs")
+    hook_cmd = re.compile(r'^node "\$\{CLAUDE_PLUGIN_ROOT\}/engine/hooks\.mjs" ([\w-]+)$')
     hook_problems = []
     if hj and os.path.isfile(dispatcher):
         dsrc = open(dispatcher, encoding="utf-8").read()
@@ -206,21 +209,22 @@ def main():
         for event, entries in hj.get("hooks", {}).items():
             for entry in entries:
                 for h in entry.get("hooks", []):
-                    args = h.get("args", [])
-                    if h.get("command") != "node" or len(args) != 2 or not args[0].endswith("engine/hooks.mjs"):
-                        hook_problems.append(event + " does not run node engine/hooks.mjs in exec form")
+                    m = hook_cmd.match(h.get("command", ""))
+                    if "args" in h or not m:
+                        hook_problems.append(event + ' does not run node "${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs" <event> in shell form')
                         continue
-                    if not re.search(r"['\"]?" + re.escape(args[1]) + r"['\"]?\s*[:,]", table):
-                        hook_problems.append(event + " is wired to '" + args[1] + "', which hooks.mjs does not handle")
+                    if not re.search(r"['\"]?" + re.escape(m.group(1)) + r"['\"]?\s*[:,]", table):
+                        hook_problems.append(event + " is wired to '" + m.group(1) + "', which hooks.mjs does not handle")
                     wired[event] = entry.get("matcher", "")
         for event in ("PreToolUse", "PostToolUse", "SubagentStop", "Stop", "SessionStart", "UserPromptSubmit"):
             if event not in wired:
                 hook_problems.append(event + " is not wired")
-        for tool in ("Bash", "PowerShell", "Write", "Edit"):
+        for tool in ("Bash", "PowerShell", "Write", "Edit", "Agent"):
             if tool not in wired.get("PreToolUse", "").split("|"):
                 hook_problems.append("the PreToolUse guard does not cover " + tool)
-        if "mcp__plugin_onestop_engine__run_open" not in wired.get("PostToolUse", ""):
-            hook_problems.append("PostToolUse no longer sees run_open - sessions would never claim their run")
+        for run_open in ("mcp__plugin_onestop_engine__run_open", "engine-run_open"):
+            if run_open not in wired.get("PostToolUse", "").split("|"):
+                hook_problems.append("PostToolUse no longer sees " + run_open + " - those sessions would never claim their run")
     for p_ in hook_problems:
         err("hooks: " + p_)
     print("  enforcement hooks   " + ("ok" if not hook_problems else "FAIL"))

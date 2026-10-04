@@ -1,6 +1,6 @@
 {
   "name": "onestop",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "One-stop SDLC orchestration. Describe what you want in plain language - onestop classifies it, searches the codebase, and drives requirements, design, plan, code, test, web and app automation, review and ship. The orchestrator decides and asks you; specialists each work in their own context and report back; a pipeline engine enforces the gates, budgets and safety rules in code.",
   "author": {
     "name": "karthikeya"

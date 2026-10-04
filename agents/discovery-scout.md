@@ -1,7 +1,7 @@
 ---
 name: discovery-scout
 description: Finds what already exists in the repository before anything is asked. Read-only.
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 phases: discovery
 model: inherit
 ---

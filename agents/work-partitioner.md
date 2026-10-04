@@ -2,7 +2,7 @@
 name: work-partitioner
 description: Splits an approved plan into tasks with write surfaces and parallel waves.
 phases: plan implement
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

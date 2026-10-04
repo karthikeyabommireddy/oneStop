@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Reviews a change for correctness, contracts, errors and fit, in every language of the diff. Read-only.
 phases: review
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

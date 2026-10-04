@@ -2,7 +2,7 @@
 name: ui-designer
 description: Binds a domain palette, visual style and design tokens, with measured contrast.
 phases: ui-design design implement
-tools: Read, Write, Edit, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

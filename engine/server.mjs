@@ -10,7 +10,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { PLUGIN_ROOT } from './lib/env.mjs';
+import { fileURLToPath } from 'node:url';
+import { PLUGIN_ROOT, setClientRoot } from './lib/env.mjs';
 import { TOOLS, callTool } from './lib/tools.mjs';
 
 let VERSION = '0.0.0';
@@ -22,13 +23,35 @@ function send(message) {
   process.stdout.write(`${JSON.stringify(message)}\n`);
 }
 
+// MCP roots: a client that has them (VS Code) names its workspace folders - the project,
+// when nothing more specific does. Asked after the handshake and whenever they change.
+let clientHasRoots = false;
+let rootsAsked = 0;
+const ROOTS_ID = 'onestop-roots-';
+
+function askRoots() {
+  if (clientHasRoots) send({ jsonrpc: '2.0', id: `${ROOTS_ID}${++rootsAsked}`, method: 'roots/list' });
+}
+
+// The only requests this server sends are roots/list; any other response is ignored.
+function takeResponse({ id, result }) {
+  if (!String(id).startsWith(ROOTS_ID) || !Array.isArray(result?.roots)) return;
+  const first = result.roots.find((r) => String(r?.uri || '').startsWith('file:'));
+  setClientRoot(first ? fileURLToPath(first.uri) : null);
+}
+
 function handle(msg) {
   const { id, method, params = {} } = msg;
   const reply = (result) => send({ jsonrpc: '2.0', id, result });
   const error = (code, message) => send({ jsonrpc: '2.0', id, error: { code, message } });
+  if (!method) return takeResponse(msg);
 
   switch (method) {
+    case 'notifications/initialized':
+    case 'notifications/roots/list_changed':
+      return askRoots();
     case 'initialize':
+      clientHasRoots = Boolean(params.capabilities?.roots);
       return reply({
         protocolVersion: params.protocolVersion || '2025-06-18',
         capabilities: { tools: { listChanged: false } },

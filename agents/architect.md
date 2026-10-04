@@ -2,7 +2,7 @@
 name: architect
 description: Designs module boundaries, data model, contracts and ADRs; scaffolds new projects.
 phases: design plan scaffold
-tools: Read, Write, Edit, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

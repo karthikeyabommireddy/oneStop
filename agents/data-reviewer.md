@@ -2,7 +2,7 @@
 name: data-reviewer
 description: Reviews migrations, schema and queries for deployment safety and performance. Read-only.
 phases: review
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

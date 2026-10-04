@@ -104,7 +104,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -121,10 +122,13 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob",
         "mcp__plugin_onestop_playwright",
-        "mcp__plugin_onestop_chrome-devtools"
+        "mcp__plugin_onestop_chrome-devtools",
+        "playwright/*",
+        "chrome-devtools/*"
       ],
       "model": "inherit",
       "phases": [
@@ -142,7 +146,8 @@
         "Edit",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -161,7 +166,8 @@
         "Edit",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -178,6 +184,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -196,7 +203,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -213,7 +221,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -245,7 +254,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -261,6 +271,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -278,7 +289,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -294,6 +306,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -312,6 +325,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -329,6 +343,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -362,6 +377,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -397,7 +413,8 @@
         "Edit",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -413,6 +430,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -431,9 +449,11 @@
         "Grep",
         "Glob",
         "Bash",
+        "PowerShell",
         "WebFetch",
         "WebSearch",
-        "mcp__plugin_onestop_context7"
+        "mcp__plugin_onestop_context7",
+        "context7/*"
       ],
       "model": "inherit",
       "phases": [
@@ -450,7 +470,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -467,7 +488,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -483,6 +505,7 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob"
       ],
@@ -503,7 +526,8 @@
         "Edit",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -521,7 +545,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [
@@ -539,10 +564,13 @@
         "Write",
         "Edit",
         "Bash",
+        "PowerShell",
         "Grep",
         "Glob",
         "mcp__plugin_onestop_playwright",
-        "mcp__plugin_onestop_chrome-devtools"
+        "mcp__plugin_onestop_chrome-devtools",
+        "playwright/*",
+        "chrome-devtools/*"
       ],
       "model": "inherit",
       "phases": [
@@ -559,7 +587,8 @@
         "Write",
         "Grep",
         "Glob",
-        "Bash"
+        "Bash",
+        "PowerShell"
       ],
       "model": "inherit",
       "phases": [

@@ -16,8 +16,8 @@ panel (`/mcp` in Claude Code) shows why. Never run the pipeline from memory.
 - `corrupt` - say so with the error; offer archive-and-start-fresh or stop.
 - `resumed` - continue at its `current` phase; skip the rest of this guide.
 - `git: false` - say at gate zero that checkpoints, undo and every git step are unavailable.
-- The engine names the wrong project - call `run_open` again with `project_dir` set to the
-  workspace root.
+- The engine names the wrong project, or says it cannot tell which one - call `run_open`
+  again with `project_dir` set to the workspace root. The engine keeps it for the session.
 
 ## Tickets, issues and specs
 

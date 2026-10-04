@@ -1,9 +1,11 @@
 ---
 description: What onestop can do, with examples. Starts nothing.
-allowed-tools: Read
+allowed-tools: Read, mcp__plugin_onestop_engine__run_status
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/registry/intents.json`. Start nothing and change nothing.
+Call the onestop engine's `run_status` - it changes nothing - and read
+`<plugin_root>/registry/intents.json`, where `<plugin_root>` is the folder it returns.
+Start nothing and change nothing.
 
 Print, in this order:
 
@@ -24,8 +26,9 @@ Print, in this order:
    mode); technology and version choices are always yours; nothing is committed, pushed or
    opened as a pull request until you choose it at the ship gate.
 
-4. **Settings** - plugin settings (`/plugin` to change): `gate_mode` (every-phase,
-   milestone, autonomous), `coverage_threshold`, `auto_automation`, `research_depth`,
-   `knowledge_graph`. For a team, the same keys and more go in `onestop.yml` at the
-   repository root, which overrides them - commands, declared stack, style, approvals and
-   retry limits. A full example: `${CLAUDE_PLUGIN_ROOT}/templates/onestop.yml`.
+4. **Settings** - `gate_mode` (every-phase, milestone, autonomous), `coverage_threshold`,
+   `auto_automation`, `research_depth`, `knowledge_graph`: plugin settings in Claude Code
+   (`/plugin` to change). GitHub Copilot and VS Code have no plugin settings - there, and
+   for a team anywhere, the same keys and more go in `onestop.yml` at the repository root,
+   which overrides them: commands, declared stack, style, approvals and retry limits. A
+   full example: `<plugin_root>/templates/onestop.yml`.

@@ -2,7 +2,7 @@
 name: a11y-agent
 description: Accessibility specialist: WCAG 2.2 AA design and review of web and native UI.
 phases: design review
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

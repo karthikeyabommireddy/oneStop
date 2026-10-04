@@ -1,5 +1,75 @@
 # Changelog
 
+## 2.1.0
+
+**One plugin, three clients - and a much smaller context.** onestop now runs in GitHub
+Copilot CLI and VS Code as well as Claude Code, from the same install, and the
+orchestrator carries a fraction of what it did.
+
+### GitHub Copilot CLI and VS Code
+
+- **Install from the same marketplace.** `copilot plugin marketplace add
+  karthikeyabommireddy/oneStop`, then `copilot plugin install onestop@onestop`. In VS Code,
+  add the repository to `chat.plugins.marketplaces` and install from `@agentPlugins`.
+- **Hooks that every client runs.** Copilot CLI ignored the exec-form `args`, ran a bare
+  `node`, and - because it denies the tool when a PreToolUse hook fails - blocked every
+  shell command and edit. Every hook is now `node "${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs"
+  <event>`, the shell form Claude Code, Copilot CLI and VS Code all run.
+- **One reading of every client's tools.** Copilot's `path`/`file_text`/`old_str`, VS Code's
+  `run_in_terminal`, `create_file`, `replace_string_in_file` and `apply_patch` meet the same
+  command guard, ledger protection and write guard as Claude Code's tools.
+- **Copilot specialists are guarded and named.** Copilot CLI runs each specialist in a
+  session of its own and names it only when it stops. The hooks link the session to its
+  owner by its W3C trace and read its agent from the owner's transcript, so the guard and
+  the read-only write scopes apply to Copilot specialists too.
+- **The engine finds the project in every client.** Claude Code passes it; VS Code names its
+  workspace folders as MCP roots, which the engine now asks for; Copilot CLI starts the
+  engine in the plugin folder and records the session's folder in its own state, which the
+  engine reads. Failing all of these the engine refuses with a hint, never guessing, and a
+  `project_dir` passed once is kept for the session.
+- **No unexpanded paths.** Copilot CLI expands `${CLAUDE_PLUGIN_ROOT}` nowhere, and no client
+  expands it in a file read with a tool. Every brief now says what it stands for;
+  `run_status` returns `plugin_root`, and `/onestop-help` reads the registry through it.
+- **Specialists get a shell on Windows in Copilot CLI** (`PowerShell` beside `Bash`), and the
+  browser and documentation servers by Copilot's names as well as Claude Code's.
+- Tested end to end in Copilot CLI: a run opened in the right project, a commit refused in
+  the owning session, a specialist dispatched, identified, sent back once for a missing
+  REPORT and its report stored. VS Code support is built from its plugin format and tested
+  against its payloads; it is marked preview.
+
+### Fixes
+
+- **A specialist that forgets its REPORT is really sent back.** The SubagentStop block was
+  nested inside `hookSpecificOutput`, where neither Claude Code nor Copilot CLI reads it. It
+  is now the top-level `decision`, and a specialist is sent back at most once even by a
+  client that does not flag the second stop.
+- **Session start reaches every client** - Copilot CLI reads only the top-level
+  `additionalContext`.
+
+### Lighter context
+
+The orchestrator and the specialists now load detail only when a step needs it.
+
+| What is in context | 2.0.0 | 2.1.0 |
+|---|---|---|
+| Always, in every session (descriptions) | 4,171 tokens | 1,037 |
+| The orchestrator's skill | 3,918 | 602, plus a guide of 143-611 read at its step |
+| Shared standards per code-writing specialist | 6,388 | 2,249 |
+| A UI style recipe for the designer | 4,410 (all 22) | ~784 (the one bound) |
+| The 27 specialist definitions | 28,462 | 6,965 |
+
+- **A lite orchestrator.** `skills/orchestrate/SKILL.md` keeps the loop, the gate format and
+  the rules. Starting a run, the context step, the development loop, unusual gates and ship
+  are guides the engine hands over at the step that needs them.
+- **Lite specialists.** Each agent file is an identity, its rules and a pointer; the method
+  lives in the skill that owns it (`skills/<skill>/agents/<agent>.md`) and is the first
+  item in every brief.
+- **Skills off the menu.** Phase skills are read by path from briefs, so they no longer
+  load a description into every session.
+- **Smaller shared files.** Language-neutral standards (the TypeScript examples moved to the
+  TypeScript pack), a trimmed architecture protocol with pattern binding as a design
+  reference, and one file per UI style.
+
 ## 2.0.0
 
 A new architecture, and the response to an external review of 1.9.1 (73 findings, every

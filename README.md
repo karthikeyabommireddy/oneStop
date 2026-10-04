@@ -10,6 +10,9 @@ every phase for your approval.
 You never pick an agent, a skill or a phase. You do approve every gate, choose every
 technology and version, and decide what reaches git.
 
+One plugin, three clients: **Claude Code**, **GitHub Copilot CLI** and **VS Code** (agent
+plugins, preview) - see [Install](#install).
+
 ```
 /onestop "a user signs in with Google, lands on the dashboard and sees their recent orders"
 ```
@@ -247,9 +250,11 @@ is the wrong style. Details: [docs/design-system.md](docs/design-system.md).
 
 ## Install
 
-Requirements: Claude Code, **Node.js 18 or newer** (the engine and the browser and
-documentation servers run on it), and **git** for checkpoints, undo and ship.
-Python is needed only to contribute.
+Requirements: **Node.js 18 or newer** (the engine and the browser and documentation
+servers run on it) and **git** for checkpoints, undo and ship. Python is needed only to
+contribute.
+
+### Claude Code
 
 ```bash
 claude plugin marketplace add karthikeyabommireddy/oneStop
@@ -257,30 +262,48 @@ claude plugin install onestop@onestop
 ```
 
 Then, in any repository: `/onestop "<what you want>"`. `/mcp` should list the onestop
-`engine` server as connected.
+`engine` server as connected. Update with `claude plugin marketplace update onestop` and
+`claude plugin update onestop@onestop`, then restart Claude Code. Remove with
+`claude plugin uninstall onestop@onestop` and `claude plugin marketplace remove onestop`.
 
-### Update
-
-```bash
-claude plugin marketplace update onestop
-claude plugin update onestop@onestop
-```
-
-Restart Claude Code to apply it.
-
-### Uninstall
+### GitHub Copilot CLI
 
 ```bash
-claude plugin uninstall onestop@onestop
-claude plugin marketplace remove onestop
+copilot plugin marketplace add karthikeyabommireddy/oneStop
+copilot plugin install onestop@onestop
 ```
+
+Then, in any repository: `/onestop "<what you want>"`. Update with
+`copilot plugin marketplace update onestop` and `copilot plugin update onestop@onestop`.
+Remove with `copilot plugin uninstall onestop` and `copilot plugin marketplace remove onestop`.
+
+### VS Code (agent plugins, preview)
+
+Turn on `chat.plugins.enabled` and `chat.useHooks`, add `"karthikeyabommireddy/oneStop"` to
+`chat.plugins.marketplaces`, and install onestop from the Extensions view (search
+`@agentPlugins`). Then, in agent mode: `/onestop "<what you want>"`.
+
+### What differs between clients
+
+| | Claude Code | GitHub Copilot CLI | VS Code (preview) |
+|---|---|---|---|
+| Gates, engine, specialists, briefs | yes | yes | yes |
+| Command guard, ledger protection | yes | yes | yes |
+| Read-only specialists held to their reports | yes | yes | not verified yet |
+| Reports captured as each specialist finishes | yes | yes | no - the orchestrator stores each report itself |
+| End-of-turn reminders (pending gate, blocked run) | yes | no - Copilot CLI ignores them | not verified yet |
+| Settings | `/plugin`, or `onestop.yml` | `onestop.yml` | `onestop.yml` |
+
+Claude Code and Copilot CLI are tested end to end. The VS Code support is built from VS
+Code's plugin format and tested against its payloads, but not yet run end to end.
 
 onestop leaves nothing in your repositories except `.onestop/` (run state, which ignores
 itself in git) and `graphify-out/` (the graph, likewise). Delete them if you like.
 
 ## Settings
 
-Plugin settings, changed with `/plugin`:
+Plugin settings, changed with `/plugin` in Claude Code. GitHub Copilot CLI and VS Code
+have no plugin settings: put the same keys in `onestop.yml` (below).
 
 | Setting | Default | Effect |
 |---|---|---|
@@ -309,6 +332,7 @@ shows.
 | A run from yesterday is still "active" | `/onestop-resume` to continue it, or resume and choose stop to close it. It never affects other sessions. |
 | The knowledge graph is empty on Windows | The repository path is longer than about 150 characters, which overflows graphify's cache path. Move the repository to a shorter path, or set `knowledge_graph: off`. |
 | The first run pauses while servers download | The browser and documentation servers are fetched by `npx` on first use, at pinned versions. |
+| "onestop cannot tell which project this session is working in" | The client started the engine without naming the project. The orchestrator passes the folder once and the engine keeps it for the session; if it keeps happening, start the client from the project folder. |
 
 ## Development
 
@@ -321,13 +345,18 @@ node --test "engine/test/*.test.mjs"     # engine: routing, scheduler, guards, s
 All three run on Ubuntu, macOS and Windows on every push. Adding a language, an agent or a
 phase: [CONTRIBUTING.md](CONTRIBUTING.md).
 
+To try a working copy: `claude --plugin-dir <onestop>` in Claude Code, or
+`copilot --plugin-dir <onestop> --add-dir <onestop>` in Copilot CLI - `--add-dir` lets
+specialists read their methods from the working copy, which an installed plugin does not
+need.
+
 ```
 onestop/
   .claude-plugin/   plugin.json (the engine and three pinned MCP servers), marketplace.json
   engine/           the pipeline engine - MCP server, CLI, hook dispatcher
     lib/            ledger, plan, classify, stack, guard, brief, dispatch, schedule, kg, git
-    test/           53 tests, run with node --test
-  hooks/            hooks.json - every event runs engine/hooks.mjs
+    test/           70 tests, run with node --test
+  hooks/            hooks.json - every event runs engine/hooks.mjs, in every client
   commands/         onestop, onestop-status, onestop-resume, onestop-undo, onestop-help
   agents/           27 specialists - lite: identity and rules only
   skills/

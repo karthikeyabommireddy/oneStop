@@ -2,7 +2,7 @@
 name: validator
 description: Renders the final pass or fail verdict on a completed change.
 phases: review verify-green ship
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

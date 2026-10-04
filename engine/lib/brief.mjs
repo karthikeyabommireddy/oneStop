@@ -89,6 +89,9 @@ export function buildBrief(root, args = {}) {
   }
   const prior = reportsFrom(root, run, [...new Set(['design', 'plan', phase])].filter((p) => run.phases[p]));
   if (prior.length) readFirst.push(`- Earlier reports you may need (read only what your task requires): ${prior.join(', ')}`);
+  // No client expands the token in a file read with a tool, and Copilot CLI expands it
+  // nowhere - so the brief says what it stands for.
+  readFirst.push(`- In these files, \`\${CLAUDE_PLUGIN_ROOT}\` stands for ${pluginPath()}`);
 
   const commands = Object.entries(run.commands);
   const scope = writeScope(name);

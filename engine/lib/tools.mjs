@@ -1,7 +1,7 @@
 // The engine's tool table - one definition shared by the MCP server and the CLI, so
 // what the orchestrator calls and what the tests call cannot drift apart.
 
-import { projectRoot } from './env.mjs';
+import { NO_PROJECT, pinProjectRoot, pluginPath, projectRoot } from './env.mjs';
 import * as ledger from './ledger.mjs';
 import { classify } from './classify.mjs';
 import { planPhases } from './plan.mjs';
@@ -12,7 +12,7 @@ import { kgEnsure, kgStatus } from './kg.mjs';
 import { effectiveSettings } from './config.mjs';
 import { withLock } from './store.mjs';
 
-const PROJECT = { project_dir: { type: 'string', description: 'Absolute project root. Omit to use the session project.' } };
+const PROJECT = { project_dir: { type: 'string', description: 'Absolute project path. Only when the engine asks for it; kept for the session.' } };
 const str = (description, extra = {}) => ({ type: 'string', description, ...extra });
 const obj = (properties, required = []) => ({ type: 'object', properties: { ...properties, ...PROJECT }, required });
 
@@ -27,7 +27,9 @@ export const TOOLS = [
     name: 'run_status',
     description: 'The run as it stands: progress line, current phase, pending gate, open questions, decisions, commands and recent events.',
     inputSchema: obj({ events: { type: 'integer', description: 'How many recent events to include (default 10).' } }),
-    handler: (a, root) => ledger.status(root, { events: a.events ?? 10 }),
+    // plugin_root: where onestop's own files are, for clients that leave the plugin-root
+    // token in markdown unexpanded.
+    handler: (a, root) => ({ ...ledger.status(root, { events: a.events ?? 10 }), project: root, plugin_root: pluginPath() }),
   },
   {
     name: 'run_close',
@@ -161,7 +163,9 @@ export function callTool(name, args = {}) {
   const tool = TOOLS.find((t) => t.name === name);
   if (!tool) return { ok: false, error: `unknown tool "${name}" - one of: ${TOOLS.map((t) => t.name).join(', ')}` };
   try {
+    if (args.project_dir) pinProjectRoot(args.project_dir);
     const root = projectRoot(args.project_dir);
+    if (!root) return NO_PROJECT;
     return MUTATES.has(name) ? withLock(root, 'ledger', () => tool.handler(args, root)) : tool.handler(args, root);
   } catch (e) {
     return { ok: false, error: `engine error in ${name}: ${e.message}`, engine_error: true };

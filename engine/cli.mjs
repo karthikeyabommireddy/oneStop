@@ -8,7 +8,7 @@
 //   node engine/cli.mjs contrast <fg> <bg> [<fg> <bg> ...]
 //   node engine/cli.mjs tools
 
-import { projectRoot } from './lib/env.mjs';
+import { NO_PROJECT, projectRoot } from './lib/env.mjs';
 import { TOOLS, callTool } from './lib/tools.mjs';
 import { kgBuildSync, kgRefreshSync, kgStatus } from './lib/kg.mjs';
 import { contrast } from './lib/contrast.mjs';
@@ -41,7 +41,8 @@ switch (command) {
   case 'kg': {
     const root = projectRoot(project);
     const sub = rest[0] || 'status';
-    if (sub === 'build-sync') out(kgBuildSync(root));
+    if (!root) out(NO_PROJECT);
+    else if (sub === 'build-sync') out(kgBuildSync(root));
     else if (sub === 'refresh-sync') out(kgRefreshSync(root));
     else out({ ok: true, ...kgStatus(root) });
     break;

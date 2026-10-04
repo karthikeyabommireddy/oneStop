@@ -81,6 +81,21 @@ git.
 | Your other sessions are untouched | hooks | enforcement applies only to sessions that own the run |
 | Undo never overwrites your edits | engine | only the run's checkpointed delta is reversed, and only if it applies cleanly |
 
+## One plugin, three clients
+
+Claude Code, GitHub Copilot CLI and VS Code all read the plugin as it is - the manifest in
+`.claude-plugin/`, `agents/`, `skills/`, `commands/` and `hooks/hooks.json`. What differs
+between them is absorbed in the engine, not copied per client:
+
+| Difference | Where it is absorbed |
+|---|---|
+| Hook commands: Copilot CLI ignores exec-form `args` | every hook runs as `node "${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs" <event>`, the shell form all three run |
+| Tool names and arguments (`path`/`file_text`, `filePath`, `apply_patch`) | `engine/lib/toolcall.mjs` reads every client's tool call the same way |
+| Copilot CLI runs each specialist in its own session and names it only at the end | `engine/lib/owners.mjs` links it to its owner by trace and names it from the owner's transcript |
+| The project directory: Claude Code passes it, VS Code names MCP roots, Copilot CLI records it in its session state | `projectRoot` in `engine/lib/env.mjs`; failing all three, the orchestrator passes it once |
+| `${CLAUDE_PLUGIN_ROOT}` is expanded in markdown by Claude Code only | the engine hands out absolute paths, and every brief says what the token stands for |
+| Output shapes: Copilot CLI reads SessionStart context at the top level | the dispatcher writes both shapes |
+
 ## Why hub-and-spoke
 
 A single agent running fifteen phases carries every file it read into every later
@@ -97,6 +112,8 @@ under `.onestop/reports/`, where the next specialist who needs it reads it.
 | `.onestop/reports/<phase>/` | every specialist's report and write-up | engine, specialists |
 | `.onestop/events.jsonl` | an audit trail of tool calls, blocks and gate answers | engine, hooks |
 | `.onestop/sessions` | the sessions that own the run | hooks |
+| `.onestop/traces`, `.onestop/subagents` | GitHub Copilot CLI only: the owner's trace ids, and each specialist session with the agent it runs | hooks |
+| `.onestop/sent-back` | specialists already sent back once for a missing REPORT | hooks |
 | `.onestop/checkpoints/` | the private index behind checkpoints | engine |
 | `.onestop/runs/` | archived runs | engine |
 

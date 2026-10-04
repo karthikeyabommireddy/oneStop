@@ -2,7 +2,7 @@
 name: build-resolver
 description: Gets a failing build or type check green with the smallest correct change.
 phases: implement verify-green
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

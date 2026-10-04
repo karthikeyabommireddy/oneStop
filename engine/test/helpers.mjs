@@ -40,21 +40,17 @@ export function readText(dir, rel) {
 
 export const ledger = (dir) => JSON.parse(fs.readFileSync(path.join(dir, '.onestop', 'run.json'), 'utf8'));
 
-// Run one hook as Claude Code would: a fresh process, the payload on stdin.
-export function hook(dir, event, payload) {
-  const r = spawnSync(process.execPath, [HOOKS, event], {
-    input: JSON.stringify(payload),
-    env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
-    encoding: 'utf8',
-  });
-  const out = r.stdout.trim();
+// Run one hook as a client would: a fresh process, the payload on stdin. `env` adds what a
+// particular client sets, such as Copilot CLI's COPILOT_HOME.
+export function hook(dir, event, payload, env = {}) {
+  const out = hookText(dir, event, payload, env).trim();
   return out ? JSON.parse(out.split('\n').pop()) : null;
 }
 
-export function hookText(dir, event, payload) {
+export function hookText(dir, event, payload, env = {}) {
   return spawnSync(process.execPath, [HOOKS, event], {
     input: JSON.stringify(payload),
-    env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
+    env: { ...process.env, CLAUDE_PROJECT_DIR: dir, ...env },
     encoding: 'utf8',
   }).stdout;
 }

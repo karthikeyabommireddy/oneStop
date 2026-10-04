@@ -91,7 +91,7 @@ the ledger and enforces phase order itself.
 | F-68 | Med | No audit log of agent actions | Fixed | `.onestop/events.jsonl`: tool calls, refusals, gates and reports, from the engine and hooks. |
 | F-69 | Med | No committed per-project config | Fixed | `onestop.yml`; documented in `templates/onestop.yml`. |
 | F-70 | Med | Always-on context and oversized prompts | Partly | The orchestrator is a thin hub that keeps reports, not files; rationale moved to `docs/`. Agent files are still 3-9 KB each. |
-| F-71 | Low | No multi-platform build step | Deferred | Claude Code only by design: gates, parallel dispatch and enforcement depend on its tools and hooks. |
+| F-71 | Low | No multi-platform build step | Done in 2.1.0 | No build step needed: GitHub Copilot CLI and VS Code read the same plugin, and the engine absorbs their differences - see "One plugin, three clients" in `docs/architecture.md`. |
 | F-72 | Low | Duplicated rule blocks | Fixed | Shared `severity.md` and `rules.md`; anecdotes in `design-rationale.md`. |
 | F-73 | Low | No contrast checker | Fixed | `node engine/cli.mjs contrast` - WCAG ratios from hex, `rgb()` and `oklch()`. |
 

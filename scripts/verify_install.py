@@ -105,13 +105,13 @@ def main():
         # captured path picks up a trailing one.
         refs = re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\"\s\\]+)", json.dumps(h))
         ok("hooks reference at least one script", len(refs) > 0)
-        # A script run through an interpreter - exec form, "command": "node" with the script
-        # in "args" - needs no executable bit. Only a script that is itself the command does.
+        # A script run through an interpreter - `node "<script>" <event>` - needs no
+        # executable bit. Only a script that is itself the command does.
         direct = set()
         for entries in h.get("hooks", {}).values():
             for entry in entries:
                 for hk in entry.get("hooks", []):
-                    direct.update(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\"\s\\]+)", hk.get("command", "")))
+                    direct.update(re.findall(r"^\"?\$\{CLAUDE_PLUGIN_ROOT\}/([^\"\s\\]+)", hk.get("command", "")))
         for r in sorted(set(refs)):
             f = os.path.join(ROOT, r)
             ok("hook script exists: " + r, os.path.isfile(f))

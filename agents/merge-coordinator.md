@@ -2,7 +2,7 @@
 name: merge-coordinator
 description: Joins a parallel wave: verifies the combined state and catches semantic conflicts.
 phases: implement
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

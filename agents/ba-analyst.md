@@ -2,7 +2,7 @@
 name: ba-analyst
 description: Turns a request into requirements, stories with testable criteria, and a traceability matrix.
 phases: requirements flow-decomposition
-tools: Read, Write, Edit, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

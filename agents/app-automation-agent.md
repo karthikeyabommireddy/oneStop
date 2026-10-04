@@ -1,7 +1,7 @@
 ---
 name: app-automation-agent
 description: Native and cross-platform app end-to-end automation - Detox, Espresso, XCUITest, FlaUI, Flutter.
-tools: Read, Write, Edit, Bash, Grep, Glob, mcp__plugin_onestop_playwright, mcp__plugin_onestop_chrome-devtools
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, mcp__plugin_onestop_playwright, mcp__plugin_onestop_chrome-devtools, playwright/*, chrome-devtools/*
 phases: automation test
 model: inherit
 ---

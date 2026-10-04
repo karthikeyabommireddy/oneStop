@@ -3,8 +3,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 import { methodFile } from '../lib/brief.mjs';
-import { call, makeRepo, removeRepo, report } from './helpers.mjs';
+import { PLUGIN, call, makeRepo, removeRepo, report } from './helpers.mjs';
 
 function started(intent = 'feature') {
   const dir = makeRepo({ 'package.json': '{"name":"x"}', 'src/a.ts': 'export const a = 1;' }, { git: true });
@@ -30,6 +31,8 @@ test('the brief names the method first and leaves out what the brief already say
     const readFirst = b.split('## Read first')[1].split('##')[0].trim().split('\n');
     assert.match(readFirst[0], /^- Your method: .*skills\/phase-context\/agents\/stack-adapter\.md$/);
     assert.doesNotMatch(b, /artifacts\.md/);
+    // Method files cite `${CLAUDE_PLUGIN_ROOT}/...`, which no client expands in a file read with a tool.
+    assert.ok(b.includes(`\`\${CLAUDE_PLUGIN_ROOT}\` stands for ${PLUGIN.split(path.sep).join('/')}`));
   } finally { removeRepo(dir); }
 });
 

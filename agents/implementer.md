@@ -2,7 +2,7 @@
 name: implementer
 description: Writes the production code that makes a failing test pass, inside its write surface.
 phases: implement
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

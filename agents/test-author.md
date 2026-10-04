@@ -2,7 +2,7 @@
 name: test-author
 description: Writes tests first and runs the red-green-refactor loop in the stack's idiom.
 phases: reproduce implement test
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

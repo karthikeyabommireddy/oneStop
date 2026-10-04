@@ -92,7 +92,18 @@ engine builds code-only - local AST extraction - and semantic mode is an explici
 
 macOS ships bash 3.2, where associative arrays fail and an empty array under `set -u`
 aborts the script. Security tracking was silently off on every default Mac. One Node
-dispatcher in exec form runs the same on Windows, macOS and Linux, with real JSON parsing.
+dispatcher runs the same on Windows, macOS and Linux, with real JSON parsing. It is
+started as `node "<plugin>/engine/hooks.mjs" <event>` - a command every shell parses the
+same way, and the one form Claude Code, GitHub Copilot CLI and VS Code all run.
+
+## One plugin, three clients
+
+A copy of the plugin per client would drift. Claude Code, Copilot CLI and VS Code all read
+the same layout, so the plugin stays one plugin and the engine absorbs the differences:
+each client's tool names and arguments, how it names a specialist, how it says which
+project is open. Where a client cannot support a rule - VS Code passes no final message
+to SubagentStop - the run falls back to the orchestrator storing the report itself, and
+the README says so.
 
 ## Commands come from the project
 
@@ -119,6 +130,6 @@ all of it, and adding a language is one file.
 - **The gate default stays `every-phase`.** The review suggested fewer gates for read-only
   intents; the project's direction is that every phase is visible and approved. The gate
   was made compact instead.
-- **Claude Code only.** Gates rely on `AskUserQuestion`, parallel dispatch on several
-  agent calls in one message, and enforcement on hooks. A second platform would need its
-  own equivalents, not a copy.
+- **No per-client copies.** Gates use whichever question tool the client has
+  (`AskUserQuestion`, `ask_user`, `askQuestions`), dispatch uses its agent tool, and the
+  hooks run unchanged - so a second client got equivalents in the engine, not a fork.

@@ -14,12 +14,18 @@ import { effectiveSettings } from './config.mjs';
 import { planPhases } from './plan.mjs';
 import * as git from './git.mjs';
 import { recipe } from './dispatch.mjs';
+import { OWNER_FILES } from './owners.mjs';
 
 export function ledgerFile(root) {
   return statePath(root, 'run.json');
 }
 
 const fail = (error, hint) => ({ ok: false, error, ...(hint ? { hint } : {}) });
+
+// Flags, owners and send-backs belong to one run and must not bleed into the next.
+function clearSessionState(root) {
+  for (const f of ['security-flags.jsonl', 'requested', 'sent-back', ...OWNER_FILES]) rmQuiet(statePath(root, f));
+}
 
 function rmQuiet(file) {
   try { fs.unlinkSync(file); } catch { /* already gone */ }
@@ -197,9 +203,7 @@ export function openRun(root, { request = '', on_conflict: onConflict } = {}) {
   };
   // Flags and owners from an earlier run must not bleed into this one. The session that
   // called run_open claims the new run right after this returns (PostToolUse hook).
-  rmQuiet(statePath(root, 'security-flags.jsonl'));
-  rmQuiet(statePath(root, 'requested'));
-  rmQuiet(statePath(root, 'sessions'));
+  clearSessionState(root);
   save(root, run);
   event(root, 'run_open', { run_id: run.run_id });
   return {
@@ -256,9 +260,7 @@ export function closeRun(root, { status: final = 'complete', note } = {}) {
   save(root, run);
   const archived = path.join(statePath(root, 'runs'), `${run.run_id}.json`);
   writeJsonAtomic(archived, run);
-  rmQuiet(statePath(root, 'security-flags.jsonl'));
-  rmQuiet(statePath(root, 'requested'));
-  rmQuiet(statePath(root, 'sessions'));
+  clearSessionState(root);
   event(root, 'run_close', { status: final });
   return { ok: true, run_id: run.run_id, status: final, archived: slash(archived), progress: progressLine(run) };
 }

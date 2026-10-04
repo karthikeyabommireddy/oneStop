@@ -4,14 +4,14 @@
     "name": "karthikeya"
   },
   "metadata": {
-    "description": "One-stop SDLC orchestration for Claude Code - automatic agent and skill routing across the full development lifecycle"
+    "description": "One-stop SDLC orchestration for Claude Code, GitHub Copilot CLI and VS Code - automatic agent and skill routing across the full development lifecycle"
   },
   "plugins": [
     {
       "name": "onestop",
       "source": "./",
       "description": "Describe what you want in plain language. onestop plans the phases and dispatches the right specialist for each - requirements, design, code, tests, web and app automation, review, ship - stopping at every gate for your approval. A pipeline engine enforces the gates, retry budgets and safety rules in code; technology and version choices and everything that reaches git stay yours.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "karthikeya"
       },

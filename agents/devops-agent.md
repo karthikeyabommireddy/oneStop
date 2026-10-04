@@ -2,7 +2,7 @@
 name: devops-agent
 description: Fixes and changes CI and build infrastructure in the repository's own system.
 phases: implement
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

@@ -2,7 +2,7 @@
 name: code-explorer
 description: Traces how existing code actually works, with file-level evidence. Read-only.
 phases: discovery reproduce
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

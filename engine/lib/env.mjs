@@ -7,6 +7,7 @@
 // locates the plugin the one way that cannot fail.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,10 +40,63 @@ export function envValue(name) {
   return v;
 }
 
-export function projectRoot(explicit) {
-  const chosen = explicit || envValue('ONESTOP_PROJECT_DIR') || envValue('CLAUDE_PROJECT_DIR') || process.cwd();
-  return path.resolve(chosen);
+// The project the engine works on. Each client says it differently: Claude Code fills in
+// CLAUDE_PROJECT_DIR; VS Code names its workspace folders as MCP roots (the server passes
+// them to setClientRoot); GitHub Copilot CLI starts a plugin's MCP servers in the plugin's
+// own folder and passes no project at all - only the session id, whose working directory
+// it records in its state folder. A project_dir the orchestrator passes is pinned for the
+// rest of the session, so one correction is enough.
+let pinned = null;
+let clientRoot = null;
+
+export function pinProjectRoot(dir) {
+  pinned = path.resolve(dir);
 }
+
+export function setClientRoot(dir) {
+  clientRoot = dir ? path.resolve(dir) : null;
+}
+
+const realPath = (p) => {
+  try { return fs.realpathSync.native(p); } catch { return path.resolve(p); }
+};
+
+function insidePlugin(dir) {
+  const rel = path.relative(realPath(PLUGIN_ROOT), realPath(dir));
+  return !rel || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+// Copilot CLI keeps <home>/session-state/<session id>/workspace.yaml with a `cwd:` line.
+export function copilotSessionDir() {
+  const id = envValue('COPILOT_AGENT_SESSION_ID');
+  if (!id || !/^[\w-]+$/.test(id)) return undefined;
+  const home = envValue('COPILOT_HOME') || path.join(os.homedir(), '.copilot');
+  try {
+    const yaml = fs.readFileSync(path.join(home, 'session-state', id, 'workspace.yaml'), 'utf8');
+    const value = yaml.match(/^cwd:(.*)$/m)?.[1].trim();
+    if (!value) return undefined;
+    if (value.startsWith("'")) return value.slice(1, -1).replace(/''/g, "'");
+    if (value.startsWith('"')) return JSON.parse(value);
+    return value;
+  } catch {
+    return undefined;
+  }
+}
+
+// null when nothing names a project - the caller asks for project_dir instead of guessing.
+export function projectRoot(explicit) {
+  const named = explicit || pinned || envValue('ONESTOP_PROJECT_DIR') || envValue('CLAUDE_PROJECT_DIR') || clientRoot;
+  if (named) return path.resolve(named);
+  const found = [copilotSessionDir(), process.cwd(), envValue('PWD')]
+    .find((d) => d && fs.existsSync(d) && !insidePlugin(d));
+  return found ? path.resolve(found) : null;
+}
+
+export const NO_PROJECT = {
+  ok: false,
+  error: 'onestop cannot tell which project this session is working in.',
+  hint: 'Call the tool again with project_dir set to the absolute path of the user\'s project. The engine keeps it for the rest of the session.',
+};
 
 const registryCache = new Map();
 

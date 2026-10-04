@@ -2,7 +2,7 @@
 name: stack-adapter
 description: Confirms the stack, commands and conventions every later specialist relies on.
 phases: context
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

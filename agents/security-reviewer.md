@@ -2,7 +2,7 @@
 name: security-reviewer
 description: Reviews a change for exploitable weaknesses, and checks compliance controls.
 phases: review compliance
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

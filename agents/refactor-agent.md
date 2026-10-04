@@ -2,7 +2,7 @@
 name: refactor-agent
 description: Restructures code without changing behaviour, suite green at every step.
 phases: implement
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

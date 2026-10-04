@@ -2,7 +2,7 @@
 name: researcher
 description: Finds versions, documentation and breaking changes from official sources, verified today.
 phases: research upgrade-plan
-tools: Read, Write, Grep, Glob, Bash, WebFetch, WebSearch, mcp__plugin_onestop_context7
+tools: Read, Write, Grep, Glob, Bash, PowerShell, WebFetch, WebSearch, mcp__plugin_onestop_context7, context7/*
 model: inherit
 ---
 

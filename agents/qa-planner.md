@@ -2,7 +2,7 @@
 name: qa-planner
 description: Writes the manual test plan and importable test cases.
 phases: qa-plan
-tools: Read, Write, Edit, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash, PowerShell
 model: inherit
 ---
 

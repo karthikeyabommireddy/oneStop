@@ -2,7 +2,7 @@
 name: docs-agent
 description: Updates documentation from the source of truth, only where the change invalidated it.
 phases: ship implement
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 

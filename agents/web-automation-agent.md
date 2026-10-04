@@ -1,7 +1,7 @@
 ---
 name: web-automation-agent
 description: Browser end-to-end automation from a described user flow, using the live page.
-tools: Read, Write, Edit, Bash, Grep, Glob, mcp__plugin_onestop_playwright, mcp__plugin_onestop_chrome-devtools
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, mcp__plugin_onestop_playwright, mcp__plugin_onestop_chrome-devtools, playwright/*, chrome-devtools/*
 phases: automation test
 model: inherit
 ---

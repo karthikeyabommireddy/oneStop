@@ -1,23 +1,23 @@
 {
-  "description": "onestop hooks - one Node dispatcher in exec form, so they run natively on Windows, macOS and Linux with no shell. Every hook is silent outside an active onestop run, and in any session that did not open or resume the run. During a run the PreToolUse guard blocks destructive git, recursive deletes, publishes, deploys, downloads piped to a shell, unapproved dependencies, any commit, push or pull request the user did not choose at the ship gate, edits to the run ledger, and writes by read-only specialists outside their reports. SubagentStop stores each specialist's report as it finishes.",
+  "description": "onestop hooks - one Node dispatcher, run as `node \"<plugin>/engine/hooks.mjs\" <event>`: the shell form that Claude Code, GitHub Copilot CLI and VS Code all run, each filling in the plugin root. Matchers name Claude Code's tools, Copilot CLI's own tool names and the engine's run_open under both clients' MCP naming; VS Code ignores matchers and the dispatcher filters. Every hook is silent outside an active onestop run, and in any session that did not open or resume the run. During a run the PreToolUse guard blocks destructive git, recursive deletes, publishes, deploys, downloads piped to a shell, unapproved dependencies, any commit, push or pull request the user did not choose at the ship gate, edits to the run ledger, and writes by read-only specialists outside their reports. SubagentStop stores each specialist's report as it finishes.",
   "hooks": {
     "PreToolUse": [
-      { "matcher": "Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs", "pre-tool"], "timeout": 10 } ] }
+      { "matcher": "Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit|Agent|Task", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs\" pre-tool", "timeout": 10 } ] }
     ],
     "PostToolUse": [
-      { "matcher": "Edit|Write|MultiEdit|NotebookEdit|Agent|Task|Bash|PowerShell|mcp__plugin_onestop_engine__run_open", "hooks": [ { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs", "post-tool"], "timeout": 10 } ] }
+      { "matcher": "Edit|Write|MultiEdit|NotebookEdit|Agent|Task|Bash|PowerShell|mcp__plugin_onestop_engine__run_open|engine-run_open|bash|powershell|create|edit|apply_patch|task", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs\" post-tool", "timeout": 10 } ] }
     ],
     "SubagentStop": [
-      { "matcher": ".*onestop:.*", "hooks": [ { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs", "subagent-stop"], "timeout": 30 } ] }
+      { "matcher": ".*onestop:.*", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs\" subagent-stop", "timeout": 30 } ] }
     ],
     "Stop": [
-      { "hooks": [ { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs", "stop"], "timeout": 10 } ] }
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs\" stop", "timeout": 10 } ] }
     ],
     "SessionStart": [
-      { "matcher": "startup|resume|compact", "hooks": [ { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs", "session-start"], "timeout": 10 } ] }
+      { "matcher": "startup|resume|compact|new", "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs\" session-start", "timeout": 10 } ] }
     ],
     "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs", "prompt-submit"], "timeout": 5 } ] }
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs\" prompt-submit", "timeout": 5 } ] }
     ]
   }
 }

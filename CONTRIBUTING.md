@@ -12,6 +12,10 @@ node --test "engine/test/*.test.mjs"      # the engine
 All four must pass; CI runs the last three on Ubuntu, macOS and Windows. You need Node.js
 18 or newer (22 in CI), Python 3.10 or newer, and git.
 
+A change to hooks, briefs or the engine's project detection should also be tried in a
+second client: `copilot --plugin-dir <onestop> --add-dir <onestop>` from a scratch
+repository runs your working copy in GitHub Copilot CLI.
+
 ## How the pieces fit
 
 Data lives in `registry/`, behaviour in `engine/`, instructions in `agents/` and `skills/`.
@@ -40,7 +44,9 @@ only alongside source files of that language; a framework stack binds only when 
    "start with your brief" line and the rules. The method - procedure, examples, output -
    goes in `skills/<owning-skill>/agents/<name>.md`; the engine finds it by name and lists
    it first in every brief. Never give a specialist the `Agent` or `Task` tool - specialists
-   are spokes.
+   are spokes. List `PowerShell` beside `Bash` (on Windows it is Copilot CLI's only shell),
+   and name an MCP server both ways: `mcp__plugin_onestop_<server>` for Claude Code,
+   `<server>/*` for Copilot CLI. Each client ignores the other's names.
 2. Lead or join a phase in `registry/phases.json` (`lead`, `also`, `then`, `panel` or
    `roles`).
 3. If it must not edit project files, add it to `write_guard.report_only` (reports only) or
@@ -67,7 +73,15 @@ way.
 ## Rules for the code
 
 - Zero runtime dependencies. The engine and hooks use only Node's standard library.
-- Hooks never fail a turn: any error exits 0, except the guard's deliberate denials.
+- One plugin serves Claude Code, GitHub Copilot CLI and VS Code. Every hook stays
+  `node "${CLAUDE_PLUGIN_ROOT}/engine/hooks.mjs" <event>` - Copilot CLI ignores exec-form
+  `args`. Read tool calls through `engine/lib/toolcall.mjs` and callers through
+  `engine/lib/owners.mjs`, never payload fields directly.
+- Hooks never fail a turn: every hook exits 0, denials included - a denial is the JSON
+  decision. Copilot CLI denies the tool whenever a PreToolUse hook exits non-zero.
+- Markdown read with a tool is never expanded: cite plugin files as `${CLAUDE_PLUGIN_ROOT}/...`
+  (every brief says what it stands for), and have the engine hand the orchestrator any
+  absolute path it needs.
 - Only the engine writes `.onestop/run.json`, always under the ledger lock.
 - Regular expressions in `registry/policies.json` are JSON strings - write them through a
   JSON-aware tool, never through a shell heredoc, which can eat a backslash.

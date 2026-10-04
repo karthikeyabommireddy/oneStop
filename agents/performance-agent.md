@@ -2,7 +2,7 @@
 name: performance-agent
 description: Measures, profiles and fixes real performance problems against a baseline.
 phases: measure implement review
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob
 model: inherit
 ---
 
